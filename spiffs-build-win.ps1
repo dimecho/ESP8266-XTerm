@@ -1,0 +1,1 @@
+Start-Process .\tools\mkspiffs.exe -ArgumentList "-c .\Web -b 8192 -p 256 -s 600000 flash-spiffs.bin" -NoNewWindow -PassThru -Wait
