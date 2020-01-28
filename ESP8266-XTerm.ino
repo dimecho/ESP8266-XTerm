@@ -154,17 +154,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         sendTXT(num, "0------------------------------------------------\r\n");
 
         if (Serial.available()) {
-          String output = "0" + Serial.readString();
-          sendTXT(num, output);
-          /*
-            char b[255];
-            size_t len = 0;
-            do {
+          //String output = "0" + Serial.readString();
+          //sendTXT(num, output);
+
+          char b[255];
+          size_t len = 0;
+          do {
             memset(b, 0, sizeof(b));
             len = Serial.readBytes(b, sizeof(b) - 1);
-            webSocket.sendBIN(num, (uint8_t *)b, len);
-            } while (len > 0);
-          */
+            char c[256] = "0"; strcat(c, b);
+            webSocket.sendBIN(num, (uint8_t *)c, len + 1);
+          } while (len > 0);
         }
       }
       break;
@@ -205,15 +205,24 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             sendTXT(num, str);
             Serial.print("get udc\n");
           */
-  
+          
           Serial.printf("%s\n", tty);
           delay(1);
 
           memset(tty, 0, sizeof(tty));
 
           if (Serial.available()) {
-            String output = "0" + Serial.readString();
-            sendTXT(num, output);
+            //String output = "0" + Serial.readString();
+            //sendTXT(num, output);
+            
+            char b[511];
+            size_t len = 0;
+            do {
+              memset(b, 0, sizeof(b));
+              len = Serial.readBytes(b, sizeof(b) - 1);
+              char c[512] = "0"; strcat(c, b);
+              webSocket.sendBIN(num, (uint8_t *)c, len + 1);
+            } while (len > 0);
           }
         }
       }
