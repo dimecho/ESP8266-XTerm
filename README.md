@@ -1,3 +1,5 @@
+<p align="center"><img src="Web/img/xterm.png?raw=true"></p>
+
 # ESP8266 XTerm - UART Web Interface
 
 A simple web interface based on [ttyd](https://github.com/tsl0922/ttyd) for UART/TTL with ESP8266.
