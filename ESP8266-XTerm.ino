@@ -116,6 +116,7 @@ bool HTTPServer(String file)
     if (f)
     {
       String contentType = getContentType(file);
+      server.sendHeader("Content-Encoding", "gzip");
       server.streamFile(f, contentType);
 
       f.close();

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+rm -rf ./spiffs
+cp -rf  ./Web ./spiffs
+rm -rf ./spiffs/img
+
+mkdir -p tools
+
 if [ ! -f tools/mkspiffs ]; then
     curl -L -o tools/mkspiffs-0.2.3-arduino-esp8266-osx.tar.gz -k -C - https://github.com/igrr/mkspiffs/releases/download/0.2.3/mkspiffs-0.2.3-arduino-esp8266-osx.tar.gz
     cd tools
@@ -9,6 +15,10 @@ if [ ! -f tools/mkspiffs ]; then
     rm -rf mkspiffs-0.2.3-arduino-esp8266-osx.tar.gz
     cd ../
 fi
-mv ./Web/img ./tools/
-./tools/mkspiffs -c ./Web/ -b 8192 -p 256 -s 600000 flash-spiffs.bin
-mv ./tools/img ./Web/
+
+for f in $(find spiffs -type f -name '*.*'); do
+    gzip "$f"
+    mv "$f.gz" "$f"
+done
+
+./tools/mkspiffs -c ./spiffs/ -b 8192 -p 256 -s 200000 flash-spiffs.bin
