@@ -12123,7 +12123,8 @@
         }
         openTerminal() {
             console.log(this.props.wsUrl);
-            this.terminal && this.terminal.dispose(), this.socket = new WebSocket(this.props.wsUrl, ["tty"]), this.terminal = new $.Terminal(this.props.options);
+            this.terminal && this.terminal.dispose(), this.socket = new WebSocket(this.props.wsUrl), this.terminal = new $.Terminal(this.props.options);
+            //this.terminal && this.terminal.dispose(), this.socket = new WebSocket(this.props.wsUrl, ["tty"]), this.terminal = new $.Terminal(this.props.options);
             const {
                 socket: e,
                 terminal: t,
@@ -12220,7 +12221,7 @@
     ce([X.bind], le.prototype, "sendData", null), ce([X.bind], le.prototype, "refreshToken", null), ce([X.bind], le.prototype, "onWindowResize", null), ce([X.bind], le.prototype, "openTerminal", null), ce([X.bind], le.prototype, "reconnect", null), ce([X.bind], le.prototype, "onSocketOpen", null), ce([X.bind], le.prototype, "onSocketClose", null), ce([X.bind], le.prototype, "onSocketError", null), ce([X.bind], le.prototype, "onSocketData", null), ce([X.bind], le.prototype, "onTerminalResize", null), ce([X.bind], le.prototype, "onTerminalData", null);
     const he = "https:" === window.location.protocol ? "wss:" : "ws:",
         ue = window.location.pathname.replace(/[\/]+$/, ""),
-        fe = [he, "//", "192.168.4.1:5999", ue, "", window.location.search].join(""),
+        fe = [he, "//", "192.168.4.1:5999", "/ws", "", window.location.search].join(""),
         _e = [window.location.protocol, "//", window.location.host, ue, "/token"].join(""),
         de = {
             fontSize: 13,

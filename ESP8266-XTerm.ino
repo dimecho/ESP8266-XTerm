@@ -208,7 +208,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           */
           
           Serial.printf("%s\n", tty);
-          delay(1);
+
+          uint8_t timeout = 10;
+          while (!Serial.available() && timeout > 0) {
+            delay(1);
+            timeout--;
+          }
 
           memset(tty, 0, sizeof(tty));
 
