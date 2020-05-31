@@ -22,7 +22,7 @@ A simple web interface based on [ttyd](https://github.com/tsl0922/ttyd) for UART
 
     1) Connect to ESP8266 USB-Serial-TTL
     2) Run sketch.ps1 flash "flash-sketch.bin"
-    3) Run spiffs.ps1 flash "flash-spiffs.bin"
+    3) Run littlefs.ps1 flash "flash-littlefs.bin"
 
 ## Update
 
@@ -39,7 +39,7 @@ A simple web interface based on [ttyd](https://github.com/tsl0922/ttyd) for UART
 
     [Build]
 
-    1) Run spiffs-build-osx.sh (spiffs-build-win.ps1 Windows) build SPIFFS filesystem
+    1) Run littlefs-build-osx.sh (littlefs-build-win.ps1 Windows) build LittleFS filesystem
     2) Open ESP8266-XTerm.ino with Arduino IDE
     3) Sketch -> Export compiled Binary
 

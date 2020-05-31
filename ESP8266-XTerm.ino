@@ -1,4 +1,4 @@
-#include <FS.h>
+#include <LittleFS.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
@@ -33,7 +33,7 @@ void setup()
   //===========
   //File system
   //===========
-  SPIFFS.begin();
+  LittleFS.begin();
 
   if (ACCESS_POINT_MODE == 0) {
     //=====================
@@ -73,10 +73,10 @@ void setup()
   //Web Server
   //===============
   server.on("/format", HTTP_GET, []() {
-    String result = SPIFFS.format() ? "OK" : "Error";
+    String result = LittleFS.format() ? "OK" : "Error";
     FSInfo fs_info;
-    SPIFFS.info(fs_info);
-    server.send(200, text_plain, "<b>Format " + result + "</b><br/>Total Flash Size: " + String(ESP.getFlashChipSize()) + "<br>SPIFFS Size: " + String(fs_info.totalBytes) + "<br>SPIFFS Used: " + String(fs_info.usedBytes));
+    LittleFS.info(fs_info);
+    server.send(200, text_plain, "<b>Format " + result + "</b><br/>Total Flash Size: " + String(ESP.getFlashChipSize()) + "<br>LittleFS Size: " + String(fs_info.totalBytes) + "<br>LittleFS Used: " + String(fs_info.usedBytes));
   });
   server.on("/reset", HTTP_GET, []() {
     server.send(200, text_plain, "...");
@@ -84,12 +84,12 @@ void setup()
     ESP.restart();
   });
   server.on("/", []() {
-    if (SPIFFS.exists("/index.html")) {
+    if (LittleFS.exists("/index.html")) {
       server.sendHeader("Location", "/index.html");
       server.send(303);
     } else {
       server.sendHeader("Refresh", "6; url=/update");
-      server.send(200, text_html, "File System Not Found ...Upload SPIFFS");
+      server.send(200, text_html, "File System Not Found ...");
     }
   });
   server.onNotFound([]() {
@@ -110,9 +110,9 @@ void loop()
 
 bool HTTPServer(String file)
 {
-  if (SPIFFS.exists(file))
+  if (LittleFS.exists(file))
   {
-    File f = SPIFFS.open(file, "r");
+    File f = LittleFS.open(file, "r");
     if (f)
     {
       String contentType = getContentType(file);
