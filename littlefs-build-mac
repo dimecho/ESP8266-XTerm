@@ -1,0 +1,34 @@
+#!/bin/sh
+
+cd "$(dirname "$0")"
+
+#=============
+#Copy Files
+#=============
+rm -rf ./data
+cp -rf  ./Web ./data
+rm -rf ./data/img
+
+#==============
+#Download Tool
+#==============
+mkdir -p tools
+if [ ! -f tools/mklittlefs ]; then
+    curl -L -o tools/x86_64-apple-darwin14-mklittlefs-295fe9b.tar.gz -k -C - https://github.com/earlephilhower/mklittlefs/releases/download/3.0.0/x86_64-apple-darwin14-mklittlefs-295fe9b.tar.gz
+    cd tools
+    gunzip -c x86_64-apple-darwin14-mklittlefs-295fe9b.tar.gz | tar xopf -
+    mv mklittlefs ./mklittlefs-295fe9b
+    mv mklittlefs-295fe9b/mklittlefs ./
+    rm -rf mklittlefs-295fe9b
+    cd ../
+fi
+
+#==============
+#Compress Files
+#==============
+for f in $(find data -type f -name '*.*'); do
+    gzip "$f"
+    mv "$f.gz" "$f"
+done
+
+./tools/mklittlefs -c ./data/ -b 8192 -p 256 -s 200000 flash-littlefs.bin

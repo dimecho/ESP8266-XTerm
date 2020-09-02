@@ -498,14 +498,17 @@
     var c = 10;
 
     function l(e) {
+        if ("function" != typeof e) throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof e)
+    }
+
+    function h(e) {
         return void 0 === e._maxListeners ? a.defaultMaxListeners : e._maxListeners
     }
 
-    function h(e, t, r, i) {
+    function u(e, t, r, i) {
         var n, o, s, a;
-        if ("function" != typeof r) throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof r);
-        if (void 0 === (o = e._events) ? (o = e._events = Object.create(null), e._eventsCount = 0) : (void 0 !== o.newListener && (e.emit("newListener", t, r.listener ? r.listener : r), o = e._events), s = o[t]), void 0 === s) s = o[t] = r, ++e._eventsCount;
-        else if ("function" == typeof s ? s = o[t] = i ? [r, s] : [s, r] : i ? s.unshift(r) : s.push(r), (n = l(e)) > 0 && s.length > n && !s.warned) {
+        if (l(r), void 0 === (o = e._events) ? (o = e._events = Object.create(null), e._eventsCount = 0) : (void 0 !== o.newListener && (e.emit("newListener", t, r.listener ? r.listener : r), o = e._events), s = o[t]), void 0 === s) s = o[t] = r, ++e._eventsCount;
+        else if ("function" == typeof s ? s = o[t] = i ? [r, s] : [s, r] : i ? s.unshift(r) : s.push(r), (n = h(e)) > 0 && s.length > n && !s.warned) {
             s.warned = !0;
             var c = new Error("Possible EventEmitter memory leak detected. " + s.length + " " + String(t) + " listeners added. Use emitter.setMaxListeners() to increase limit");
             c.name = "MaxListenersExceededWarning", c.emitter = e, c.type = t, c.count = s.length, a = c, console && console.warn && console.warn(a)
@@ -513,7 +516,7 @@
         return e
     }
 
-    function u(e, t, r) {
+    function f(e, t, r) {
         var i = {
                 fired: !1,
                 wrapFn: void 0,
@@ -522,23 +525,22 @@
                 listener: r
             },
             n = function() {
-                for (var e = [], t = 0; t < arguments.length; t++) e.push(arguments[t]);
-                this.fired || (this.target.removeListener(this.type, this.wrapFn), this.fired = !0, o(this.listener, this.target, e))
+                if (!this.fired) return this.target.removeListener(this.type, this.wrapFn), this.fired = !0, 0 === arguments.length ? this.listener.call(this.target) : this.listener.apply(this.target, arguments)
             }.bind(i);
         return n.listener = r, i.wrapFn = n, n
     }
 
-    function f(e, t, r) {
+    function _(e, t, r) {
         var i = e._events;
         if (void 0 === i) return [];
         var n = i[t];
         return void 0 === n ? [] : "function" == typeof n ? r ? [n.listener || n] : [n] : r ? function(e) {
             for (var t = new Array(e.length), r = 0; r < t.length; ++r) t[r] = e[r].listener || e[r];
             return t
-        }(n) : d(n, n.length)
+        }(n) : p(n, n.length)
     }
 
-    function _(e) {
+    function d(e) {
         var t = this._events;
         if (void 0 !== t) {
             var r = t[e];
@@ -548,7 +550,7 @@
         return 0
     }
 
-    function d(e, t) {
+    function p(e, t) {
         for (var r = new Array(t), i = 0; i < t; ++i) r[i] = e[i];
         return r
     }
@@ -567,7 +569,7 @@
         if ("number" != typeof e || e < 0 || s(e)) throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + e + ".");
         return this._maxListeners = e, this
     }, a.prototype.getMaxListeners = function() {
-        return l(this)
+        return h(this)
     }, a.prototype.emit = function(e) {
         for (var t = [], r = 1; r < arguments.length; r++) t.push(arguments[r]);
         var i = "error" === e,
@@ -585,24 +587,21 @@
         if ("function" == typeof c) o(c, this, t);
         else {
             var l = c.length,
-                h = d(c, l);
+                h = p(c, l);
             for (r = 0; r < l; ++r) o(h[r], this, t)
         }
         return !0
     }, a.prototype.addListener = function(e, t) {
-        return h(this, e, t, !1)
+        return u(this, e, t, !1)
     }, a.prototype.on = a.prototype.addListener, a.prototype.prependListener = function(e, t) {
-        return h(this, e, t, !0)
+        return u(this, e, t, !0)
     }, a.prototype.once = function(e, t) {
-        if ("function" != typeof t) throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof t);
-        return this.on(e, u(this, e, t)), this
+        return l(t), this.on(e, f(this, e, t)), this
     }, a.prototype.prependOnceListener = function(e, t) {
-        if ("function" != typeof t) throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof t);
-        return this.prependListener(e, u(this, e, t)), this
+        return l(t), this.prependListener(e, f(this, e, t)), this
     }, a.prototype.removeListener = function(e, t) {
         var r, i, n, o, s;
-        if ("function" != typeof t) throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof t);
-        if (void 0 === (i = this._events)) return this;
+        if (l(t), void 0 === (i = this._events)) return this;
         if (void 0 === (r = i[e])) return this;
         if (r === t || r.listener === t) 0 == --this._eventsCount ? this._events = Object.create(null) : (delete i[e], i.removeListener && this.emit("removeListener", e, r.listener || t));
         else if ("function" != typeof r) {
@@ -631,12 +630,12 @@
             for (i = t.length - 1; i >= 0; i--) this.removeListener(e, t[i]);
         return this
     }, a.prototype.listeners = function(e) {
-        return f(this, e, !0)
+        return _(this, e, !0)
     }, a.prototype.rawListeners = function(e) {
-        return f(this, e, !1)
+        return _(this, e, !1)
     }, a.listenerCount = function(e, t) {
-        return "function" == typeof e.listenerCount ? e.listenerCount(t) : _.call(e, t)
-    }, a.prototype.listenerCount = _, a.prototype.eventNames = function() {
+        return "function" == typeof e.listenerCount ? e.listenerCount(t) : d.call(e, t)
+    }, a.prototype.listenerCount = d, a.prototype.eventNames = function() {
         return this._eventsCount > 0 ? i(this._events) : []
     }
 }, function(e, t, r) {
@@ -848,39 +847,34 @@
     "use strict";
     const i = r(32);
     var n, o = e.exports;
-    Object.assign(o, r(3), r(6));
-    const s = 16,
-        a = 4129,
-        c = 65535,
-        l = 1 << s - 1;
 
-    function h(e, t) {
+    function s(e, t) {
         return n || function() {
             n = new Array(256);
-            for (var e = s - 8, t = 0; t < 256; t++) {
-                for (var r = t << e & c, i = 0; i < 8; i++) 0 != (r & l) ? (r <<= 1, r ^= a) : r <<= 1;
-                n[t] = r & c
+            for (var e = 0; e < 256; e++) {
+                for (var t = e << 8 & 65535, r = 0; r < 8; r++) 0 != (32768 & t) ? (t <<= 1, t ^= 4129) : t <<= 1;
+                n[e] = 65535 & t
             }
         }(), n[t >> 8 & 255] ^ (255 & t) << 8 ^ e
     }
 
-    function u(e, t) {
+    function a(e, t) {
         if (e.join() !== t.join()) throw new o.Error("crc", t, e)
     }
-    o.CRC = {
+    Object.assign(o, r(3), r(6)), o.CRC = {
         crc16: function(e) {
-            for (var t = e[0], r = 1; r < e.length; r++) t = h(e[r], t);
-            return t = h(0, h(0, t)), o.ENCODELIB.pack_u16_be(t)
+            for (var t = e[0], r = 1; r < e.length; r++) t = s(e[r], t);
+            return t = s(0, s(0, t)), o.ENCODELIB.pack_u16_be(t)
         },
         crc32: function(e) {
             return o.ENCODELIB.pack_u32_le(i.buf(e) >>> 0)
         },
         verify16: function(e, t) {
-            return u(this.crc16(e), t)
+            return a(this.crc16(e), t)
         },
         verify32: function(e, t) {
             try {
-                u(this.crc32(e), t)
+                a(this.crc32(e), t)
             } catch (t) {
                 throw t.input = e.slice(0), t
             }
@@ -945,19 +939,12 @@
             return r.d(t, "a", t), t
         }, r.o = function(e, t) {
             return Object.prototype.hasOwnProperty.call(e, t)
-        }, r.p = "", r(r.s = 32)
+        }, r.p = "", r(r.s = 34)
     }([function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(14);
-        t.IBufferService = i.createDecorator("BufferService"), t.ICoreMouseService = i.createDecorator("CoreMouseService"), t.ICoreService = i.createDecorator("CoreService"), t.ICharsetService = i.createDecorator("CharsetService"), t.IDirtyRowService = i.createDecorator("DirtyRowService"), t.IInstantiationService = i.createDecorator("InstantiationService"), t.ILogService = i.createDecorator("LogService"), t.IOptionsService = i.createDecorator("OptionsService"), t.IUnicodeService = i.createDecorator("UnicodeService")
-    }, function(e, t, r) {
-        "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
+        }), t.forwardEvent = t.EventEmitter = void 0;
         var i = function() {
             function e() {
                 this._listeners = [], this._disposed = !1
@@ -975,7 +962,7 @@
                         }
                     }), this._event
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype.fire = function(e, t) {
                 for (var r = [], i = 0; i < this._listeners.length; i++) r.push(this._listeners[i]);
@@ -984,39 +971,54 @@
                 this._listeners && (this._listeners.length = 0), this._disposed = !0
             }, e
         }();
-        t.EventEmitter = i
+        t.EventEmitter = i, t.forwardEvent = function(e, t) {
+            return e(function(e) {
+                return t.fire(e)
+            })
+        }
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.IUnicodeService = t.IOptionsService = t.ILogService = t.IInstantiationService = t.IDirtyRowService = t.ICharsetService = t.ICoreService = t.ICoreMouseService = t.IBufferService = void 0;
+        var i = r(14);
+        t.IBufferService = i.createDecorator("BufferService"), t.ICoreMouseService = i.createDecorator("CoreMouseService"), t.ICoreService = i.createDecorator("CoreService"), t.ICharsetService = i.createDecorator("CharsetService"), t.IDirtyRowService = i.createDecorator("DirtyRowService"), t.IInstantiationService = i.createDecorator("InstantiationService"), t.ILogService = i.createDecorator("LogService"), t.IOptionsService = i.createDecorator("OptionsService"), t.IUnicodeService = i.createDecorator("UnicodeService")
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.getDisposeArrayDisposable = t.disposeArray = t.Disposable = void 0;
         var i = function() {
             function e() {
                 this._disposables = [], this._isDisposed = !1
             }
             return e.prototype.dispose = function() {
-                this._isDisposed = !0, this._disposables.forEach(function(e) {
-                    return e.dispose()
-                }), this._disposables.length = 0
+                this._isDisposed = !0;
+                for (var e = 0, t = this._disposables; e < t.length; e++) t[e].dispose();
+                this._disposables.length = 0
             }, e.prototype.register = function(e) {
-                this._disposables.push(e)
+                return this._disposables.push(e), e
             }, e.prototype.unregister = function(e) {
                 var t = this._disposables.indexOf(e); - 1 !== t && this._disposables.splice(t, 1)
             }, e
         }();
-        t.Disposable = i
+
+        function n(e) {
+            for (var t = 0, r = e; t < r.length; t++) r[t].dispose();
+            e.length = 0
+        }
+        t.Disposable = i, t.disposeArray = n, t.getDisposeArrayDisposable = function(e) {
+            return {
+                dispose: function() {
+                    return n(e)
+                }
+            }
+        }
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.DEFAULT_COLOR = 256, t.DEFAULT_ATTR = 256 | t.DEFAULT_COLOR << 9, t.CHAR_DATA_ATTR_INDEX = 0, t.CHAR_DATA_CHAR_INDEX = 1, t.CHAR_DATA_WIDTH_INDEX = 2, t.CHAR_DATA_CODE_INDEX = 3, t.NULL_CELL_CHAR = "", t.NULL_CELL_WIDTH = 1, t.NULL_CELL_CODE = 0, t.WHITESPACE_CELL_CHAR = " ", t.WHITESPACE_CELL_WIDTH = 1, t.WHITESPACE_CELL_CODE = 32
-    }, function(e, t, r) {
-        "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var i = r(14);
-        t.ICharSizeService = i.createDecorator("CharSizeService"), t.ICoreBrowserService = i.createDecorator("CoreBrowserService"), t.IMouseService = i.createDecorator("MouseService"), t.IRenderService = i.createDecorator("RenderService"), t.ISelectionService = i.createDecorator("SelectionService"), t.ISoundService = i.createDecorator("SoundService")
+        }), t.WHITESPACE_CELL_CODE = t.WHITESPACE_CELL_WIDTH = t.WHITESPACE_CELL_CHAR = t.NULL_CELL_CODE = t.NULL_CELL_WIDTH = t.NULL_CELL_CHAR = t.CHAR_DATA_CODE_INDEX = t.CHAR_DATA_WIDTH_INDEX = t.CHAR_DATA_CHAR_INDEX = t.CHAR_DATA_ATTR_INDEX = t.DEFAULT_ATTR = t.DEFAULT_COLOR = void 0, t.DEFAULT_COLOR = 256, t.DEFAULT_ATTR = 256 | t.DEFAULT_COLOR << 9, t.CHAR_DATA_ATTR_INDEX = 0, t.CHAR_DATA_CHAR_INDEX = 1, t.CHAR_DATA_WIDTH_INDEX = 2, t.CHAR_DATA_CODE_INDEX = 3, t.NULL_CELL_CHAR = "", t.NULL_CELL_WIDTH = 1, t.NULL_CELL_CODE = 0, t.WHITESPACE_CELL_CHAR = " ", t.WHITESPACE_CELL_WIDTH = 1, t.WHITESPACE_CELL_CODE = 32
     }, function(e, t, r) {
         "use strict";
         var i, n = this && this.__extends || (i = function(e, t) {
@@ -1036,13 +1038,14 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(7),
+        }), t.CellData = void 0;
+        var o = r(8),
             s = r(3),
-            a = function(e) {
+            a = r(6),
+            c = function(e) {
                 function t() {
                     var t = null !== e && e.apply(this, arguments) || this;
-                    return t.content = 0, t.fg = 0, t.bg = 0, t.combinedData = "", t
+                    return t.content = 0, t.fg = 0, t.bg = 0, t.extended = new a.ExtendedAttrs, t.combinedData = "", t
                 }
                 return n(t, e), t.fromCharData = function(e) {
                     var r = new t;
@@ -1070,16 +1073,23 @@
                 }, t.prototype.getAsCharData = function() {
                     return [this.fg, this.getChars(), this.getWidth(), this.getCode()]
                 }, t
-            }(r(6).AttributeData);
-        t.CellData = a
+            }(a.AttributeData);
+        t.CellData = c
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.ISoundService = t.ISelectionService = t.IRenderService = t.IMouseService = t.ICoreBrowserService = t.ICharSizeService = void 0;
+        var i = r(14);
+        t.ICharSizeService = i.createDecorator("CharSizeService"), t.ICoreBrowserService = i.createDecorator("CoreBrowserService"), t.IMouseService = i.createDecorator("MouseService"), t.IRenderService = i.createDecorator("RenderService"), t.ISelectionService = i.createDecorator("SelectionService"), t.ISoundService = i.createDecorator("SoundService")
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.ExtendedAttrs = t.AttributeData = void 0;
         var i = function() {
             function e() {
-                this.fg = 0, this.bg = 0
+                this.fg = 0, this.bg = 0, this.extended = new n
             }
             return e.toColorRGB = function(e) {
                 return [e >>> 16 & 255, e >>> 8 & 255, 255 & e]
@@ -1087,7 +1097,7 @@
                 return (255 & e[0]) << 16 | (255 & e[1]) << 8 | 255 & e[2]
             }, e.prototype.clone = function() {
                 var t = new e;
-                return t.fg = this.fg, t.bg = this.bg, t
+                return t.fg = this.fg, t.bg = this.bg, t.extended = this.extended.clone(), t
             }, e.prototype.isInverse = function() {
                 return 67108864 & this.fg
             }, e.prototype.isBold = function() {
@@ -1140,14 +1150,63 @@
                     default:
                         return -1
                 }
+            }, e.prototype.hasExtendedAttrs = function() {
+                return 268435456 & this.bg
+            }, e.prototype.updateExtended = function() {
+                this.extended.isEmpty() ? this.bg &= -268435457 : this.bg |= 268435456
+            }, e.prototype.getUnderlineColor = function() {
+                if (268435456 & this.bg && ~this.extended.underlineColor) switch (50331648 & this.extended.underlineColor) {
+                    case 16777216:
+                    case 33554432:
+                        return 255 & this.extended.underlineColor;
+                    case 50331648:
+                        return 16777215 & this.extended.underlineColor;
+                    default:
+                        return this.getFgColor()
+                }
+                return this.getFgColor()
+            }, e.prototype.getUnderlineColorMode = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 50331648 & this.extended.underlineColor : this.getFgColorMode()
+            }, e.prototype.isUnderlineColorRGB = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 50331648 == (50331648 & this.extended.underlineColor) : this.isFgRGB()
+            }, e.prototype.isUnderlineColorPalette = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 16777216 == (50331648 & this.extended.underlineColor) || 33554432 == (50331648 & this.extended.underlineColor) : this.isFgPalette()
+            }, e.prototype.isUnderlineColorDefault = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 0 == (50331648 & this.extended.underlineColor) : this.isFgDefault()
+            }, e.prototype.getUnderlineStyle = function() {
+                return 268435456 & this.fg ? 268435456 & this.bg ? this.extended.underlineStyle : 1 : 0
             }, e
         }();
-        t.AttributeData = i
+        t.AttributeData = i;
+        var n = function() {
+            function e(e, t) {
+                void 0 === e && (e = 0), void 0 === t && (t = -1), this.underlineStyle = e, this.underlineColor = t
+            }
+            return e.prototype.clone = function() {
+                return new e(this.underlineStyle, this.underlineColor)
+            }, e.prototype.isEmpty = function() {
+                return 0 === this.underlineStyle
+            }, e
+        }();
+        t.ExtendedAttrs = n
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.stringFromCodePoint = function(e) {
+        }), t.addDisposableDomListener = void 0, t.addDisposableDomListener = function(e, t, r, i) {
+            e.addEventListener(t, r, i);
+            var n = !1;
+            return {
+                dispose: function() {
+                    n || (n = !0, e.removeEventListener(t, r, i))
+                }
+            }
+        }
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.Utf8ToUtf32 = t.StringToUtf32 = t.utf32ToString = t.stringFromCodePoint = void 0, t.stringFromCodePoint = function(e) {
             return e > 65535 ? (e -= 65536, String.fromCharCode(55296 + (e >> 10)) + String.fromCharCode(e % 1024 + 56320)) : String.fromCharCode(e)
         }, t.utf32ToString = function(e, t, r) {
             void 0 === t && (t = 0), void 0 === r && (r = e.length);
@@ -1264,20 +1323,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.addDisposableDomListener = function(e, t, r, i) {
-            e.addEventListener(t, r, i);
-            var n = !1;
-            return {
-                dispose: function() {
-                    n && (n = !0, e.removeEventListener(t, r, i))
-                }
-            }
-        }
-    }, function(e, t, r) {
-        "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        }), t.INVERTED_DEFAULT_COLOR = 257, t.DIM_OPACITY = .5, t.CHAR_ATLAS_CELL_SPACING = 1
+        }), t.CHAR_ATLAS_CELL_SPACING = t.DIM_OPACITY = t.INVERTED_DEFAULT_COLOR = void 0, t.INVERTED_DEFAULT_COLOR = 257, t.DIM_OPACITY = .5, t.CHAR_ATLAS_CELL_SPACING = 1
     }, function(e, t, r) {
         "use strict";
         var i, n, o, s;
@@ -1292,7 +1338,7 @@
         }
         Object.defineProperty(t, "__esModule", {
                 value: !0
-            }),
+            }), t.contrastRatio = t.toPaddedHex = t.rgba = t.rgb = t.css = t.color = t.channels = void 0,
             function(e) {
                 e.toCss = function(e, t, r, i) {
                     return void 0 !== i ? "#" + a(e) + a(t) + a(r) + a(i) : "#" + a(e) + a(t) + a(r)
@@ -1318,6 +1364,8 @@
                     css: i.toCss(h, u, f),
                     rgba: i.toRgba(h, u, f)
                 }
+            }, n.isOpaque = function(e) {
+                return 255 == (255 & e.rgba)
             }, n.ensureContrastRatio = function(e, t, r) {
                 var i = s.ensureContrastRatio(e.rgba, t.rgba, r);
                 if (i) return s.toColor(i >> 24 & 255, i >> 16 & 255, i >> 8 & 255)
@@ -1331,11 +1379,28 @@
                     css: i.toCss(n, o, a),
                     rgba: t
                 }
-            }, (t.css || (t.css = {})).toColor = function(e) {
+            }, n.opacity = function(e, t) {
+                var r = Math.round(255 * t),
+                    n = s.toChannels(e.rgba),
+                    o = n[0],
+                    a = n[1],
+                    c = n[2];
                 return {
-                    css: e,
-                    rgba: (parseInt(e.slice(1), 16) << 8 | 255) >>> 0
+                    css: i.toCss(o, a, c, r),
+                    rgba: i.toRgba(o, a, c, r)
                 }
+            }, (t.css || (t.css = {})).toColor = function(e) {
+                switch (e.length) {
+                    case 7:
+                        return {
+                            css: e, rgba: (parseInt(e.slice(1), 16) << 8 | 255) >>> 0
+                        };
+                    case 9:
+                        return {
+                            css: e, rgba: parseInt(e.slice(1), 16) >>> 0
+                        }
+                }
+                throw new Error("css.toColor: Unsupported css format")
             },
             function(e) {
                 function t(e, t, r) {
@@ -1375,7 +1440,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.isLinux = t.isWindows = t.isIphone = t.isIpad = t.isMac = t.isSafari = t.isFirefox = void 0;
         var i = "undefined" == typeof navigator,
             n = i ? "node" : navigator.userAgent,
             o = i ? "node" : navigator.platform;
@@ -1388,7 +1453,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
                 value: !0
-            }),
+            }), t.C1 = t.C0 = void 0,
             function(e) {
                 e.NUL = "\0", e.SOH = "", e.STX = "", e.ETX = "", e.EOT = "", e.ENQ = "", e.ACK = "", e.BEL = "", e.BS = "\b", e.HT = "\t", e.LF = "\n", e.VT = "\v", e.FF = "\f", e.CR = "\r", e.SO = "", e.SI = "", e.DLE = "", e.DC1 = "", e.DC2 = "", e.DC3 = "", e.DC4 = "", e.NAK = "", e.SYN = "", e.ETB = "", e.CAN = "", e.EM = "", e.SUB = "", e.ESC = "", e.FS = "", e.GS = "", e.RS = "", e.US = "", e.SP = " ", e.DEL = ""
             }(t.C0 || (t.C0 = {})),
@@ -1399,14 +1464,15 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.BaseRenderLayer = void 0;
         var i = r(3),
             n = r(9),
-            o = r(23),
+            o = r(25),
             s = r(6),
-            a = r(26),
+            a = r(28),
             c = r(10),
-            l = function() {
+            l = r(17),
+            h = function() {
                 function e(e, t, r, i, n, o, s, a) {
                     this._container = e, this._alpha = i, this._colors = n, this._rendererId = o, this._bufferService = s, this._optionsService = a, this._scaledCharWidth = 0, this._scaledCharHeight = 0, this._scaledCellWidth = 0, this._scaledCellHeight = 0, this._scaledCharLeft = 0, this._scaledCharTop = 0, this._currentGlyphIdentifier = {
                         chars: "",
@@ -1420,7 +1486,7 @@
                 }
                 return e.prototype.dispose = function() {
                     var e;
-                    this._container.removeChild(this._canvas), null === (e = this._charAtlas) || void 0 === e || e.dispose()
+                    l.removeElementFromParent(this._canvas), null === (e = this._charAtlas) || void 0 === e || e.dispose()
                 }, e.prototype._initCanvas = function() {
                     this._ctx = a.throwIfFalsy(this._canvas.getContext("2d", {
                         alpha: this._alpha
@@ -1527,31 +1593,26 @@
                     }
                 }, e
             }();
-        t.BaseRenderLayer = l
+        t.BaseRenderLayer = h
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = "di$target",
-            n = "di$dependencies";
-
-        function o(e, t, r) {
-            t[i] === t ? t[n].push({
-                id: e,
-                index: r
-            }) : (t[n] = [{
-                id: e,
-                index: r
-            }], t[i] = t)
-        }
-        t.serviceRegistry = new Map, t.getServiceDependencies = function(e) {
-            return e[n] || []
+        }), t.createDecorator = t.getServiceDependencies = t.serviceRegistry = void 0, t.serviceRegistry = new Map, t.getServiceDependencies = function(e) {
+            return e.di$dependencies || []
         }, t.createDecorator = function(e) {
             if (t.serviceRegistry.has(e)) return t.serviceRegistry.get(e);
             var r = function(e, t, i) {
                 if (3 !== arguments.length) throw new Error("@IServiceName-decorator can only be used to decorate a parameter");
-                o(r, e, i)
+                ! function(e, t, r) {
+                    t.di$target === t ? t.di$dependencies.push({
+                        id: e,
+                        index: r
+                    }) : (t.di$dependencies = [{
+                        id: e,
+                        index: r
+                    }], t.di$target = t)
+                }(r, e, i)
             };
             return r.toString = function() {
                 return e
@@ -1568,7 +1629,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.fill = function(e, t, r, n) {
+        }), t.concat = t.fillFallback = t.fill = void 0, t.fill = function(e, t, r, n) {
             return e.fill ? e.fill(t, r, n) : i(e, t, r, n)
         }, t.fillFallback = i, t.concat = function(e, t) {
             var r = new e.constructor(e.length + t.length);
@@ -1578,80 +1639,76 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(7),
+        }), t.BufferLine = t.DEFAULT_ATTR_DATA = void 0;
+        var i = r(8),
             n = r(3),
-            o = r(5),
-            s = r(6),
-            a = 3;
+            o = r(4),
+            s = r(6);
         t.DEFAULT_ATTR_DATA = Object.freeze(new s.AttributeData);
-        var c = function() {
+        var a = function() {
             function e(e, t, r) {
-                void 0 === r && (r = !1), this.isWrapped = r, this._combined = {}, this._data = new Uint32Array(e * a);
+                void 0 === r && (r = !1), this.isWrapped = r, this._combined = {}, this._extendedAttrs = {}, this._data = new Uint32Array(3 * e);
                 for (var i = t || o.CellData.fromCharData([0, n.NULL_CELL_CHAR, n.NULL_CELL_WIDTH, n.NULL_CELL_CODE]), s = 0; s < e; ++s) this.setCell(s, i);
                 this.length = e
             }
             return e.prototype.get = function(e) {
-                var t = this._data[e * a + 0],
+                var t = this._data[3 * e + 0],
                     r = 2097151 & t;
-                return [this._data[e * a + 1], 2097152 & t ? this._combined[e] : r ? i.stringFromCodePoint(r) : "", t >> 22, 2097152 & t ? this._combined[e].charCodeAt(this._combined[e].length - 1) : r]
+                return [this._data[3 * e + 1], 2097152 & t ? this._combined[e] : r ? i.stringFromCodePoint(r) : "", t >> 22, 2097152 & t ? this._combined[e].charCodeAt(this._combined[e].length - 1) : r]
             }, e.prototype.set = function(e, t) {
-                this._data[e * a + 1] = t[n.CHAR_DATA_ATTR_INDEX], t[n.CHAR_DATA_CHAR_INDEX].length > 1 ? (this._combined[e] = t[1], this._data[e * a + 0] = 2097152 | e | t[n.CHAR_DATA_WIDTH_INDEX] << 22) : this._data[e * a + 0] = t[n.CHAR_DATA_CHAR_INDEX].charCodeAt(0) | t[n.CHAR_DATA_WIDTH_INDEX] << 22
+                this._data[3 * e + 1] = t[n.CHAR_DATA_ATTR_INDEX], t[n.CHAR_DATA_CHAR_INDEX].length > 1 ? (this._combined[e] = t[1], this._data[3 * e + 0] = 2097152 | e | t[n.CHAR_DATA_WIDTH_INDEX] << 22) : this._data[3 * e + 0] = t[n.CHAR_DATA_CHAR_INDEX].charCodeAt(0) | t[n.CHAR_DATA_WIDTH_INDEX] << 22
             }, e.prototype.getWidth = function(e) {
-                return this._data[e * a + 0] >> 22
+                return this._data[3 * e + 0] >> 22
             }, e.prototype.hasWidth = function(e) {
-                return 12582912 & this._data[e * a + 0]
+                return 12582912 & this._data[3 * e + 0]
             }, e.prototype.getFg = function(e) {
-                return this._data[e * a + 1]
+                return this._data[3 * e + 1]
             }, e.prototype.getBg = function(e) {
-                return this._data[e * a + 2]
+                return this._data[3 * e + 2]
             }, e.prototype.hasContent = function(e) {
-                return 4194303 & this._data[e * a + 0]
+                return 4194303 & this._data[3 * e + 0]
             }, e.prototype.getCodePoint = function(e) {
-                var t = this._data[e * a + 0];
+                var t = this._data[3 * e + 0];
                 return 2097152 & t ? this._combined[e].charCodeAt(this._combined[e].length - 1) : 2097151 & t
             }, e.prototype.isCombined = function(e) {
-                return 2097152 & this._data[e * a + 0]
+                return 2097152 & this._data[3 * e + 0]
             }, e.prototype.getString = function(e) {
-                var t = this._data[e * a + 0];
+                var t = this._data[3 * e + 0];
                 return 2097152 & t ? this._combined[e] : 2097151 & t ? i.stringFromCodePoint(2097151 & t) : ""
             }, e.prototype.loadCell = function(e, t) {
-                var r = e * a;
-                return t.content = this._data[r + 0], t.fg = this._data[r + 1], t.bg = this._data[r + 2], 2097152 & t.content && (t.combinedData = this._combined[e]), t
+                var r = 3 * e;
+                return t.content = this._data[r + 0], t.fg = this._data[r + 1], t.bg = this._data[r + 2], 2097152 & t.content && (t.combinedData = this._combined[e]), 268435456 & t.bg && (t.extended = this._extendedAttrs[e]), t
             }, e.prototype.setCell = function(e, t) {
-                2097152 & t.content && (this._combined[e] = t.combinedData), this._data[e * a + 0] = t.content, this._data[e * a + 1] = t.fg, this._data[e * a + 2] = t.bg
-            }, e.prototype.setCellFromCodePoint = function(e, t, r, i, n) {
-                this._data[e * a + 0] = t | r << 22, this._data[e * a + 1] = i, this._data[e * a + 2] = n
+                2097152 & t.content && (this._combined[e] = t.combinedData), 268435456 & t.bg && (this._extendedAttrs[e] = t.extended), this._data[3 * e + 0] = t.content, this._data[3 * e + 1] = t.fg, this._data[3 * e + 2] = t.bg
+            }, e.prototype.setCellFromCodePoint = function(e, t, r, i, n, o) {
+                268435456 & n && (this._extendedAttrs[e] = o), this._data[3 * e + 0] = t | r << 22, this._data[3 * e + 1] = i, this._data[3 * e + 2] = n
             }, e.prototype.addCodepointToCell = function(e, t) {
-                var r = this._data[e * a + 0];
-                2097152 & r ? this._combined[e] += i.stringFromCodePoint(t) : (2097151 & r ? (this._combined[e] = i.stringFromCodePoint(2097151 & r) + i.stringFromCodePoint(t), r &= -2097152, r |= 2097152) : r = t | 1 << 22, this._data[e * a + 0] = r)
+                var r = this._data[3 * e + 0];
+                2097152 & r ? this._combined[e] += i.stringFromCodePoint(t) : (2097151 & r ? (this._combined[e] = i.stringFromCodePoint(2097151 & r) + i.stringFromCodePoint(t), r &= -2097152, r |= 2097152) : r = t | 1 << 22, this._data[3 * e + 0] = r)
             }, e.prototype.insertCells = function(e, t, r, i) {
-                var n, s, a, c;
-                if ((e %= this.length) && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null === (n = i) || void 0 === n ? void 0 : n.fg) || 0, (null === (s = i) || void 0 === s ? void 0 : s.bg) || 0), t < this.length - e) {
-                    for (var l = new o.CellData, h = this.length - e - t - 1; h >= 0; --h) this.setCell(e + t + h, this.loadCell(e + h, l));
-                    for (h = 0; h < t; ++h) this.setCell(e + h, r)
+                if ((e %= this.length) && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs), t < this.length - e) {
+                    for (var n = new o.CellData, a = this.length - e - t - 1; a >= 0; --a) this.setCell(e + t + a, this.loadCell(e + a, n));
+                    for (a = 0; a < t; ++a) this.setCell(e + a, r)
                 } else
-                    for (h = e; h < this.length; ++h) this.setCell(h, r);
-                2 === this.getWidth(this.length - 1) && this.setCellFromCodePoint(this.length - 1, 0, 1, (null === (a = i) || void 0 === a ? void 0 : a.fg) || 0, (null === (c = i) || void 0 === c ? void 0 : c.bg) || 0)
+                    for (a = e; a < this.length; ++a) this.setCell(a, r);
+                2 === this.getWidth(this.length - 1) && this.setCellFromCodePoint(this.length - 1, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs)
             }, e.prototype.deleteCells = function(e, t, r, i) {
-                var n, s, a, c;
                 if (e %= this.length, t < this.length - e) {
-                    for (var l = new o.CellData, h = 0; h < this.length - e - t; ++h) this.setCell(e + h, this.loadCell(e + t + h, l));
-                    for (h = this.length - t; h < this.length; ++h) this.setCell(h, r)
+                    for (var n = new o.CellData, a = 0; a < this.length - e - t; ++a) this.setCell(e + a, this.loadCell(e + t + a, n));
+                    for (a = this.length - t; a < this.length; ++a) this.setCell(a, r)
                 } else
-                    for (h = e; h < this.length; ++h) this.setCell(h, r);
-                e && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null === (n = i) || void 0 === n ? void 0 : n.fg) || 0, (null === (s = i) || void 0 === s ? void 0 : s.bg) || 0), 0 !== this.getWidth(e) || this.hasContent(e) || this.setCellFromCodePoint(e, 0, 1, (null === (a = i) || void 0 === a ? void 0 : a.fg) || 0, (null === (c = i) || void 0 === c ? void 0 : c.bg) || 0)
+                    for (a = e; a < this.length; ++a) this.setCell(a, r);
+                e && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs), 0 !== this.getWidth(e) || this.hasContent(e) || this.setCellFromCodePoint(e, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs)
             }, e.prototype.replaceCells = function(e, t, r, i) {
-                var n, o, s, a;
-                for (e && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null === (n = i) || void 0 === n ? void 0 : n.fg) || 0, (null === (o = i) || void 0 === o ? void 0 : o.bg) || 0), t < this.length && 2 === this.getWidth(t - 1) && this.setCellFromCodePoint(t, 0, 1, (null === (s = i) || void 0 === s ? void 0 : s.fg) || 0, (null === (a = i) || void 0 === a ? void 0 : a.bg) || 0); e < t && e < this.length;) this.setCell(e++, r)
+                for (e && 2 === this.getWidth(e - 1) && this.setCellFromCodePoint(e - 1, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs), t < this.length && 2 === this.getWidth(t - 1) && this.setCellFromCodePoint(t, 0, 1, (null == i ? void 0 : i.fg) || 0, (null == i ? void 0 : i.bg) || 0, (null == i ? void 0 : i.extended) || new s.ExtendedAttrs); e < t && e < this.length;) this.setCell(e++, r)
             }, e.prototype.resize = function(e, t) {
                 if (e !== this.length) {
                     if (e > this.length) {
-                        var r = new Uint32Array(e * a);
-                        this.length && (e * a < this._data.length ? r.set(this._data.subarray(0, e * a)) : r.set(this._data)), this._data = r;
+                        var r = new Uint32Array(3 * e);
+                        this.length && (3 * e < this._data.length ? r.set(this._data.subarray(0, 3 * e)) : r.set(this._data)), this._data = r;
                         for (var i = this.length; i < e; ++i) this.setCell(i, t)
                     } else if (e) {
-                        (r = new Uint32Array(e * a)).set(this._data.subarray(0, e * a)), this._data = r;
+                        (r = new Uint32Array(3 * e)).set(this._data.subarray(0, 3 * e)), this._data = r;
                         var n = Object.keys(this._combined);
                         for (i = 0; i < n.length; i++) {
                             var o = parseInt(n[i], 10);
@@ -1661,53 +1718,1160 @@
                     this.length = e
                 }
             }, e.prototype.fill = function(e) {
-                this._combined = {};
+                this._combined = {}, this._extendedAttrs = {};
                 for (var t = 0; t < this.length; ++t) this.setCell(t, e)
             }, e.prototype.copyFrom = function(e) {
                 for (var t in this.length !== e.length ? this._data = new Uint32Array(e._data) : this._data.set(e._data), this.length = e.length, this._combined = {}, e._combined) this._combined[t] = e._combined[t];
+                for (var t in this._extendedAttrs = {}, e._extendedAttrs) this._extendedAttrs[t] = e._extendedAttrs[t];
                 this.isWrapped = e.isWrapped
             }, e.prototype.clone = function() {
                 var t = new e(0);
                 for (var r in t._data = new Uint32Array(this._data), t.length = this.length, this._combined) t._combined[r] = this._combined[r];
+                for (var r in this._extendedAttrs) t._extendedAttrs[r] = this._extendedAttrs[r];
                 return t.isWrapped = this.isWrapped, t
             }, e.prototype.getTrimmedLength = function() {
                 for (var e = this.length - 1; e >= 0; --e)
-                    if (4194303 & this._data[e * a + 0]) return e + (this._data[e * a + 0] >> 22);
+                    if (4194303 & this._data[3 * e + 0]) return e + (this._data[3 * e + 0] >> 22);
                 return 0
             }, e.prototype.copyCellsFrom = function(e, t, r, i, n) {
                 var o = e._data;
                 if (n)
                     for (var s = i - 1; s >= 0; s--)
-                        for (var c = 0; c < a; c++) this._data[(r + s) * a + c] = o[(t + s) * a + c];
+                        for (var a = 0; a < 3; a++) this._data[3 * (r + s) + a] = o[3 * (t + s) + a];
                 else
                     for (s = 0; s < i; s++)
-                        for (c = 0; c < a; c++) this._data[(r + s) * a + c] = o[(t + s) * a + c];
-                var l = Object.keys(e._combined);
-                for (c = 0; c < l.length; c++) {
-                    var h = parseInt(l[c], 10);
-                    h >= t && (this._combined[h - t + r] = e._combined[h])
+                        for (a = 0; a < 3; a++) this._data[3 * (r + s) + a] = o[3 * (t + s) + a];
+                var c = Object.keys(e._combined);
+                for (a = 0; a < c.length; a++) {
+                    var l = parseInt(c[a], 10);
+                    l >= t && (this._combined[l - t + r] = e._combined[l])
                 }
             }, e.prototype.translateToString = function(e, t, r) {
                 void 0 === e && (e = !1), void 0 === t && (t = 0), void 0 === r && (r = this.length), e && (r = Math.min(r, this.getTrimmedLength()));
                 for (var o = ""; t < r;) {
-                    var s = this._data[t * a + 0],
-                        c = 2097151 & s;
-                    o += 2097152 & s ? this._combined[t] : c ? i.stringFromCodePoint(c) : n.WHITESPACE_CELL_CHAR, t += s >> 22 || 1
+                    var s = this._data[3 * t + 0],
+                        a = 2097151 & s;
+                    o += 2097152 & s ? this._combined[t] : a ? i.stringFromCodePoint(a) : n.WHITESPACE_CELL_CHAR, t += s >> 22 || 1
                 }
                 return o
             }, e
         }();
-        t.BufferLine = c
+        t.BufferLine = a
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.promptLabel = "Terminal input", t.tooMuchOutput = "Too much output to announce, navigate to rows manually to read"
+        }), t.removeElementFromParent = void 0, t.removeElementFromParent = function() {
+            for (var e, t = [], r = 0; r < arguments.length; r++) t[r] = arguments[r];
+            for (var i = 0, n = t; i < n.length; i++) {
+                var o = n[i];
+                null === (e = null == o ? void 0 : o.parentElement) || void 0 === e || e.removeChild(o)
+            }
+        }
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.CHARSETS = {}, t.DEFAULT_CHARSET = t.CHARSETS.B, t.CHARSETS[0] = {
+        }), t.tooMuchOutput = t.promptLabel = void 0, t.promptLabel = "Terminal input", t.tooMuchOutput = "Too much output to announce, navigate to rows manually to read"
+    }, function(e, t, r) {
+        "use strict";
+        var i, n = this && this.__extends || (i = function(e, t) {
+            return (i = Object.setPrototypeOf || {
+                    __proto__: []
+                }
+                instanceof Array && function(e, t) {
+                    e.__proto__ = t
+                } || function(e, t) {
+                    for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                })(e, t)
+        }, function(e, t) {
+            function r() {
+                this.constructor = e
+            }
+            i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+        });
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.InputHandler = t.WindowsOptionsReportType = void 0;
+        var o, s = r(12),
+            a = r(20),
+            c = r(39),
+            l = r(2),
+            h = r(15),
+            u = r(8),
+            f = r(16),
+            _ = r(0),
+            d = r(3),
+            p = r(4),
+            v = r(6),
+            g = r(22),
+            y = r(24),
+            b = {
+                "(": 0,
+                ")": 1,
+                "*": 2,
+                "+": 3,
+                "-": 1,
+                ".": 2
+            };
+
+        function m(e, t) {
+            if (e > 24) return t.setWinLines || !1;
+            switch (e) {
+                case 1:
+                    return !!t.restoreWin;
+                case 2:
+                    return !!t.minimizeWin;
+                case 3:
+                    return !!t.setWinPosition;
+                case 4:
+                    return !!t.setWinSizePixels;
+                case 5:
+                    return !!t.raiseWin;
+                case 6:
+                    return !!t.lowerWin;
+                case 7:
+                    return !!t.refreshWin;
+                case 8:
+                    return !!t.setWinSizeChars;
+                case 9:
+                    return !!t.maximizeWin;
+                case 10:
+                    return !!t.fullscreenWin;
+                case 11:
+                    return !!t.getWinState;
+                case 13:
+                    return !!t.getWinPosition;
+                case 14:
+                    return !!t.getWinSizePixels;
+                case 15:
+                    return !!t.getScreenSizePixels;
+                case 16:
+                    return !!t.getCellSizePixels;
+                case 18:
+                    return !!t.getWinSizeChars;
+                case 19:
+                    return !!t.getScreenSizeChars;
+                case 20:
+                    return !!t.getIconTitle;
+                case 21:
+                    return !!t.getWinTitle;
+                case 22:
+                    return !!t.pushTitle;
+                case 23:
+                    return !!t.popTitle;
+                case 24:
+                    return !!t.setWinLines
+            }
+            return !1
+        }! function(e) {
+            e[e.GET_WIN_SIZE_PIXELS = 0] = "GET_WIN_SIZE_PIXELS", e[e.GET_CELL_SIZE_PIXELS = 1] = "GET_CELL_SIZE_PIXELS"
+        }(o = t.WindowsOptionsReportType || (t.WindowsOptionsReportType = {}));
+        var C = function() {
+                function e(e, t, r, i) {
+                    this._bufferService = e, this._coreService = t, this._logService = r, this._optionsService = i, this._data = new Uint32Array(0)
+                }
+                return e.prototype.hook = function(e) {
+                    this._data = new Uint32Array(0)
+                }, e.prototype.put = function(e, t, r) {
+                    this._data = h.concat(this._data, e.subarray(t, r))
+                }, e.prototype.unhook = function(e) {
+                    if (e) {
+                        var t = u.utf32ToString(this._data);
+                        switch (this._data = new Uint32Array(0), t) {
+                            case '"q':
+                                return this._coreService.triggerDataEvent(s.C0.ESC + 'P1$r0"q' + s.C0.ESC + "\\");
+                            case '"p':
+                                return this._coreService.triggerDataEvent(s.C0.ESC + 'P1$r61;1"p' + s.C0.ESC + "\\");
+                            case "r":
+                                var r = this._bufferService.buffer.scrollTop + 1 + ";" + (this._bufferService.buffer.scrollBottom + 1) + "r";
+                                return this._coreService.triggerDataEvent(s.C0.ESC + "P1$r" + r + s.C0.ESC + "\\");
+                            case "m":
+                                return this._coreService.triggerDataEvent(s.C0.ESC + "P1$r0m" + s.C0.ESC + "\\");
+                            case " q":
+                                var i = {
+                                    block: 2,
+                                    underline: 4,
+                                    bar: 6
+                                } [this._optionsService.options.cursorStyle];
+                                return i -= this._optionsService.options.cursorBlink ? 1 : 0, this._coreService.triggerDataEvent(s.C0.ESC + "P1$r" + i + " q" + s.C0.ESC + "\\");
+                            default:
+                                this._logService.debug("Unknown DCS $q %s", t), this._coreService.triggerDataEvent(s.C0.ESC + "P0$r" + s.C0.ESC + "\\")
+                        }
+                    } else this._data = new Uint32Array(0)
+                }, e
+            }(),
+            S = function(e) {
+                function t(t, r, i, n, o, l, h, d, v) {
+                    void 0 === v && (v = new c.EscapeSequenceParser);
+                    var y = e.call(this) || this;
+                    y._bufferService = t, y._charsetService = r, y._coreService = i, y._dirtyRowService = n, y._logService = o, y._optionsService = l, y._coreMouseService = h, y._unicodeService = d, y._parser = v, y._parseBuffer = new Uint32Array(4096), y._stringDecoder = new u.StringToUtf32, y._utf8Decoder = new u.Utf8ToUtf32, y._workCell = new p.CellData, y._windowTitle = "", y._iconName = "", y._windowTitleStack = [], y._iconNameStack = [], y._curAttrData = f.DEFAULT_ATTR_DATA.clone(), y._eraseAttrDataInternal = f.DEFAULT_ATTR_DATA.clone(), y._onRequestBell = new _.EventEmitter, y._onRequestRefreshRows = new _.EventEmitter, y._onRequestReset = new _.EventEmitter, y._onRequestScroll = new _.EventEmitter, y._onRequestSyncScrollBar = new _.EventEmitter, y._onRequestWindowsOptionsReport = new _.EventEmitter, y._onA11yChar = new _.EventEmitter, y._onA11yTab = new _.EventEmitter, y._onCursorMove = new _.EventEmitter, y._onLineFeed = new _.EventEmitter, y._onScroll = new _.EventEmitter, y._onTitleChange = new _.EventEmitter, y.register(y._parser), y._parser.setCsiHandlerFallback(function(e, t) {
+                        y._logService.debug("Unknown CSI code: ", {
+                            identifier: y._parser.identToString(e),
+                            params: t.toArray()
+                        })
+                    }), y._parser.setEscHandlerFallback(function(e) {
+                        y._logService.debug("Unknown ESC code: ", {
+                            identifier: y._parser.identToString(e)
+                        })
+                    }), y._parser.setExecuteHandlerFallback(function(e) {
+                        y._logService.debug("Unknown EXECUTE code: ", {
+                            code: e
+                        })
+                    }), y._parser.setOscHandlerFallback(function(e, t, r) {
+                        y._logService.debug("Unknown OSC code: ", {
+                            identifier: e,
+                            action: t,
+                            data: r
+                        })
+                    }), y._parser.setDcsHandlerFallback(function(e, t, r) {
+                        "HOOK" === t && (r = r.toArray()), y._logService.debug("Unknown DCS code: ", {
+                            identifier: y._parser.identToString(e),
+                            action: t,
+                            payload: r
+                        })
+                    }), y._parser.setPrintHandler(function(e, t, r) {
+                        return y.print(e, t, r)
+                    }), y._parser.setCsiHandler({
+                        final: "@"
+                    }, function(e) {
+                        return y.insertChars(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: " ",
+                        final: "@"
+                    }, function(e) {
+                        return y.scrollLeft(e)
+                    }), y._parser.setCsiHandler({
+                        final: "A"
+                    }, function(e) {
+                        return y.cursorUp(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: " ",
+                        final: "A"
+                    }, function(e) {
+                        return y.scrollRight(e)
+                    }), y._parser.setCsiHandler({
+                        final: "B"
+                    }, function(e) {
+                        return y.cursorDown(e)
+                    }), y._parser.setCsiHandler({
+                        final: "C"
+                    }, function(e) {
+                        return y.cursorForward(e)
+                    }), y._parser.setCsiHandler({
+                        final: "D"
+                    }, function(e) {
+                        return y.cursorBackward(e)
+                    }), y._parser.setCsiHandler({
+                        final: "E"
+                    }, function(e) {
+                        return y.cursorNextLine(e)
+                    }), y._parser.setCsiHandler({
+                        final: "F"
+                    }, function(e) {
+                        return y.cursorPrecedingLine(e)
+                    }), y._parser.setCsiHandler({
+                        final: "G"
+                    }, function(e) {
+                        return y.cursorCharAbsolute(e)
+                    }), y._parser.setCsiHandler({
+                        final: "H"
+                    }, function(e) {
+                        return y.cursorPosition(e)
+                    }), y._parser.setCsiHandler({
+                        final: "I"
+                    }, function(e) {
+                        return y.cursorForwardTab(e)
+                    }), y._parser.setCsiHandler({
+                        final: "J"
+                    }, function(e) {
+                        return y.eraseInDisplay(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: "?",
+                        final: "J"
+                    }, function(e) {
+                        return y.eraseInDisplay(e)
+                    }), y._parser.setCsiHandler({
+                        final: "K"
+                    }, function(e) {
+                        return y.eraseInLine(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: "?",
+                        final: "K"
+                    }, function(e) {
+                        return y.eraseInLine(e)
+                    }), y._parser.setCsiHandler({
+                        final: "L"
+                    }, function(e) {
+                        return y.insertLines(e)
+                    }), y._parser.setCsiHandler({
+                        final: "M"
+                    }, function(e) {
+                        return y.deleteLines(e)
+                    }), y._parser.setCsiHandler({
+                        final: "P"
+                    }, function(e) {
+                        return y.deleteChars(e)
+                    }), y._parser.setCsiHandler({
+                        final: "S"
+                    }, function(e) {
+                        return y.scrollUp(e)
+                    }), y._parser.setCsiHandler({
+                        final: "T"
+                    }, function(e) {
+                        return y.scrollDown(e)
+                    }), y._parser.setCsiHandler({
+                        final: "X"
+                    }, function(e) {
+                        return y.eraseChars(e)
+                    }), y._parser.setCsiHandler({
+                        final: "Z"
+                    }, function(e) {
+                        return y.cursorBackwardTab(e)
+                    }), y._parser.setCsiHandler({
+                        final: "`"
+                    }, function(e) {
+                        return y.charPosAbsolute(e)
+                    }), y._parser.setCsiHandler({
+                        final: "a"
+                    }, function(e) {
+                        return y.hPositionRelative(e)
+                    }), y._parser.setCsiHandler({
+                        final: "b"
+                    }, function(e) {
+                        return y.repeatPrecedingCharacter(e)
+                    }), y._parser.setCsiHandler({
+                        final: "c"
+                    }, function(e) {
+                        return y.sendDeviceAttributesPrimary(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: ">",
+                        final: "c"
+                    }, function(e) {
+                        return y.sendDeviceAttributesSecondary(e)
+                    }), y._parser.setCsiHandler({
+                        final: "d"
+                    }, function(e) {
+                        return y.linePosAbsolute(e)
+                    }), y._parser.setCsiHandler({
+                        final: "e"
+                    }, function(e) {
+                        return y.vPositionRelative(e)
+                    }), y._parser.setCsiHandler({
+                        final: "f"
+                    }, function(e) {
+                        return y.hVPosition(e)
+                    }), y._parser.setCsiHandler({
+                        final: "g"
+                    }, function(e) {
+                        return y.tabClear(e)
+                    }), y._parser.setCsiHandler({
+                        final: "h"
+                    }, function(e) {
+                        return y.setMode(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: "?",
+                        final: "h"
+                    }, function(e) {
+                        return y.setModePrivate(e)
+                    }), y._parser.setCsiHandler({
+                        final: "l"
+                    }, function(e) {
+                        return y.resetMode(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: "?",
+                        final: "l"
+                    }, function(e) {
+                        return y.resetModePrivate(e)
+                    }), y._parser.setCsiHandler({
+                        final: "m"
+                    }, function(e) {
+                        return y.charAttributes(e)
+                    }), y._parser.setCsiHandler({
+                        final: "n"
+                    }, function(e) {
+                        return y.deviceStatus(e)
+                    }), y._parser.setCsiHandler({
+                        prefix: "?",
+                        final: "n"
+                    }, function(e) {
+                        return y.deviceStatusPrivate(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: "!",
+                        final: "p"
+                    }, function(e) {
+                        return y.softReset(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: " ",
+                        final: "q"
+                    }, function(e) {
+                        return y.setCursorStyle(e)
+                    }), y._parser.setCsiHandler({
+                        final: "r"
+                    }, function(e) {
+                        return y.setScrollRegion(e)
+                    }), y._parser.setCsiHandler({
+                        final: "s"
+                    }, function(e) {
+                        return y.saveCursor(e)
+                    }), y._parser.setCsiHandler({
+                        final: "t"
+                    }, function(e) {
+                        return y.windowOptions(e)
+                    }), y._parser.setCsiHandler({
+                        final: "u"
+                    }, function(e) {
+                        return y.restoreCursor(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: "'",
+                        final: "}"
+                    }, function(e) {
+                        return y.insertColumns(e)
+                    }), y._parser.setCsiHandler({
+                        intermediates: "'",
+                        final: "~"
+                    }, function(e) {
+                        return y.deleteColumns(e)
+                    }), y._parser.setExecuteHandler(s.C0.BEL, function() {
+                        return y.bell()
+                    }), y._parser.setExecuteHandler(s.C0.LF, function() {
+                        return y.lineFeed()
+                    }), y._parser.setExecuteHandler(s.C0.VT, function() {
+                        return y.lineFeed()
+                    }), y._parser.setExecuteHandler(s.C0.FF, function() {
+                        return y.lineFeed()
+                    }), y._parser.setExecuteHandler(s.C0.CR, function() {
+                        return y.carriageReturn()
+                    }), y._parser.setExecuteHandler(s.C0.BS, function() {
+                        return y.backspace()
+                    }), y._parser.setExecuteHandler(s.C0.HT, function() {
+                        return y.tab()
+                    }), y._parser.setExecuteHandler(s.C0.SO, function() {
+                        return y.shiftOut()
+                    }), y._parser.setExecuteHandler(s.C0.SI, function() {
+                        return y.shiftIn()
+                    }), y._parser.setExecuteHandler(s.C1.IND, function() {
+                        return y.index()
+                    }), y._parser.setExecuteHandler(s.C1.NEL, function() {
+                        return y.nextLine()
+                    }), y._parser.setExecuteHandler(s.C1.HTS, function() {
+                        return y.tabSet()
+                    }), y._parser.setOscHandler(0, new g.OscHandler(function(e) {
+                        y.setTitle(e), y.setIconName(e)
+                    })), y._parser.setOscHandler(1, new g.OscHandler(function(e) {
+                        return y.setIconName(e)
+                    })), y._parser.setOscHandler(2, new g.OscHandler(function(e) {
+                        return y.setTitle(e)
+                    })), y._parser.setEscHandler({
+                        final: "7"
+                    }, function() {
+                        return y.saveCursor()
+                    }), y._parser.setEscHandler({
+                        final: "8"
+                    }, function() {
+                        return y.restoreCursor()
+                    }), y._parser.setEscHandler({
+                        final: "D"
+                    }, function() {
+                        return y.index()
+                    }), y._parser.setEscHandler({
+                        final: "E"
+                    }, function() {
+                        return y.nextLine()
+                    }), y._parser.setEscHandler({
+                        final: "H"
+                    }, function() {
+                        return y.tabSet()
+                    }), y._parser.setEscHandler({
+                        final: "M"
+                    }, function() {
+                        return y.reverseIndex()
+                    }), y._parser.setEscHandler({
+                        final: "="
+                    }, function() {
+                        return y.keypadApplicationMode()
+                    }), y._parser.setEscHandler({
+                        final: ">"
+                    }, function() {
+                        return y.keypadNumericMode()
+                    }), y._parser.setEscHandler({
+                        final: "c"
+                    }, function() {
+                        return y.fullReset()
+                    }), y._parser.setEscHandler({
+                        final: "n"
+                    }, function() {
+                        return y.setgLevel(2)
+                    }), y._parser.setEscHandler({
+                        final: "o"
+                    }, function() {
+                        return y.setgLevel(3)
+                    }), y._parser.setEscHandler({
+                        final: "|"
+                    }, function() {
+                        return y.setgLevel(3)
+                    }), y._parser.setEscHandler({
+                        final: "}"
+                    }, function() {
+                        return y.setgLevel(2)
+                    }), y._parser.setEscHandler({
+                        final: "~"
+                    }, function() {
+                        return y.setgLevel(1)
+                    }), y._parser.setEscHandler({
+                        intermediates: "%",
+                        final: "@"
+                    }, function() {
+                        return y.selectDefaultCharset()
+                    }), y._parser.setEscHandler({
+                        intermediates: "%",
+                        final: "G"
+                    }, function() {
+                        return y.selectDefaultCharset()
+                    });
+                    var b = function(e) {
+                            m._parser.setEscHandler({
+                                intermediates: "(",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("(" + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: ")",
+                                final: e
+                            }, function() {
+                                return y.selectCharset(")" + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: "*",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("*" + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: "+",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("+" + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: "-",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("-" + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: ".",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("." + e)
+                            }), m._parser.setEscHandler({
+                                intermediates: "/",
+                                final: e
+                            }, function() {
+                                return y.selectCharset("/" + e)
+                            })
+                        },
+                        m = this;
+                    for (var S in a.CHARSETS) b(S);
+                    return y._parser.setEscHandler({
+                        intermediates: "#",
+                        final: "8"
+                    }, function() {
+                        return y.screenAlignmentPattern()
+                    }), y._parser.setErrorHandler(function(e) {
+                        return y._logService.error("Parsing error: ", e), e
+                    }), y._parser.setDcsHandler({
+                        intermediates: "$",
+                        final: "q"
+                    }, new C(y._bufferService, y._coreService, y._logService, y._optionsService)), y
+                }
+                return n(t, e), Object.defineProperty(t.prototype, "onRequestBell", {
+                    get: function() {
+                        return this._onRequestBell.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onRequestRefreshRows", {
+                    get: function() {
+                        return this._onRequestRefreshRows.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onRequestReset", {
+                    get: function() {
+                        return this._onRequestReset.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onRequestScroll", {
+                    get: function() {
+                        return this._onRequestScroll.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onRequestSyncScrollBar", {
+                    get: function() {
+                        return this._onRequestSyncScrollBar.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onRequestWindowsOptionsReport", {
+                    get: function() {
+                        return this._onRequestWindowsOptionsReport.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onA11yChar", {
+                    get: function() {
+                        return this._onA11yChar.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onA11yTab", {
+                    get: function() {
+                        return this._onA11yTab.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onCursorMove", {
+                    get: function() {
+                        return this._onCursorMove.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onLineFeed", {
+                    get: function() {
+                        return this._onLineFeed.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onScroll", {
+                    get: function() {
+                        return this._onScroll.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onTitleChange", {
+                    get: function() {
+                        return this._onTitleChange.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), t.prototype.dispose = function() {
+                    e.prototype.dispose.call(this)
+                }, t.prototype.parse = function(e) {
+                    var t = this._bufferService.buffer,
+                        r = t.x,
+                        i = t.y;
+                    if (this._logService.debug("parsing data", e), this._parseBuffer.length < e.length && this._parseBuffer.length < 131072 && (this._parseBuffer = new Uint32Array(Math.min(e.length, 131072))), this._dirtyRowService.clearRange(), e.length > 131072)
+                        for (var n = 0; n < e.length; n += 131072) {
+                            var o = n + 131072 < e.length ? n + 131072 : e.length,
+                                s = "string" == typeof e ? this._stringDecoder.decode(e.substring(n, o), this._parseBuffer) : this._utf8Decoder.decode(e.subarray(n, o), this._parseBuffer);
+                            this._parser.parse(this._parseBuffer, s)
+                        } else s = "string" == typeof e ? this._stringDecoder.decode(e, this._parseBuffer) : this._utf8Decoder.decode(e, this._parseBuffer), this._parser.parse(this._parseBuffer, s);
+                    (t = this._bufferService.buffer).x === r && t.y === i || this._onCursorMove.fire(), this._onRequestRefreshRows.fire(this._dirtyRowService.start, this._dirtyRowService.end)
+                }, t.prototype.print = function(e, t, r) {
+                    var i, n, o = this._bufferService.buffer,
+                        s = this._charsetService.charset,
+                        a = this._optionsService.options.screenReaderMode,
+                        c = this._bufferService.cols,
+                        l = this._coreService.decPrivateModes.wraparound,
+                        h = this._coreService.modes.insertMode,
+                        f = this._curAttrData,
+                        _ = o.lines.get(o.ybase + o.y);
+                    this._dirtyRowService.markDirty(o.y), o.x && r - t > 0 && 2 === _.getWidth(o.x - 1) && _.setCellFromCodePoint(o.x - 1, 0, 1, f.fg, f.bg, f.extended);
+                    for (var p = t; p < r; ++p) {
+                        if (i = e[p], n = this._unicodeService.wcwidth(i), i < 127 && s) {
+                            var v = s[String.fromCharCode(i)];
+                            v && (i = v.charCodeAt(0))
+                        }
+                        if (a && this._onA11yChar.fire(u.stringFromCodePoint(i)), n || !o.x) {
+                            if (o.x + n - 1 >= c)
+                                if (l) {
+                                    for (; o.x < c;) _.setCellFromCodePoint(o.x++, 0, 1, f.fg, f.bg, f.extended);
+                                    o.x = 0, o.y++, o.y === o.scrollBottom + 1 ? (o.y--, this._onRequestScroll.fire(this._eraseAttrData(), !0)) : (o.y >= this._bufferService.rows && (o.y = this._bufferService.rows - 1), o.lines.get(o.ybase + o.y).isWrapped = !0), _ = o.lines.get(o.ybase + o.y)
+                                } else if (o.x = c - 1, 2 === n) continue;
+                            if (h && (_.insertCells(o.x, n, o.getNullCell(f), f), 2 === _.getWidth(c - 1) && _.setCellFromCodePoint(c - 1, d.NULL_CELL_CODE, d.NULL_CELL_WIDTH, f.fg, f.bg, f.extended)), _.setCellFromCodePoint(o.x++, i, n, f.fg, f.bg, f.extended), n > 0)
+                                for (; --n;) _.setCellFromCodePoint(o.x++, 0, 0, f.fg, f.bg, f.extended)
+                        } else _.getWidth(o.x - 1) ? _.addCodepointToCell(o.x - 1, i) : _.addCodepointToCell(o.x - 2, i)
+                    }
+                    r - t > 0 && (_.loadCell(o.x - 1, this._workCell), 2 === this._workCell.getWidth() || this._workCell.getCode() > 65535 ? this._parser.precedingCodepoint = 0 : this._workCell.isCombined() ? this._parser.precedingCodepoint = this._workCell.getChars().charCodeAt(0) : this._parser.precedingCodepoint = this._workCell.content), o.x < c && r - t > 0 && 0 === _.getWidth(o.x) && !_.hasContent(o.x) && _.setCellFromCodePoint(o.x, 0, 1, f.fg, f.bg, f.extended), this._dirtyRowService.markDirty(o.y)
+                }, t.prototype.addCsiHandler = function(e, t) {
+                    var r = this;
+                    return "t" !== e.final || e.prefix || e.intermediates ? this._parser.addCsiHandler(e, t) : this._parser.addCsiHandler(e, function(e) {
+                        return !m(e.params[0], r._optionsService.options.windowOptions) || t(e)
+                    })
+                }, t.prototype.addDcsHandler = function(e, t) {
+                    return this._parser.addDcsHandler(e, new y.DcsHandler(t))
+                }, t.prototype.addEscHandler = function(e, t) {
+                    return this._parser.addEscHandler(e, t)
+                }, t.prototype.addOscHandler = function(e, t) {
+                    return this._parser.addOscHandler(e, new g.OscHandler(t))
+                }, t.prototype.bell = function() {
+                    this._onRequestBell.fire()
+                }, t.prototype.lineFeed = function() {
+                    var e = this._bufferService.buffer;
+                    this._dirtyRowService.markDirty(e.y), this._optionsService.options.convertEol && (e.x = 0), e.y++, e.y === e.scrollBottom + 1 ? (e.y--, this._onRequestScroll.fire(this._eraseAttrData())) : e.y >= this._bufferService.rows && (e.y = this._bufferService.rows - 1), e.x >= this._bufferService.cols && e.x--, this._dirtyRowService.markDirty(e.y), this._onLineFeed.fire()
+                }, t.prototype.carriageReturn = function() {
+                    this._bufferService.buffer.x = 0
+                }, t.prototype.backspace = function() {
+                    var e, t = this._bufferService.buffer;
+                    if (!this._coreService.decPrivateModes.reverseWraparound) return this._restrictCursor(), void(t.x > 0 && t.x--);
+                    if (this._restrictCursor(this._bufferService.cols), t.x > 0) t.x--;
+                    else if (0 === t.x && t.y > t.scrollTop && t.y <= t.scrollBottom && (null === (e = t.lines.get(t.ybase + t.y)) || void 0 === e ? void 0 : e.isWrapped)) {
+                        t.lines.get(t.ybase + t.y).isWrapped = !1, t.y--, t.x = this._bufferService.cols - 1;
+                        var r = t.lines.get(t.ybase + t.y);
+                        r.hasWidth(t.x) && !r.hasContent(t.x) && t.x--
+                    }
+                    this._restrictCursor()
+                }, t.prototype.tab = function() {
+                    if (!(this._bufferService.buffer.x >= this._bufferService.cols)) {
+                        var e = this._bufferService.buffer.x;
+                        this._bufferService.buffer.x = this._bufferService.buffer.nextStop(), this._optionsService.options.screenReaderMode && this._onA11yTab.fire(this._bufferService.buffer.x - e)
+                    }
+                }, t.prototype.shiftOut = function() {
+                    this._charsetService.setgLevel(1)
+                }, t.prototype.shiftIn = function() {
+                    this._charsetService.setgLevel(0)
+                }, t.prototype._restrictCursor = function(e) {
+                    void 0 === e && (e = this._bufferService.cols - 1), this._bufferService.buffer.x = Math.min(e, Math.max(0, this._bufferService.buffer.x)), this._bufferService.buffer.y = this._coreService.decPrivateModes.origin ? Math.min(this._bufferService.buffer.scrollBottom, Math.max(this._bufferService.buffer.scrollTop, this._bufferService.buffer.y)) : Math.min(this._bufferService.rows - 1, Math.max(0, this._bufferService.buffer.y)), this._dirtyRowService.markDirty(this._bufferService.buffer.y)
+                }, t.prototype._setCursor = function(e, t) {
+                    this._dirtyRowService.markDirty(this._bufferService.buffer.y), this._coreService.decPrivateModes.origin ? (this._bufferService.buffer.x = e, this._bufferService.buffer.y = this._bufferService.buffer.scrollTop + t) : (this._bufferService.buffer.x = e, this._bufferService.buffer.y = t), this._restrictCursor(), this._dirtyRowService.markDirty(this._bufferService.buffer.y)
+                }, t.prototype._moveCursor = function(e, t) {
+                    this._restrictCursor(), this._setCursor(this._bufferService.buffer.x + e, this._bufferService.buffer.y + t)
+                }, t.prototype.cursorUp = function(e) {
+                    var t = this._bufferService.buffer.y - this._bufferService.buffer.scrollTop;
+                    t >= 0 ? this._moveCursor(0, -Math.min(t, e.params[0] || 1)) : this._moveCursor(0, -(e.params[0] || 1))
+                }, t.prototype.cursorDown = function(e) {
+                    var t = this._bufferService.buffer.scrollBottom - this._bufferService.buffer.y;
+                    t >= 0 ? this._moveCursor(0, Math.min(t, e.params[0] || 1)) : this._moveCursor(0, e.params[0] || 1)
+                }, t.prototype.cursorForward = function(e) {
+                    this._moveCursor(e.params[0] || 1, 0)
+                }, t.prototype.cursorBackward = function(e) {
+                    this._moveCursor(-(e.params[0] || 1), 0)
+                }, t.prototype.cursorNextLine = function(e) {
+                    this.cursorDown(e), this._bufferService.buffer.x = 0
+                }, t.prototype.cursorPrecedingLine = function(e) {
+                    this.cursorUp(e), this._bufferService.buffer.x = 0
+                }, t.prototype.cursorCharAbsolute = function(e) {
+                    this._setCursor((e.params[0] || 1) - 1, this._bufferService.buffer.y)
+                }, t.prototype.cursorPosition = function(e) {
+                    this._setCursor(e.length >= 2 ? (e.params[1] || 1) - 1 : 0, (e.params[0] || 1) - 1)
+                }, t.prototype.charPosAbsolute = function(e) {
+                    this._setCursor((e.params[0] || 1) - 1, this._bufferService.buffer.y)
+                }, t.prototype.hPositionRelative = function(e) {
+                    this._moveCursor(e.params[0] || 1, 0)
+                }, t.prototype.linePosAbsolute = function(e) {
+                    this._setCursor(this._bufferService.buffer.x, (e.params[0] || 1) - 1)
+                }, t.prototype.vPositionRelative = function(e) {
+                    this._moveCursor(0, e.params[0] || 1)
+                }, t.prototype.hVPosition = function(e) {
+                    this.cursorPosition(e)
+                }, t.prototype.tabClear = function(e) {
+                    var t = e.params[0];
+                    0 === t ? delete this._bufferService.buffer.tabs[this._bufferService.buffer.x] : 3 === t && (this._bufferService.buffer.tabs = {})
+                }, t.prototype.cursorForwardTab = function(e) {
+                    if (!(this._bufferService.buffer.x >= this._bufferService.cols))
+                        for (var t = e.params[0] || 1; t--;) this._bufferService.buffer.x = this._bufferService.buffer.nextStop()
+                }, t.prototype.cursorBackwardTab = function(e) {
+                    if (!(this._bufferService.buffer.x >= this._bufferService.cols))
+                        for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.x = r.prevStop()
+                }, t.prototype._eraseInBufferLine = function(e, t, r, i) {
+                    void 0 === i && (i = !1);
+                    var n = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + e);
+                    n.replaceCells(t, r, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), i && (n.isWrapped = !1)
+                }, t.prototype._resetBufferLine = function(e) {
+                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + e);
+                    t.fill(this._bufferService.buffer.getNullCell(this._eraseAttrData())), t.isWrapped = !1
+                }, t.prototype.eraseInDisplay = function(e) {
+                    var t;
+                    switch (this._restrictCursor(), e.params[0]) {
+                        case 0:
+                            for (t = this._bufferService.buffer.y, this._dirtyRowService.markDirty(t), this._eraseInBufferLine(t++, this._bufferService.buffer.x, this._bufferService.cols, 0 === this._bufferService.buffer.x); t < this._bufferService.rows; t++) this._resetBufferLine(t);
+                            this._dirtyRowService.markDirty(t);
+                            break;
+                        case 1:
+                            for (t = this._bufferService.buffer.y, this._dirtyRowService.markDirty(t), this._eraseInBufferLine(t, 0, this._bufferService.buffer.x + 1, !0), this._bufferService.buffer.x + 1 >= this._bufferService.cols && (this._bufferService.buffer.lines.get(t + 1).isWrapped = !1); t--;) this._resetBufferLine(t);
+                            this._dirtyRowService.markDirty(0);
+                            break;
+                        case 2:
+                            for (t = this._bufferService.rows, this._dirtyRowService.markDirty(t - 1); t--;) this._resetBufferLine(t);
+                            this._dirtyRowService.markDirty(0);
+                            break;
+                        case 3:
+                            var r = this._bufferService.buffer.lines.length - this._bufferService.rows;
+                            r > 0 && (this._bufferService.buffer.lines.trimStart(r), this._bufferService.buffer.ybase = Math.max(this._bufferService.buffer.ybase - r, 0), this._bufferService.buffer.ydisp = Math.max(this._bufferService.buffer.ydisp - r, 0), this._onScroll.fire(0))
+                    }
+                }, t.prototype.eraseInLine = function(e) {
+                    switch (this._restrictCursor(), e.params[0]) {
+                        case 0:
+                            this._eraseInBufferLine(this._bufferService.buffer.y, this._bufferService.buffer.x, this._bufferService.cols);
+                            break;
+                        case 1:
+                            this._eraseInBufferLine(this._bufferService.buffer.y, 0, this._bufferService.buffer.x + 1);
+                            break;
+                        case 2:
+                            this._eraseInBufferLine(this._bufferService.buffer.y, 0, this._bufferService.cols)
+                    }
+                    this._dirtyRowService.markDirty(this._bufferService.buffer.y)
+                }, t.prototype.insertLines = function(e) {
+                    this._restrictCursor();
+                    var t = e.params[0] || 1,
+                        r = this._bufferService.buffer;
+                    if (!(r.y > r.scrollBottom || r.y < r.scrollTop)) {
+                        for (var i = r.ybase + r.y, n = this._bufferService.rows - 1 - r.scrollBottom, o = this._bufferService.rows - 1 + r.ybase - n + 1; t--;) r.lines.splice(o - 1, 1), r.lines.splice(i, 0, r.getBlankLine(this._eraseAttrData()));
+                        this._dirtyRowService.markRangeDirty(r.y, r.scrollBottom), r.x = 0
+                    }
+                }, t.prototype.deleteLines = function(e) {
+                    this._restrictCursor();
+                    var t = e.params[0] || 1,
+                        r = this._bufferService.buffer;
+                    if (!(r.y > r.scrollBottom || r.y < r.scrollTop)) {
+                        var i, n = r.ybase + r.y;
+                        for (i = this._bufferService.rows - 1 - r.scrollBottom, i = this._bufferService.rows - 1 + r.ybase - i; t--;) r.lines.splice(n, 1), r.lines.splice(i, 0, r.getBlankLine(this._eraseAttrData()));
+                        this._dirtyRowService.markRangeDirty(r.y, r.scrollBottom), r.x = 0
+                    }
+                }, t.prototype.insertChars = function(e) {
+                    this._restrictCursor();
+                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + this._bufferService.buffer.y);
+                    t && (t.insertCells(this._bufferService.buffer.x, e.params[0] || 1, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
+                }, t.prototype.deleteChars = function(e) {
+                    this._restrictCursor();
+                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + this._bufferService.buffer.y);
+                    t && (t.deleteCells(this._bufferService.buffer.x, e.params[0] || 1, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
+                }, t.prototype.scrollUp = function(e) {
+                    for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.lines.splice(r.ybase + r.scrollTop, 1), r.lines.splice(r.ybase + r.scrollBottom, 0, r.getBlankLine(this._eraseAttrData()));
+                    this._dirtyRowService.markRangeDirty(r.scrollTop, r.scrollBottom)
+                }, t.prototype.scrollDown = function(e) {
+                    for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.lines.splice(r.ybase + r.scrollBottom, 1), r.lines.splice(r.ybase + r.scrollTop, 0, r.getBlankLine(f.DEFAULT_ATTR_DATA));
+                    this._dirtyRowService.markRangeDirty(r.scrollTop, r.scrollBottom)
+                }, t.prototype.scrollLeft = function(e) {
+                    var t = this._bufferService.buffer;
+                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
+                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
+                            var n = t.lines.get(t.ybase + i);
+                            n.deleteCells(0, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
+                        }
+                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
+                    }
+                }, t.prototype.scrollRight = function(e) {
+                    var t = this._bufferService.buffer;
+                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
+                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
+                            var n = t.lines.get(t.ybase + i);
+                            n.insertCells(0, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
+                        }
+                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
+                    }
+                }, t.prototype.insertColumns = function(e) {
+                    var t = this._bufferService.buffer;
+                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
+                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
+                            var n = this._bufferService.buffer.lines.get(t.ybase + i);
+                            n.insertCells(t.x, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
+                        }
+                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
+                    }
+                }, t.prototype.deleteColumns = function(e) {
+                    var t = this._bufferService.buffer;
+                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
+                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
+                            var n = t.lines.get(t.ybase + i);
+                            n.deleteCells(t.x, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
+                        }
+                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
+                    }
+                }, t.prototype.eraseChars = function(e) {
+                    this._restrictCursor();
+                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + this._bufferService.buffer.y);
+                    t && (t.replaceCells(this._bufferService.buffer.x, this._bufferService.buffer.x + (e.params[0] || 1), this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
+                }, t.prototype.repeatPrecedingCharacter = function(e) {
+                    if (this._parser.precedingCodepoint) {
+                        for (var t = e.params[0] || 1, r = new Uint32Array(t), i = 0; i < t; ++i) r[i] = this._parser.precedingCodepoint;
+                        this.print(r, 0, r.length)
+                    }
+                }, t.prototype.sendDeviceAttributesPrimary = function(e) {
+                    e.params[0] > 0 || (this._is("xterm") || this._is("rxvt-unicode") || this._is("screen") ? this._coreService.triggerDataEvent(s.C0.ESC + "[?1;2c") : this._is("linux") && this._coreService.triggerDataEvent(s.C0.ESC + "[?6c"))
+                }, t.prototype.sendDeviceAttributesSecondary = function(e) {
+                    e.params[0] > 0 || (this._is("xterm") ? this._coreService.triggerDataEvent(s.C0.ESC + "[>0;276;0c") : this._is("rxvt-unicode") ? this._coreService.triggerDataEvent(s.C0.ESC + "[>85;95;0c") : this._is("linux") ? this._coreService.triggerDataEvent(e.params[0] + "c") : this._is("screen") && this._coreService.triggerDataEvent(s.C0.ESC + "[>83;40003;0c"))
+                }, t.prototype._is = function(e) {
+                    return 0 === (this._optionsService.options.termName + "").indexOf(e)
+                }, t.prototype.setMode = function(e) {
+                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
+                        case 4:
+                            this._coreService.modes.insertMode = !0
+                    }
+                }, t.prototype.setModePrivate = function(e) {
+                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
+                        case 1:
+                            this._coreService.decPrivateModes.applicationCursorKeys = !0;
+                            break;
+                        case 2:
+                            this._charsetService.setgCharset(0, a.DEFAULT_CHARSET), this._charsetService.setgCharset(1, a.DEFAULT_CHARSET), this._charsetService.setgCharset(2, a.DEFAULT_CHARSET), this._charsetService.setgCharset(3, a.DEFAULT_CHARSET);
+                            break;
+                        case 3:
+                            this._optionsService.options.windowOptions.setWinLines && (this._bufferService.resize(132, this._bufferService.rows), this._onRequestReset.fire());
+                            break;
+                        case 6:
+                            this._coreService.decPrivateModes.origin = !0, this._setCursor(0, 0);
+                            break;
+                        case 7:
+                            this._coreService.decPrivateModes.wraparound = !0;
+                            break;
+                        case 12:
+                            break;
+                        case 45:
+                            this._coreService.decPrivateModes.reverseWraparound = !0;
+                            break;
+                        case 66:
+                            this._logService.debug("Serial port requested application keypad."), this._coreService.decPrivateModes.applicationKeypad = !0, this._onRequestSyncScrollBar.fire();
+                            break;
+                        case 9:
+                            this._coreMouseService.activeProtocol = "X10";
+                            break;
+                        case 1e3:
+                            this._coreMouseService.activeProtocol = "VT200";
+                            break;
+                        case 1002:
+                            this._coreMouseService.activeProtocol = "DRAG";
+                            break;
+                        case 1003:
+                            this._coreMouseService.activeProtocol = "ANY";
+                            break;
+                        case 1004:
+                            this._coreService.decPrivateModes.sendFocus = !0;
+                            break;
+                        case 1005:
+                            this._logService.debug("DECSET 1005 not supported (see #2507)");
+                            break;
+                        case 1006:
+                            this._coreMouseService.activeEncoding = "SGR";
+                            break;
+                        case 1015:
+                            this._logService.debug("DECSET 1015 not supported (see #2507)");
+                            break;
+                        case 25:
+                            this._coreService.isCursorHidden = !1;
+                            break;
+                        case 1048:
+                            this.saveCursor();
+                            break;
+                        case 1049:
+                            this.saveCursor();
+                        case 47:
+                        case 1047:
+                            this._bufferService.buffers.activateAltBuffer(this._eraseAttrData()), this._coreService.isCursorInitialized = !0, this._onRequestRefreshRows.fire(0, this._bufferService.rows - 1), this._onRequestSyncScrollBar.fire();
+                            break;
+                        case 2004:
+                            this._coreService.decPrivateModes.bracketedPasteMode = !0
+                    }
+                }, t.prototype.resetMode = function(e) {
+                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
+                        case 4:
+                            this._coreService.modes.insertMode = !1
+                    }
+                }, t.prototype.resetModePrivate = function(e) {
+                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
+                        case 1:
+                            this._coreService.decPrivateModes.applicationCursorKeys = !1;
+                            break;
+                        case 3:
+                            this._optionsService.options.windowOptions.setWinLines && (this._bufferService.resize(80, this._bufferService.rows), this._onRequestReset.fire());
+                            break;
+                        case 6:
+                            this._coreService.decPrivateModes.origin = !1, this._setCursor(0, 0);
+                            break;
+                        case 7:
+                            this._coreService.decPrivateModes.wraparound = !1;
+                            break;
+                        case 12:
+                            break;
+                        case 45:
+                            this._coreService.decPrivateModes.reverseWraparound = !1;
+                            break;
+                        case 66:
+                            this._logService.debug("Switching back to normal keypad."), this._coreService.decPrivateModes.applicationKeypad = !1, this._onRequestSyncScrollBar.fire();
+                            break;
+                        case 9:
+                        case 1e3:
+                        case 1002:
+                        case 1003:
+                            this._coreMouseService.activeProtocol = "NONE";
+                            break;
+                        case 1004:
+                            this._coreService.decPrivateModes.sendFocus = !1;
+                            break;
+                        case 1005:
+                            this._logService.debug("DECRST 1005 not supported (see #2507)");
+                            break;
+                        case 1006:
+                            this._coreMouseService.activeEncoding = "DEFAULT";
+                            break;
+                        case 1015:
+                            this._logService.debug("DECRST 1015 not supported (see #2507)");
+                            break;
+                        case 25:
+                            this._coreService.isCursorHidden = !0;
+                            break;
+                        case 1048:
+                            this.restoreCursor();
+                            break;
+                        case 1049:
+                        case 47:
+                        case 1047:
+                            this._bufferService.buffers.activateNormalBuffer(), 1049 === e.params[t] && this.restoreCursor(), this._coreService.isCursorInitialized = !0, this._onRequestRefreshRows.fire(0, this._bufferService.rows - 1), this._onRequestSyncScrollBar.fire();
+                            break;
+                        case 2004:
+                            this._coreService.decPrivateModes.bracketedPasteMode = !1
+                    }
+                }, t.prototype._updateAttrColor = function(e, t, r, i, n) {
+                    return 2 === t ? (e |= 50331648, e &= -16777216, e |= v.AttributeData.fromColorRGB([r, i, n])) : 5 === t && (e &= -50331904, e |= 33554432 | 255 & r), e
+                }, t.prototype._extractColor = function(e, t, r) {
+                    var i = [0, 0, -1, 0, 0, 0],
+                        n = 0,
+                        o = 0;
+                    do {
+                        if (i[o + n] = e.params[t + o], e.hasSubParams(t + o)) {
+                            var s = e.getSubParams(t + o),
+                                a = 0;
+                            do {
+                                5 === i[1] && (n = 1), i[o + a + 1 + n] = s[a]
+                            } while (++a < s.length && a + o + 1 + n < i.length);
+                            break
+                        }
+                        if (5 === i[1] && o + n >= 2 || 2 === i[1] && o + n >= 5) break;
+                        i[1] && (n = 1)
+                    } while (++o + t < e.length && o + n < i.length);
+                    for (a = 2; a < i.length; ++a) - 1 === i[a] && (i[a] = 0);
+                    switch (i[0]) {
+                        case 38:
+                            r.fg = this._updateAttrColor(r.fg, i[1], i[3], i[4], i[5]);
+                            break;
+                        case 48:
+                            r.bg = this._updateAttrColor(r.bg, i[1], i[3], i[4], i[5]);
+                            break;
+                        case 58:
+                            r.extended = r.extended.clone(), r.extended.underlineColor = this._updateAttrColor(r.extended.underlineColor, i[1], i[3], i[4], i[5])
+                    }
+                    return o
+                }, t.prototype._processUnderline = function(e, t) {
+                    t.extended = t.extended.clone(), (!~e || e > 5) && (e = 1), t.extended.underlineStyle = e, t.fg |= 268435456, 0 === e && (t.fg &= -268435457), t.updateExtended()
+                }, t.prototype.charAttributes = function(e) {
+                    if (1 === e.length && 0 === e.params[0]) return this._curAttrData.fg = f.DEFAULT_ATTR_DATA.fg, void(this._curAttrData.bg = f.DEFAULT_ATTR_DATA.bg);
+                    for (var t, r = e.length, i = this._curAttrData, n = 0; n < r; n++)(t = e.params[n]) >= 30 && t <= 37 ? (i.fg &= -50331904, i.fg |= 16777216 | t - 30) : t >= 40 && t <= 47 ? (i.bg &= -50331904, i.bg |= 16777216 | t - 40) : t >= 90 && t <= 97 ? (i.fg &= -50331904, i.fg |= 16777224 | t - 90) : t >= 100 && t <= 107 ? (i.bg &= -50331904, i.bg |= 16777224 | t - 100) : 0 === t ? (i.fg = f.DEFAULT_ATTR_DATA.fg, i.bg = f.DEFAULT_ATTR_DATA.bg) : 1 === t ? i.fg |= 134217728 : 3 === t ? i.bg |= 67108864 : 4 === t ? (i.fg |= 268435456, this._processUnderline(e.hasSubParams(n) ? e.getSubParams(n)[0] : 1, i)) : 5 === t ? i.fg |= 536870912 : 7 === t ? i.fg |= 67108864 : 8 === t ? i.fg |= 1073741824 : 2 === t ? i.bg |= 134217728 : 21 === t ? this._processUnderline(2, i) : 22 === t ? (i.fg &= -134217729, i.bg &= -134217729) : 23 === t ? i.bg &= -67108865 : 24 === t ? i.fg &= -268435457 : 25 === t ? i.fg &= -536870913 : 27 === t ? i.fg &= -67108865 : 28 === t ? i.fg &= -1073741825 : 39 === t ? (i.fg &= -67108864, i.fg |= 16777215 & f.DEFAULT_ATTR_DATA.fg) : 49 === t ? (i.bg &= -67108864, i.bg |= 16777215 & f.DEFAULT_ATTR_DATA.bg) : 38 === t || 48 === t || 58 === t ? n += this._extractColor(e, n, i) : 59 === t ? (i.extended = i.extended.clone(), i.extended.underlineColor = -1, i.updateExtended()) : 100 === t ? (i.fg &= -67108864, i.fg |= 16777215 & f.DEFAULT_ATTR_DATA.fg, i.bg &= -67108864, i.bg |= 16777215 & f.DEFAULT_ATTR_DATA.bg) : this._logService.debug("Unknown SGR attribute: %d.", t)
+                }, t.prototype.deviceStatus = function(e) {
+                    switch (e.params[0]) {
+                        case 5:
+                            this._coreService.triggerDataEvent(s.C0.ESC + "[0n");
+                            break;
+                        case 6:
+                            var t = this._bufferService.buffer.y + 1,
+                                r = this._bufferService.buffer.x + 1;
+                            this._coreService.triggerDataEvent(s.C0.ESC + "[" + t + ";" + r + "R")
+                    }
+                }, t.prototype.deviceStatusPrivate = function(e) {
+                    switch (e.params[0]) {
+                        case 6:
+                            var t = this._bufferService.buffer.y + 1,
+                                r = this._bufferService.buffer.x + 1;
+                            this._coreService.triggerDataEvent(s.C0.ESC + "[?" + t + ";" + r + "R")
+                    }
+                }, t.prototype.softReset = function(e) {
+                    this._coreService.isCursorHidden = !1, this._onRequestSyncScrollBar.fire(), this._bufferService.buffer.scrollTop = 0, this._bufferService.buffer.scrollBottom = this._bufferService.rows - 1, this._curAttrData = f.DEFAULT_ATTR_DATA.clone(), this._coreService.reset(), this._charsetService.reset(), this._bufferService.buffer.savedX = 0, this._bufferService.buffer.savedY = this._bufferService.buffer.ybase, this._bufferService.buffer.savedCurAttrData.fg = this._curAttrData.fg, this._bufferService.buffer.savedCurAttrData.bg = this._curAttrData.bg, this._bufferService.buffer.savedCharset = this._charsetService.charset, this._coreService.decPrivateModes.origin = !1
+                }, t.prototype.setCursorStyle = function(e) {
+                    var t = e.params[0] || 1;
+                    switch (t) {
+                        case 1:
+                        case 2:
+                            this._optionsService.options.cursorStyle = "block";
+                            break;
+                        case 3:
+                        case 4:
+                            this._optionsService.options.cursorStyle = "underline";
+                            break;
+                        case 5:
+                        case 6:
+                            this._optionsService.options.cursorStyle = "bar"
+                    }
+                    var r = t % 2 == 1;
+                    this._optionsService.options.cursorBlink = r
+                }, t.prototype.setScrollRegion = function(e) {
+                    var t, r = e.params[0] || 1;
+                    (e.length < 2 || (t = e.params[1]) > this._bufferService.rows || 0 === t) && (t = this._bufferService.rows), t > r && (this._bufferService.buffer.scrollTop = r - 1, this._bufferService.buffer.scrollBottom = t - 1, this._setCursor(0, 0))
+                }, t.prototype.windowOptions = function(e) {
+                    if (m(e.params[0], this._optionsService.options.windowOptions)) {
+                        var t = e.length > 1 ? e.params[1] : 0;
+                        switch (e.params[0]) {
+                            case 14:
+                                2 !== t && this._onRequestWindowsOptionsReport.fire(o.GET_WIN_SIZE_PIXELS);
+                                break;
+                            case 16:
+                                this._onRequestWindowsOptionsReport.fire(o.GET_CELL_SIZE_PIXELS);
+                                break;
+                            case 18:
+                                this._bufferService && this._coreService.triggerDataEvent(s.C0.ESC + "[8;" + this._bufferService.rows + ";" + this._bufferService.cols + "t");
+                                break;
+                            case 22:
+                                0 !== t && 2 !== t || (this._windowTitleStack.push(this._windowTitle), this._windowTitleStack.length > 10 && this._windowTitleStack.shift()), 0 !== t && 1 !== t || (this._iconNameStack.push(this._iconName), this._iconNameStack.length > 10 && this._iconNameStack.shift());
+                                break;
+                            case 23:
+                                0 !== t && 2 !== t || this._windowTitleStack.length && this.setTitle(this._windowTitleStack.pop()), 0 !== t && 1 !== t || this._iconNameStack.length && this.setIconName(this._iconNameStack.pop())
+                        }
+                    }
+                }, t.prototype.saveCursor = function(e) {
+                    this._bufferService.buffer.savedX = this._bufferService.buffer.x, this._bufferService.buffer.savedY = this._bufferService.buffer.ybase + this._bufferService.buffer.y, this._bufferService.buffer.savedCurAttrData.fg = this._curAttrData.fg, this._bufferService.buffer.savedCurAttrData.bg = this._curAttrData.bg, this._bufferService.buffer.savedCharset = this._charsetService.charset
+                }, t.prototype.restoreCursor = function(e) {
+                    this._bufferService.buffer.x = this._bufferService.buffer.savedX || 0, this._bufferService.buffer.y = Math.max(this._bufferService.buffer.savedY - this._bufferService.buffer.ybase, 0), this._curAttrData.fg = this._bufferService.buffer.savedCurAttrData.fg, this._curAttrData.bg = this._bufferService.buffer.savedCurAttrData.bg, this._charsetService.charset = this._savedCharset, this._bufferService.buffer.savedCharset && (this._charsetService.charset = this._bufferService.buffer.savedCharset), this._restrictCursor()
+                }, t.prototype.setTitle = function(e) {
+                    this._windowTitle = e, this._onTitleChange.fire(e)
+                }, t.prototype.setIconName = function(e) {
+                    this._iconName = e
+                }, t.prototype.nextLine = function() {
+                    this._bufferService.buffer.x = 0, this.index()
+                }, t.prototype.keypadApplicationMode = function() {
+                    this._logService.debug("Serial port requested application keypad."), this._coreService.decPrivateModes.applicationKeypad = !0, this._onRequestSyncScrollBar.fire()
+                }, t.prototype.keypadNumericMode = function() {
+                    this._logService.debug("Switching back to normal keypad."), this._coreService.decPrivateModes.applicationKeypad = !1, this._onRequestSyncScrollBar.fire()
+                }, t.prototype.selectDefaultCharset = function() {
+                    this._charsetService.setgLevel(0), this._charsetService.setgCharset(0, a.DEFAULT_CHARSET)
+                }, t.prototype.selectCharset = function(e) {
+                    2 === e.length ? "/" !== e[0] && this._charsetService.setgCharset(b[e[0]], a.CHARSETS[e[1]] || a.DEFAULT_CHARSET) : this.selectDefaultCharset()
+                }, t.prototype.index = function() {
+                    this._restrictCursor();
+                    var e = this._bufferService.buffer;
+                    this._bufferService.buffer.y++, e.y === e.scrollBottom + 1 ? (e.y--, this._onRequestScroll.fire(this._eraseAttrData())) : e.y >= this._bufferService.rows && (e.y = this._bufferService.rows - 1), this._restrictCursor()
+                }, t.prototype.tabSet = function() {
+                    this._bufferService.buffer.tabs[this._bufferService.buffer.x] = !0
+                }, t.prototype.reverseIndex = function() {
+                    this._restrictCursor();
+                    var e = this._bufferService.buffer;
+                    if (e.y === e.scrollTop) {
+                        var t = e.scrollBottom - e.scrollTop;
+                        e.lines.shiftElements(e.ybase + e.y, t, 1), e.lines.set(e.ybase + e.y, e.getBlankLine(this._eraseAttrData())), this._dirtyRowService.markRangeDirty(e.scrollTop, e.scrollBottom)
+                    } else e.y--, this._restrictCursor()
+                }, t.prototype.fullReset = function() {
+                    this._parser.reset(), this._onRequestReset.fire()
+                }, t.prototype.reset = function() {
+                    this._curAttrData = f.DEFAULT_ATTR_DATA.clone(), this._eraseAttrDataInternal = f.DEFAULT_ATTR_DATA.clone()
+                }, t.prototype._eraseAttrData = function() {
+                    return this._eraseAttrDataInternal.bg &= -67108864, this._eraseAttrDataInternal.bg |= 67108863 & this._curAttrData.bg, this._eraseAttrDataInternal
+                }, t.prototype.setgLevel = function(e) {
+                    this._charsetService.setgLevel(e)
+                }, t.prototype.screenAlignmentPattern = function() {
+                    var e = new p.CellData;
+                    e.content = 1 << 22 | "E".charCodeAt(0), e.fg = this._curAttrData.fg, e.bg = this._curAttrData.bg;
+                    var t = this._bufferService.buffer;
+                    this._setCursor(0, 0);
+                    for (var r = 0; r < this._bufferService.rows; ++r) {
+                        var i = t.ybase + t.y + r,
+                            n = t.lines.get(i);
+                        n && (n.fill(e), n.isWrapped = !1)
+                    }
+                    this._dirtyRowService.markAllDirty(), this._setCursor(0, 0)
+                }, t
+            }(l.Disposable);
+        t.InputHandler = S
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.DEFAULT_CHARSET = t.CHARSETS = void 0, t.CHARSETS = {}, t.DEFAULT_CHARSET = t.CHARSETS.B, t.CHARSETS[0] = {
             "`": "◆",
             a: "▒",
             b: "␉",
@@ -1741,7 +2905,7 @@
             "~": "·"
         }, t.CHARSETS.A = {
             "#": "£"
-        }, t.CHARSETS.B = null, t.CHARSETS[4] = {
+        }, t.CHARSETS.B = void 0, t.CHARSETS[4] = {
             "#": "£",
             "@": "¾",
             "[": "ij",
@@ -1851,79 +3015,78 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = 256,
-            n = function() {
-                function e(e, t) {
-                    if (void 0 === e && (e = 32), void 0 === t && (t = 32), this.maxLength = e, this.maxSubParamsLength = t, t > i) throw new Error("maxSubParamsLength must not be greater than 256");
-                    this.params = new Int32Array(e), this.length = 0, this._subParams = new Int32Array(t), this._subParamsLength = 0, this._subParamsIdx = new Uint16Array(e), this._rejectDigits = !1, this._rejectSubDigits = !1, this._digitIsSub = !1
+        }), t.Params = void 0;
+        var i = function() {
+            function e(e, t) {
+                if (void 0 === e && (e = 32), void 0 === t && (t = 32), this.maxLength = e, this.maxSubParamsLength = t, t > 256) throw new Error("maxSubParamsLength must not be greater than 256");
+                this.params = new Int32Array(e), this.length = 0, this._subParams = new Int32Array(t), this._subParamsLength = 0, this._subParamsIdx = new Uint16Array(e), this._rejectDigits = !1, this._rejectSubDigits = !1, this._digitIsSub = !1
+            }
+            return e.fromArray = function(t) {
+                var r = new e;
+                if (!t.length) return r;
+                for (var i = t[0] instanceof Array ? 1 : 0; i < t.length; ++i) {
+                    var n = t[i];
+                    if (n instanceof Array)
+                        for (var o = 0; o < n.length; ++o) r.addSubParam(n[o]);
+                    else r.addParam(n)
                 }
-                return e.fromArray = function(t) {
-                    var r = new e;
-                    if (!t.length) return r;
-                    for (var i = t[0] instanceof Array ? 1 : 0; i < t.length; ++i) {
-                        var n = t[i];
-                        if (n instanceof Array)
-                            for (var o = 0; o < n.length; ++o) r.addSubParam(n[o]);
-                        else r.addParam(n)
-                    }
-                    return r
-                }, e.prototype.clone = function() {
-                    var t = new e(this.maxLength, this.maxSubParamsLength);
-                    return t.params.set(this.params), t.length = this.length, t._subParams.set(this._subParams), t._subParamsLength = this._subParamsLength, t._subParamsIdx.set(this._subParamsIdx), t._rejectDigits = this._rejectDigits, t._rejectSubDigits = this._rejectSubDigits, t._digitIsSub = this._digitIsSub, t
-                }, e.prototype.toArray = function() {
-                    for (var e = [], t = 0; t < this.length; ++t) {
-                        e.push(this.params[t]);
-                        var r = this._subParamsIdx[t] >> 8,
-                            i = 255 & this._subParamsIdx[t];
-                        i - r > 0 && e.push(Array.prototype.slice.call(this._subParams, r, i))
-                    }
-                    return e
-                }, e.prototype.reset = function() {
-                    this.length = 0, this._subParamsLength = 0, this._rejectDigits = !1, this._rejectSubDigits = !1, this._digitIsSub = !1
-                }, e.prototype.addParam = function(e) {
-                    if (this._digitIsSub = !1, this.length >= this.maxLength) this._rejectDigits = !0;
+                return r
+            }, e.prototype.clone = function() {
+                var t = new e(this.maxLength, this.maxSubParamsLength);
+                return t.params.set(this.params), t.length = this.length, t._subParams.set(this._subParams), t._subParamsLength = this._subParamsLength, t._subParamsIdx.set(this._subParamsIdx), t._rejectDigits = this._rejectDigits, t._rejectSubDigits = this._rejectSubDigits, t._digitIsSub = this._digitIsSub, t
+            }, e.prototype.toArray = function() {
+                for (var e = [], t = 0; t < this.length; ++t) {
+                    e.push(this.params[t]);
+                    var r = this._subParamsIdx[t] >> 8,
+                        i = 255 & this._subParamsIdx[t];
+                    i - r > 0 && e.push(Array.prototype.slice.call(this._subParams, r, i))
+                }
+                return e
+            }, e.prototype.reset = function() {
+                this.length = 0, this._subParamsLength = 0, this._rejectDigits = !1, this._rejectSubDigits = !1, this._digitIsSub = !1
+            }, e.prototype.addParam = function(e) {
+                if (this._digitIsSub = !1, this.length >= this.maxLength) this._rejectDigits = !0;
+                else {
+                    if (e < -1) throw new Error("values lesser than -1 are not allowed");
+                    this._subParamsIdx[this.length] = this._subParamsLength << 8 | this._subParamsLength, this.params[this.length++] = e > 2147483647 ? 2147483647 : e
+                }
+            }, e.prototype.addSubParam = function(e) {
+                if (this._digitIsSub = !0, this.length)
+                    if (this._rejectDigits || this._subParamsLength >= this.maxSubParamsLength) this._rejectSubDigits = !0;
                     else {
                         if (e < -1) throw new Error("values lesser than -1 are not allowed");
-                        this._subParamsIdx[this.length] = this._subParamsLength << 8 | this._subParamsLength, this.params[this.length++] = e > 2147483647 ? 2147483647 : e
+                        this._subParams[this._subParamsLength++] = e > 2147483647 ? 2147483647 : e, this._subParamsIdx[this.length - 1]++
                     }
-                }, e.prototype.addSubParam = function(e) {
-                    if (this._digitIsSub = !0, this.length)
-                        if (this._rejectDigits || this._subParamsLength >= this.maxSubParamsLength) this._rejectSubDigits = !0;
-                        else {
-                            if (e < -1) throw new Error("values lesser than -1 are not allowed");
-                            this._subParams[this._subParamsLength++] = e > 2147483647 ? 2147483647 : e, this._subParamsIdx[this.length - 1]++
-                        }
-                }, e.prototype.hasSubParams = function(e) {
-                    return (255 & this._subParamsIdx[e]) - (this._subParamsIdx[e] >> 8) > 0
-                }, e.prototype.getSubParams = function(e) {
-                    var t = this._subParamsIdx[e] >> 8,
-                        r = 255 & this._subParamsIdx[e];
-                    return r - t > 0 ? this._subParams.subarray(t, r) : null
-                }, e.prototype.getSubParamsAll = function() {
-                    for (var e = {}, t = 0; t < this.length; ++t) {
-                        var r = this._subParamsIdx[t] >> 8,
-                            i = 255 & this._subParamsIdx[t];
-                        i - r > 0 && (e[t] = this._subParams.slice(r, i))
-                    }
-                    return e
-                }, e.prototype.addDigit = function(e) {
-                    var t;
-                    if (!(this._rejectDigits || !(t = this._digitIsSub ? this._subParamsLength : this.length) || this._digitIsSub && this._rejectSubDigits)) {
-                        var r = this._digitIsSub ? this._subParams : this.params,
-                            i = r[t - 1];
-                        r[t - 1] = ~i ? Math.min(10 * i + e, 2147483647) : e
-                    }
-                }, e
-            }();
-        t.Params = n
+            }, e.prototype.hasSubParams = function(e) {
+                return (255 & this._subParamsIdx[e]) - (this._subParamsIdx[e] >> 8) > 0
+            }, e.prototype.getSubParams = function(e) {
+                var t = this._subParamsIdx[e] >> 8,
+                    r = 255 & this._subParamsIdx[e];
+                return r - t > 0 ? this._subParams.subarray(t, r) : null
+            }, e.prototype.getSubParamsAll = function() {
+                for (var e = {}, t = 0; t < this.length; ++t) {
+                    var r = this._subParamsIdx[t] >> 8,
+                        i = 255 & this._subParamsIdx[t];
+                    i - r > 0 && (e[t] = this._subParams.slice(r, i))
+                }
+                return e
+            }, e.prototype.addDigit = function(e) {
+                var t;
+                if (!(this._rejectDigits || !(t = this._digitIsSub ? this._subParamsLength : this.length) || this._digitIsSub && this._rejectSubDigits)) {
+                    var r = this._digitIsSub ? this._subParams : this.params,
+                        i = r[t - 1];
+                    r[t - 1] = ~i ? Math.min(10 * i + e, 2147483647) : e
+                }
+            }, e
+        }();
+        t.Params = i
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(21),
-            n = r(7),
+        }), t.OscHandler = t.OscParser = void 0;
+        var i = r(23),
+            n = r(8),
             o = function() {
                 function e() {
                     this._state = 0, this._id = -1, this._handlers = Object.create(null), this._handlerFb = function() {}
@@ -2000,15 +3163,15 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.PAYLOAD_LIMIT = 1e7
+        }), t.PAYLOAD_LIMIT = void 0, t.PAYLOAD_LIMIT = 1e7
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(7),
-            n = r(19),
-            o = r(21),
+        }), t.DcsHandler = t.DcsParser = void 0;
+        var i = r(8),
+            n = r(21),
+            o = r(23),
             s = [],
             a = function() {
                 function e() {
@@ -2059,7 +3222,7 @@
                 this._hitLimit || (this._data += i.utf32ToString(e, t, r), this._data.length > o.PAYLOAD_LIMIT && (this._data = "", this._hitLimit = !0))
             }, e.prototype.unhook = function(e) {
                 var t;
-                return this._hitLimit ? t = !1 : e && (t = this._handler(this._data, this._params ? this._params : new n.Params)), this._params = void 0, this._data = "", this._hitLimit = !1, t
+                return this._hitLimit ? t = !1 : e && (t = this._handler(this._data, this._params || new n.Params)), this._params = void 0, this._data = "", this._hitLimit = !1, t
             }, e
         }();
         t.DcsHandler = c
@@ -2067,9 +3230,9 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(24),
-            n = r(42),
+        }), t.removeTerminalFromCache = t.acquireCharAtlas = void 0;
+        var i = r(26),
+            n = r(43),
             o = [];
         t.acquireCharAtlas = function(e, t, r, s, a) {
             for (var c = i.generateConfig(s, a, e, r), l = 0; l < o.length; l++) {
@@ -2103,7 +3266,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.is256Color = t.configEquals = t.generateConfig = void 0;
         var i = r(3);
         t.generateConfig = function(e, t, r, i) {
             var n = {
@@ -2136,9 +3299,9 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.ColorManager = t.DEFAULT_ANSI_COLORS = void 0;
         var i = r(10),
-            n = r(44),
+            n = r(45),
             o = i.css.toColor("#ffffff"),
             s = i.css.toColor("#000000"),
             a = i.css.toColor("#ffffff"),
@@ -2178,7 +3341,7 @@
                     background: s,
                     cursor: a,
                     cursorAccent: c,
-                    selection: l,
+                    selectionTransparent: l,
                     selectionOpaque: i.color.blend(s, l),
                     ansi: t.DEFAULT_ANSI_COLORS.slice(),
                     contrastCache: this._contrastCache
@@ -2187,7 +3350,7 @@
             return e.prototype.onOptionsChange = function(e) {
                 "minimumContrastRatio" === e && this._contrastCache.clear()
             }, e.prototype.setTheme = function(e) {
-                void 0 === e && (e = {}), this.colors.foreground = this._parseColor(e.foreground, o), this.colors.background = this._parseColor(e.background, s), this.colors.cursor = this._parseColor(e.cursor, a, !0), this.colors.cursorAccent = this._parseColor(e.cursorAccent, c, !0), this.colors.selection = this._parseColor(e.selection, l, !0), this.colors.selectionOpaque = i.color.blend(this.colors.background, this.colors.selection), this.colors.ansi[0] = this._parseColor(e.black, t.DEFAULT_ANSI_COLORS[0]), this.colors.ansi[1] = this._parseColor(e.red, t.DEFAULT_ANSI_COLORS[1]), this.colors.ansi[2] = this._parseColor(e.green, t.DEFAULT_ANSI_COLORS[2]), this.colors.ansi[3] = this._parseColor(e.yellow, t.DEFAULT_ANSI_COLORS[3]), this.colors.ansi[4] = this._parseColor(e.blue, t.DEFAULT_ANSI_COLORS[4]), this.colors.ansi[5] = this._parseColor(e.magenta, t.DEFAULT_ANSI_COLORS[5]), this.colors.ansi[6] = this._parseColor(e.cyan, t.DEFAULT_ANSI_COLORS[6]), this.colors.ansi[7] = this._parseColor(e.white, t.DEFAULT_ANSI_COLORS[7]), this.colors.ansi[8] = this._parseColor(e.brightBlack, t.DEFAULT_ANSI_COLORS[8]), this.colors.ansi[9] = this._parseColor(e.brightRed, t.DEFAULT_ANSI_COLORS[9]), this.colors.ansi[10] = this._parseColor(e.brightGreen, t.DEFAULT_ANSI_COLORS[10]), this.colors.ansi[11] = this._parseColor(e.brightYellow, t.DEFAULT_ANSI_COLORS[11]), this.colors.ansi[12] = this._parseColor(e.brightBlue, t.DEFAULT_ANSI_COLORS[12]), this.colors.ansi[13] = this._parseColor(e.brightMagenta, t.DEFAULT_ANSI_COLORS[13]), this.colors.ansi[14] = this._parseColor(e.brightCyan, t.DEFAULT_ANSI_COLORS[14]), this.colors.ansi[15] = this._parseColor(e.brightWhite, t.DEFAULT_ANSI_COLORS[15]), this._contrastCache.clear()
+                void 0 === e && (e = {}), this.colors.foreground = this._parseColor(e.foreground, o), this.colors.background = this._parseColor(e.background, s), this.colors.cursor = this._parseColor(e.cursor, a, !0), this.colors.cursorAccent = this._parseColor(e.cursorAccent, c, !0), this.colors.selectionTransparent = this._parseColor(e.selection, l, !0), this.colors.selectionOpaque = i.color.blend(this.colors.background, this.colors.selectionTransparent), i.color.isOpaque(this.colors.selectionTransparent) && (this.colors.selectionTransparent = i.color.opacity(this.colors.selectionTransparent, .3)), this.colors.ansi[0] = this._parseColor(e.black, t.DEFAULT_ANSI_COLORS[0]), this.colors.ansi[1] = this._parseColor(e.red, t.DEFAULT_ANSI_COLORS[1]), this.colors.ansi[2] = this._parseColor(e.green, t.DEFAULT_ANSI_COLORS[2]), this.colors.ansi[3] = this._parseColor(e.yellow, t.DEFAULT_ANSI_COLORS[3]), this.colors.ansi[4] = this._parseColor(e.blue, t.DEFAULT_ANSI_COLORS[4]), this.colors.ansi[5] = this._parseColor(e.magenta, t.DEFAULT_ANSI_COLORS[5]), this.colors.ansi[6] = this._parseColor(e.cyan, t.DEFAULT_ANSI_COLORS[6]), this.colors.ansi[7] = this._parseColor(e.white, t.DEFAULT_ANSI_COLORS[7]), this.colors.ansi[8] = this._parseColor(e.brightBlack, t.DEFAULT_ANSI_COLORS[8]), this.colors.ansi[9] = this._parseColor(e.brightRed, t.DEFAULT_ANSI_COLORS[9]), this.colors.ansi[10] = this._parseColor(e.brightGreen, t.DEFAULT_ANSI_COLORS[10]), this.colors.ansi[11] = this._parseColor(e.brightYellow, t.DEFAULT_ANSI_COLORS[11]), this.colors.ansi[12] = this._parseColor(e.brightBlue, t.DEFAULT_ANSI_COLORS[12]), this.colors.ansi[13] = this._parseColor(e.brightMagenta, t.DEFAULT_ANSI_COLORS[13]), this.colors.ansi[14] = this._parseColor(e.brightCyan, t.DEFAULT_ANSI_COLORS[14]), this.colors.ansi[15] = this._parseColor(e.brightWhite, t.DEFAULT_ANSI_COLORS[15]), this._contrastCache.clear()
             }, e.prototype._parseColor = function(e, t, r) {
                 if (void 0 === r && (r = this.allowTransparency), void 0 === e) return t;
                 if (this._ctx.fillStyle = this._litmusColor, this._ctx.fillStyle = e, "string" != typeof this._ctx.fillStyle) return console.warn("Color: " + e + " is invalid using fallback " + t.css), t;
@@ -2205,7 +3368,7 @@
                         h = Math.round(255 * l);
                     return {
                         rgba: i.channels.toRgba(s, a, c, h),
-                        css: i.channels.toCss(s, a, c, h)
+                        css: e
                     }
                 }
                 return {
@@ -2219,7 +3382,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.throwIfFalsy = function(e) {
+        }), t.throwIfFalsy = void 0, t.throwIfFalsy = function(e) {
             if (!e) throw new Error("value must not be falsy");
             return e
         }
@@ -2242,10 +3405,10 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.CharacterJoinerRegistry = t.JoinedCellData = void 0;
         var o = r(6),
             s = r(3),
-            a = r(5),
+            a = r(4),
             c = function(e) {
                 function t(t, r, i) {
                     var n = e.call(this) || this;
@@ -2344,7 +3507,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.getCoordsRelativeToElement = i, t.getCoords = function(e, t, r, n, o, s, a, c) {
+        }), t.getRawByteCoords = t.getCoords = t.getCoordsRelativeToElement = void 0, t.getCoordsRelativeToElement = i, t.getCoords = function(e, t, r, n, o, s, a, c) {
             if (o) {
                 var l = i(e, t);
                 if (l) return l[0] = Math.ceil((l[0] + (c ? s / 2 : 0)) / s), l[1] = Math.ceil(l[1] / a), l[0] = Math.min(Math.max(l[0], 1), r + (c ? 1 : 0)), l[1] = Math.min(Math.max(l[1], 1), n), l
@@ -2359,7 +3522,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.RenderDebouncer = void 0;
         var i = function() {
             function e(e) {
                 this._renderCallback = e
@@ -2372,7 +3535,11 @@
                     return i._innerRefresh()
                 }))
             }, e.prototype._innerRefresh = function() {
-                void 0 !== this._rowStart && void 0 !== this._rowEnd && void 0 !== this._rowCount && (this._rowStart = Math.max(this._rowStart, 0), this._rowEnd = Math.min(this._rowEnd, this._rowCount - 1), this._renderCallback(this._rowStart, this._rowEnd), this._rowStart = void 0, this._rowEnd = void 0, this._animationFrame = void 0)
+                if (void 0 !== this._rowStart && void 0 !== this._rowEnd && void 0 !== this._rowCount) {
+                    var e = Math.max(this._rowStart, 0),
+                        t = Math.min(this._rowEnd, this._rowCount - 1);
+                    this._rowStart = void 0, this._rowEnd = void 0, this._animationFrame = void 0, this._renderCallback(e, t)
+                }
             }, e
         }();
         t.RenderDebouncer = i
@@ -2395,7 +3562,7 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.ScreenDprMonitor = void 0;
         var o = function(e) {
             function t() {
                 var t = null !== e && e.apply(this, arguments) || this;
@@ -2409,7 +3576,8 @@
             }, t.prototype.dispose = function() {
                 e.prototype.dispose.call(this), this.clearListener()
             }, t.prototype._updateDpr = function() {
-                this._resolutionMediaMatchList && this._outerListener && (this._resolutionMediaMatchList.removeListener(this._outerListener), this._currentDevicePixelRatio = window.devicePixelRatio, this._resolutionMediaMatchList = window.matchMedia("screen and (resolution: " + window.devicePixelRatio + "dppx)"), this._resolutionMediaMatchList.addListener(this._outerListener))
+                var e;
+                this._outerListener && (null === (e = this._resolutionMediaMatchList) || void 0 === e || e.removeListener(this._outerListener), this._currentDevicePixelRatio = window.devicePixelRatio, this._resolutionMediaMatchList = window.matchMedia("screen and (resolution: " + window.devicePixelRatio + "dppx)"), this._resolutionMediaMatchList.addListener(this._outerListener))
             }, t.prototype.clearListener = function() {
                 this._resolutionMediaMatchList && this._listener && this._outerListener && (this._resolutionMediaMatchList.removeListener(this._outerListener), this._resolutionMediaMatchList = void 0, this._listener = void 0, this._outerListener = void 0)
             }, t
@@ -2419,7 +3587,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.clone = function e(t, r) {
+        }), t.clone = void 0, t.clone = function e(t, r) {
             if (void 0 === r && (r = 5), "object" != typeof t) return t;
             var i = Array.isArray(t) ? [] : {};
             for (var n in t) i[n] = r <= 1 ? t[n] : t[n] ? e(t[n], r - 1) : t[n];
@@ -2429,122 +3597,125 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(5),
-            n = r(33),
-            o = r(17),
-            s = r(80),
-            a = function() {
+        }), t.Terminal = void 0;
+        var i = r(4),
+            n = r(35),
+            o = r(18),
+            s = r(0),
+            a = r(83),
+            c = function() {
                 function e(e) {
-                    this._core = new n.Terminal(e), this._addonManager = new s.AddonManager
+                    this._core = new n.Terminal(e), this._addonManager = new a.AddonManager
                 }
-                return Object.defineProperty(e.prototype, "onCursorMove", {
+                return e.prototype._checkProposedApi = function() {
+                    if (!this._core.optionsService.options.allowProposedApi) throw new Error("You must set the allowProposedApi option to true to use proposed API")
+                }, Object.defineProperty(e.prototype, "onCursorMove", {
                     get: function() {
                         return this._core.onCursorMove
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onLineFeed", {
                     get: function() {
                         return this._core.onLineFeed
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onSelectionChange", {
                     get: function() {
                         return this._core.onSelectionChange
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onData", {
                     get: function() {
                         return this._core.onData
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onBinary", {
                     get: function() {
                         return this._core.onBinary
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onTitleChange", {
                     get: function() {
                         return this._core.onTitleChange
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onScroll", {
                     get: function() {
                         return this._core.onScroll
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onKey", {
                     get: function() {
                         return this._core.onKey
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onRender", {
                     get: function() {
                         return this._core.onRender
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onResize", {
                     get: function() {
                         return this._core.onResize
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "element", {
                     get: function() {
                         return this._core.element
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "parser", {
                     get: function() {
-                        return this._parser || (this._parser = new h(this._core)), this._parser
+                        return this._checkProposedApi(), this._parser || (this._parser = new f(this._core)), this._parser
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "unicode", {
                     get: function() {
-                        return new u(this._core)
+                        return this._checkProposedApi(), new _(this._core)
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "textarea", {
                     get: function() {
                         return this._core.textarea
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "rows", {
                     get: function() {
                         return this._core.rows
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "cols", {
                     get: function() {
                         return this._core.cols
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "buffer", {
                     get: function() {
-                        return new c(this._core.buffer)
+                        return this._checkProposedApi(), new h(this._core.buffers)
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "markers", {
                     get: function() {
-                        return this._core.markers
+                        return this._checkProposedApi(), this._core.markers
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.blur = function() {
                     this._core.blur()
@@ -2557,15 +3728,17 @@
                 }, e.prototype.attachCustomKeyEventHandler = function(e) {
                     this._core.attachCustomKeyEventHandler(e)
                 }, e.prototype.registerLinkMatcher = function(e, t, r) {
-                    return this._core.registerLinkMatcher(e, t, r)
+                    return this._checkProposedApi(), this._core.registerLinkMatcher(e, t, r)
                 }, e.prototype.deregisterLinkMatcher = function(e) {
-                    this._core.deregisterLinkMatcher(e)
+                    this._checkProposedApi(), this._core.deregisterLinkMatcher(e)
+                }, e.prototype.registerLinkProvider = function(e) {
+                    return this._checkProposedApi(), this._core.registerLinkProvider(e)
                 }, e.prototype.registerCharacterJoiner = function(e) {
-                    return this._core.registerCharacterJoiner(e)
+                    return this._checkProposedApi(), this._core.registerCharacterJoiner(e)
                 }, e.prototype.deregisterCharacterJoiner = function(e) {
-                    this._core.deregisterCharacterJoiner(e)
+                    this._checkProposedApi(), this._core.deregisterCharacterJoiner(e)
                 }, e.prototype.registerMarker = function(e) {
-                    return this._verifyIntegers(e), this._core.addMarker(e)
+                    return this._checkProposedApi(), this._verifyIntegers(e), this._core.addMarker(e)
                 }, e.prototype.addMarker = function(e) {
                     return this.registerMarker(e)
                 }, e.prototype.hasSelection = function() {
@@ -2618,58 +3791,96 @@
                     get: function() {
                         return o
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype._verifyIntegers = function() {
                     for (var e = [], t = 0; t < arguments.length; t++) e[t] = arguments[t];
-                    e.forEach(function(e) {
-                        if (e === 1 / 0 || isNaN(e) || e % 1 != 0) throw new Error("This API only accepts integers")
-                    })
+                    for (var r = 0, i = e; r < i.length; r++) {
+                        var n = i[r];
+                        if (n === 1 / 0 || isNaN(n) || n % 1 != 0) throw new Error("This API only accepts integers")
+                    }
                 }, e
             }();
-        t.Terminal = a;
-        var c = function() {
-                function e(e) {
-                    this._buffer = e
+        t.Terminal = c;
+        var l = function() {
+                function e(e, t) {
+                    this._buffer = e, this.type = t
                 }
-                return Object.defineProperty(e.prototype, "cursorY", {
+                return e.prototype.init = function(e) {
+                    return this._buffer = e, this
+                }, Object.defineProperty(e.prototype, "cursorY", {
                     get: function() {
                         return this._buffer.y
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "cursorX", {
                     get: function() {
                         return this._buffer.x
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "viewportY", {
                     get: function() {
                         return this._buffer.ydisp
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "baseY", {
                     get: function() {
                         return this._buffer.ybase
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "length", {
                     get: function() {
                         return this._buffer.lines.length
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.getLine = function(e) {
                     var t = this._buffer.lines.get(e);
-                    if (t) return new l(t)
+                    if (t) return new u(t)
                 }, e.prototype.getNullCell = function() {
                     return new i.CellData
                 }, e
             }(),
-            l = function() {
+            h = function() {
+                function e(e) {
+                    var t = this;
+                    this._buffers = e, this._onBufferChange = new s.EventEmitter, this._normal = new l(this._buffers.normal, "normal"), this._alternate = new l(this._buffers.alt, "alternate"), this._buffers.onBufferActivate(function() {
+                        return t._onBufferChange.fire(t.active)
+                    })
+                }
+                return Object.defineProperty(e.prototype, "onBufferChange", {
+                    get: function() {
+                        return this._onBufferChange.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(e.prototype, "active", {
+                    get: function() {
+                        if (this._buffers.active === this._buffers.normal) return this.normal;
+                        if (this._buffers.active === this._buffers.alt) return this.alternate;
+                        throw new Error("Active buffer is neither normal nor alternate")
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(e.prototype, "normal", {
+                    get: function() {
+                        return this._normal.init(this._buffers.normal)
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(e.prototype, "alternate", {
+                    get: function() {
+                        return this._alternate.init(this._buffers.alt)
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), e
+            }(),
+            u = function() {
                 function e(e) {
                     this._line = e
                 }
@@ -2677,13 +3888,13 @@
                     get: function() {
                         return this._line.isWrapped
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "length", {
                     get: function() {
                         return this._line.length
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.getCell = function(e, t) {
                     if (!(e < 0 || e >= this._line.length)) return t ? (this._line.loadCell(e, t), t) : this._line.loadCell(e, new i.CellData)
@@ -2691,7 +3902,7 @@
                     return this._line.translateToString(e, t, r)
                 }, e
             }(),
-            h = function() {
+            f = function() {
                 function e(e) {
                     this._core = e
                 }
@@ -2717,7 +3928,7 @@
                     return this.registerOscHandler(e, t)
                 }, e
             }(),
-            u = function() {
+            _ = function() {
                 function e(e) {
                     this._core = e
                 }
@@ -2727,7 +3938,7 @@
                     get: function() {
                         return this._core.unicodeService.versions
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "activeVersion", {
                     get: function() {
@@ -2736,7 +3947,7 @@
                     set: function(e) {
                         this._core.unicodeService.activeVersion = e
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e
             }()
@@ -2759,262 +3970,175 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(34),
-            s = r(35),
-            a = r(36),
+        }), t.Terminal = void 0;
+        var o = r(36),
+            s = r(37),
+            a = r(38),
             c = r(12),
-            l = r(37),
-            h = r(39),
-            u = r(49),
-            f = r(50),
+            l = r(19),
+            h = r(40),
+            u = r(50),
+            f = r(51),
             _ = r(11),
-            d = r(8),
-            p = r(17),
-            v = r(53),
-            g = r(54),
-            y = r(55),
-            b = r(56),
-            m = r(58),
-            C = r(1),
+            d = r(7),
+            p = r(18),
+            v = r(54),
+            g = r(55),
+            y = r(56),
+            b = r(57),
+            m = r(59),
+            C = r(0),
             S = r(16),
-            w = r(59),
-            E = r(25),
-            A = r(60),
-            R = r(0),
-            x = r(61),
-            L = r(4),
-            k = r(62),
-            T = r(63),
-            D = r(2),
-            O = r(69),
-            M = r(70),
-            P = r(71),
-            I = r(72),
-            B = r(73),
-            H = r(74),
-            F = r(75),
-            j = r(76),
-            N = r(77),
-            W = r(79),
-            U = "undefined" != typeof window ? window.document : null,
-            q = function(e) {
+            w = r(27),
+            E = r(60),
+            A = r(5),
+            R = r(61),
+            x = r(62),
+            L = r(63),
+            k = r(64),
+            T = r(65),
+            D = "undefined" != typeof window ? window.document : null,
+            O = function(e) {
                 function t(t) {
                     void 0 === t && (t = {});
-                    var r = e.call(this) || this;
-                    return r.browser = _, r.mouseEvents = 0, r._keyDownHandled = !1, r._blankLine = null, r._onCursorMove = new C.EventEmitter, r._onData = new C.EventEmitter, r._onBinary = new C.EventEmitter, r._onKey = new C.EventEmitter, r._onLineFeed = new C.EventEmitter, r._onRender = new C.EventEmitter, r._onResize = new C.EventEmitter, r._onScroll = new C.EventEmitter, r._onSelectionChange = new C.EventEmitter, r._onTitleChange = new C.EventEmitter, r._onFocus = new C.EventEmitter, r._onBlur = new C.EventEmitter, r.onA11yCharEmitter = new C.EventEmitter, r.onA11yTabEmitter = new C.EventEmitter, r._instantiationService = new B.InstantiationService, r.optionsService = new x.OptionsService(t), r._instantiationService.setService(R.IOptionsService, r.optionsService), r._bufferService = r._instantiationService.createInstance(T.BufferService), r._instantiationService.setService(R.IBufferService, r._bufferService), r._logService = r._instantiationService.createInstance(P.LogService), r._instantiationService.setService(R.ILogService, r._logService), r._coreService = r._instantiationService.createInstance(M.CoreService, function() {
-                        return r.scrollToBottom()
-                    }), r._instantiationService.setService(R.ICoreService, r._coreService), r._coreService.onData(function(e) {
-                        return r._onData.fire(e)
-                    }), r._coreService.onBinary(function(e) {
-                        return r._onBinary.fire(e)
-                    }), r._coreMouseService = r._instantiationService.createInstance(H.CoreMouseService), r._instantiationService.setService(R.ICoreMouseService, r._coreMouseService), r._dirtyRowService = r._instantiationService.createInstance(I.DirtyRowService), r._instantiationService.setService(R.IDirtyRowService, r._dirtyRowService), r.unicodeService = r._instantiationService.createInstance(N.UnicodeService), r._instantiationService.setService(R.IUnicodeService, r.unicodeService), r._charsetService = r._instantiationService.createInstance(W.CharsetService), r._instantiationService.setService(R.ICharsetService, r._charsetService), r._setupOptionsListeners(), r._setup(), r._writeBuffer = new F.WriteBuffer(function(e) {
-                        return r._inputHandler.parse(e)
-                    }), r
+                    var r = e.call(this, t) || this;
+                    return r.browser = _, r._keyDownHandled = !1, r._onCursorMove = new C.EventEmitter, r._onKey = new C.EventEmitter, r._onRender = new C.EventEmitter, r._onSelectionChange = new C.EventEmitter, r._onTitleChange = new C.EventEmitter, r._onFocus = new C.EventEmitter, r._onBlur = new C.EventEmitter, r._onA11yCharEmitter = new C.EventEmitter, r._onA11yTabEmitter = new C.EventEmitter, r._setup(), r.linkifier = r._instantiationService.createInstance(u.Linkifier), r.linkifier2 = r.register(r._instantiationService.createInstance(L.Linkifier2)), r.register(r._inputHandler.onRequestBell(function() {
+                        return r.bell()
+                    })), r.register(r._inputHandler.onRequestRefreshRows(function(e, t) {
+                        return r.refresh(e, t)
+                    })), r.register(r._inputHandler.onRequestReset(function() {
+                        return r.reset()
+                    })), r.register(r._inputHandler.onRequestScroll(function(e, t) {
+                        return r.scroll(e, t || void 0)
+                    })), r.register(r._inputHandler.onRequestWindowsOptionsReport(function(e) {
+                        return r._reportWindowsOptions(e)
+                    })), r.register(C.forwardEvent(r._inputHandler.onCursorMove, r._onCursorMove)), r.register(C.forwardEvent(r._inputHandler.onTitleChange, r._onTitleChange)), r.register(C.forwardEvent(r._inputHandler.onA11yChar, r._onA11yCharEmitter)), r.register(C.forwardEvent(r._inputHandler.onA11yTab, r._onA11yTabEmitter)), r.register(r._bufferService.onResize(function(e) {
+                        return r._afterResize(e.cols, e.rows)
+                    })), r
                 }
                 return n(t, e), Object.defineProperty(t.prototype, "options", {
                     get: function() {
                         return this.optionsService.options
                     },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "cols", {
-                    get: function() {
-                        return this._bufferService.cols
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "rows", {
-                    get: function() {
-                        return this._bufferService.rows
-                    },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onCursorMove", {
                     get: function() {
                         return this._onCursorMove.event
                     },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onData", {
-                    get: function() {
-                        return this._onData.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onBinary", {
-                    get: function() {
-                        return this._onBinary.event
-                    },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onKey", {
                     get: function() {
                         return this._onKey.event
                     },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onLineFeed", {
-                    get: function() {
-                        return this._onLineFeed.event
-                    },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onRender", {
                     get: function() {
                         return this._onRender.event
                     },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onResize", {
-                    get: function() {
-                        return this._onResize.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onScroll", {
-                    get: function() {
-                        return this._onScroll.event
-                    },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onSelectionChange", {
                     get: function() {
                         return this._onSelectionChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onTitleChange", {
                     get: function() {
                         return this._onTitleChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onFocus", {
                     get: function() {
                         return this._onFocus.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onBlur", {
                     get: function() {
                         return this._onBlur.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onA11yChar", {
                     get: function() {
-                        return this.onA11yCharEmitter.event
+                        return this._onA11yCharEmitter.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onA11yTab", {
                     get: function() {
-                        return this.onA11yTabEmitter.event
+                        return this._onA11yTabEmitter.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.dispose = function() {
-                    var t, r, i, n;
-                    this._isDisposed || (e.prototype.dispose.call(this), null === (t = this._windowsMode) || void 0 === t || t.dispose(), this._windowsMode = void 0, null === (r = this._renderService) || void 0 === r || r.dispose(), this._customKeyEventHandler = null, this.write = function() {}, null === (n = null === (i = this.element) || void 0 === i ? void 0 : i.parentNode) || void 0 === n || n.removeChild(this.element))
+                    var t, r, i;
+                    this._isDisposed || (e.prototype.dispose.call(this), null === (t = this._renderService) || void 0 === t || t.dispose(), this._customKeyEventHandler = void 0, this.write = function() {}, null === (i = null === (r = this.element) || void 0 === r ? void 0 : r.parentNode) || void 0 === i || i.removeChild(this.element))
                 }, t.prototype._setup = function() {
-                    var e = this;
-                    this._customKeyEventHandler = null, this.insertMode = !1, this.bracketedPasteMode = !1, this._userScrolling = !1, this._inputHandler ? this._inputHandler.reset() : (this._inputHandler = new l.InputHandler(this, this._bufferService, this._charsetService, this._coreService, this._dirtyRowService, this._logService, this.optionsService, this._coreMouseService, this.unicodeService, this._instantiationService), this._inputHandler.onRequestBell(function() {
-                        return e.bell()
-                    }), this._inputHandler.onRequestRefreshRows(function(t, r) {
-                        return e.refresh(t, r)
-                    }), this._inputHandler.onRequestReset(function() {
-                        return e.reset()
-                    }), this._inputHandler.onCursorMove(function() {
-                        return e._onCursorMove.fire()
-                    }), this._inputHandler.onLineFeed(function() {
-                        return e._onLineFeed.fire()
-                    }), this.register(this._inputHandler)), this.linkifier || (this.linkifier = new u.Linkifier(this._bufferService, this._logService, this.optionsService, this.unicodeService)), this.options.windowsMode && this._enableWindowsMode()
-                }, t.prototype._enableWindowsMode = function() {
-                    var e = this;
-                    if (!this._windowsMode) {
-                        var t = [];
-                        t.push(this.onLineFeed(w.updateWindowsModeWrappedState.bind(null, this._bufferService))), t.push(this.addCsiHandler({
-                            final: "H"
-                        }, function() {
-                            return w.updateWindowsModeWrappedState(e._bufferService), !1
-                        })), this._windowsMode = {
-                            dispose: function() {
-                                t.forEach(function(e) {
-                                    return e.dispose()
-                                })
-                            }
-                        }
-                    }
+                    e.prototype._setup.call(this), this._customKeyEventHandler = void 0
                 }, Object.defineProperty(t.prototype, "buffer", {
                     get: function() {
                         return this.buffers.active
                     },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "buffers", {
-                    get: function() {
-                        return this._bufferService.buffers
-                    },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.focus = function() {
                     this.textarea && this.textarea.focus({
                         preventScroll: !0
                     })
-                }, t.prototype._setupOptionsListeners = function() {
-                    var e = this;
-                    this.optionsService.onOptionChange(function(t) {
-                        var r, i, n, o, s;
-                        switch (t) {
-                            case "fontFamily":
-                            case "fontSize":
-                                null === (r = e._renderService) || void 0 === r || r.clear(), null === (i = e._charSizeService) || void 0 === i || i.measure();
-                                break;
-                            case "cursorBlink":
-                            case "cursorStyle":
-                                e.refresh(e.buffer.y, e.buffer.y);
-                                break;
-                            case "drawBoldTextInBrightColors":
-                            case "letterSpacing":
-                            case "lineHeight":
-                            case "fontWeight":
-                            case "fontWeightBold":
-                            case "minimumContrastRatio":
-                                e._renderService && (e._renderService.clear(), e._renderService.onResize(e.cols, e.rows), e.refresh(0, e.rows - 1));
-                                break;
-                            case "rendererType":
-                                e._renderService && (e._renderService.setRenderer(e._createRenderer()), e._renderService.onResize(e.cols, e.rows));
-                                break;
-                            case "scrollback":
-                                e.buffers.resize(e.cols, e.rows), null === (n = e.viewport) || void 0 === n || n.syncScrollArea();
-                                break;
-                            case "screenReaderMode":
-                                e.optionsService.options.screenReaderMode ? !e._accessibilityManager && e._renderService && (e._accessibilityManager = new y.AccessibilityManager(e, e._renderService)) : (null === (o = e._accessibilityManager) || void 0 === o || o.dispose(), e._accessibilityManager = null);
-                                break;
-                            case "tabStopWidth":
-                                e.buffers.setupTabStops();
-                                break;
-                            case "theme":
-                                e._setTheme(e.optionsService.options.theme);
-                                break;
-                            case "windowsMode":
-                                e.optionsService.options.windowsMode ? e._enableWindowsMode() : (null === (s = e._windowsMode) || void 0 === s || s.dispose(), e._windowsMode = void 0)
-                        }
-                    })
+                }, t.prototype._updateOptions = function(t) {
+                    var r, i, n, o;
+                    switch (e.prototype._updateOptions.call(this, t), t) {
+                        case "fontFamily":
+                        case "fontSize":
+                            null === (r = this._renderService) || void 0 === r || r.clear(), null === (i = this._charSizeService) || void 0 === i || i.measure();
+                            break;
+                        case "cursorBlink":
+                        case "cursorStyle":
+                            this.refresh(this.buffer.y, this.buffer.y);
+                            break;
+                        case "drawBoldTextInBrightColors":
+                        case "letterSpacing":
+                        case "lineHeight":
+                        case "fontWeight":
+                        case "fontWeightBold":
+                        case "minimumContrastRatio":
+                            this._renderService && (this._renderService.clear(), this._renderService.onResize(this.cols, this.rows), this.refresh(0, this.rows - 1));
+                            break;
+                        case "rendererType":
+                            this._renderService && (this._renderService.setRenderer(this._createRenderer()), this._renderService.onResize(this.cols, this.rows));
+                            break;
+                        case "scrollback":
+                            null === (n = this.viewport) || void 0 === n || n.syncScrollArea();
+                            break;
+                        case "screenReaderMode":
+                            this.optionsService.options.screenReaderMode ? !this._accessibilityManager && this._renderService && (this._accessibilityManager = new y.AccessibilityManager(this, this._renderService)) : (null === (o = this._accessibilityManager) || void 0 === o || o.dispose(), this._accessibilityManager = void 0);
+                            break;
+                        case "tabStopWidth":
+                            this.buffers.setupTabStops();
+                            break;
+                        case "theme":
+                            this._setTheme(this.optionsService.options.theme)
+                    }
                 }, t.prototype._onTextAreaFocus = function(e) {
-                    this.sendFocus && this._coreService.triggerDataEvent(c.C0.ESC + "[I"), this.updateCursorStyle(e), this.element.classList.add("focus"), this.showCursor(), this._onFocus.fire()
+                    this._coreService.decPrivateModes.sendFocus && this._coreService.triggerDataEvent(c.C0.ESC + "[I"), this.updateCursorStyle(e), this.element.classList.add("focus"), this._showCursor(), this._onFocus.fire()
                 }, t.prototype.blur = function() {
-                    return this.textarea.blur()
+                    var e;
+                    return null === (e = this.textarea) || void 0 === e ? void 0 : e.blur()
                 }, t.prototype._onTextAreaBlur = function() {
-                    this.textarea.value = "", this.refresh(this.buffer.y, this.buffer.y), this.sendFocus && this._coreService.triggerDataEvent(c.C0.ESC + "[O"), this.element.classList.remove("focus"), this._onBlur.fire()
+                    this.textarea.value = "", this.refresh(this.buffer.y, this.buffer.y), this._coreService.decPrivateModes.sendFocus && this._coreService.triggerDataEvent(c.C0.ESC + "[O"), this.element.classList.remove("focus"), this._onBlur.fire()
                 }, t.prototype._initGlobal = function() {
                     var e = this;
                     this._bindKeys(), this.register(d.addDisposableDomListener(this.element, "copy", function(t) {
                         e.hasSelection() && a.copyHandler(t, e._selectionService)
                     }));
                     var t = function(t) {
-                        return a.handlePasteEvent(t, e.textarea, e.bracketedPasteMode, e._coreService)
+                        return a.handlePasteEvent(t, e.textarea, e._coreService)
                     };
                     this.register(d.addDisposableDomListener(this.textarea, "paste", t)), this.register(d.addDisposableDomListener(this.element, "paste", t)), _.isFirefox ? this.register(d.addDisposableDomListener(this.element, "mousedown", function(t) {
                         2 === t.button && a.rightClickHandler(t, e.textarea, e.screenElement, e._selectionService, e.options.rightClickSelectsWord)
@@ -3045,25 +4169,27 @@
                 }, t.prototype.open = function(e) {
                     var t = this;
                     if (!e) throw new Error("Terminal requires a parent element.");
-                    U.body.contains(e) || this._logService.warn("Terminal.open was called on an element that was not attached to the DOM"), this._document = e.ownerDocument, this.element = this._document.createElement("div"), this.element.dir = "ltr", this.element.classList.add("terminal"), this.element.classList.add("xterm"), this.element.setAttribute("tabindex", "0"), e.appendChild(this.element);
-                    var r = U.createDocumentFragment();
-                    this._viewportElement = U.createElement("div"), this._viewportElement.classList.add("xterm-viewport"), r.appendChild(this._viewportElement), this._viewportScrollArea = U.createElement("div"), this._viewportScrollArea.classList.add("xterm-scroll-area"), this._viewportElement.appendChild(this._viewportScrollArea), this.screenElement = U.createElement("div"), this.screenElement.classList.add("xterm-screen"), this._helperContainer = U.createElement("div"), this._helperContainer.classList.add("xterm-helpers"), this.screenElement.appendChild(this._helperContainer), r.appendChild(this.screenElement), this.textarea = U.createElement("textarea"), this.textarea.classList.add("xterm-helper-textarea"), this.textarea.setAttribute("aria-label", p.promptLabel), this.textarea.setAttribute("aria-multiline", "false"), this.textarea.setAttribute("autocorrect", "off"), this.textarea.setAttribute("autocapitalize", "off"), this.textarea.setAttribute("spellcheck", "false"), this.textarea.tabIndex = 0, this.register(d.addDisposableDomListener(this.textarea, "focus", function(e) {
+                    D.body.contains(e) || this._logService.debug("Terminal.open was called on an element that was not attached to the DOM"), this._document = e.ownerDocument, this.element = this._document.createElement("div"), this.element.dir = "ltr", this.element.classList.add("terminal"), this.element.classList.add("xterm"), this.element.setAttribute("tabindex", "0"), e.appendChild(this.element);
+                    var r = D.createDocumentFragment();
+                    this._viewportElement = D.createElement("div"), this._viewportElement.classList.add("xterm-viewport"), r.appendChild(this._viewportElement), this._viewportScrollArea = D.createElement("div"), this._viewportScrollArea.classList.add("xterm-scroll-area"), this._viewportElement.appendChild(this._viewportScrollArea), this.screenElement = D.createElement("div"), this.screenElement.classList.add("xterm-screen"), this._helperContainer = D.createElement("div"), this._helperContainer.classList.add("xterm-helpers"), this.screenElement.appendChild(this._helperContainer), r.appendChild(this.screenElement), this.textarea = D.createElement("textarea"), this.textarea.classList.add("xterm-helper-textarea"), this.textarea.setAttribute("aria-label", p.promptLabel), this.textarea.setAttribute("aria-multiline", "false"), this.textarea.setAttribute("autocorrect", "off"), this.textarea.setAttribute("autocapitalize", "off"), this.textarea.setAttribute("spellcheck", "false"), this.textarea.tabIndex = 0, this.register(d.addDisposableDomListener(this.textarea, "focus", function(e) {
                         return t._onTextAreaFocus(e)
                     })), this.register(d.addDisposableDomListener(this.textarea, "blur", function() {
                         return t._onTextAreaBlur()
                     })), this._helperContainer.appendChild(this.textarea);
-                    var i = this._instantiationService.createInstance(j.CoreBrowserService, this.textarea);
-                    this._instantiationService.setService(L.ICoreBrowserService, i), this._charSizeService = this._instantiationService.createInstance(k.CharSizeService, this._document, this._helperContainer), this._instantiationService.setService(L.ICharSizeService, this._charSizeService), this._compositionView = U.createElement("div"), this._compositionView.classList.add("composition-view"), this._compositionHelper = this._instantiationService.createInstance(o.CompositionHelper, this.textarea, this._compositionView), this._helperContainer.appendChild(this._compositionView), this.element.appendChild(r), this._theme = this.options.theme || this._theme, this.options.theme = void 0, this._colorManager = new E.ColorManager(U, this.options.allowTransparency), this.optionsService.onOptionChange(function(e) {
+                    var i = this._instantiationService.createInstance(k.CoreBrowserService, this.textarea);
+                    this._instantiationService.setService(A.ICoreBrowserService, i), this._charSizeService = this._instantiationService.createInstance(R.CharSizeService, this._document, this._helperContainer), this._instantiationService.setService(A.ICharSizeService, this._charSizeService), this._compositionView = D.createElement("div"), this._compositionView.classList.add("composition-view"), this._compositionHelper = this._instantiationService.createInstance(o.CompositionHelper, this.textarea, this._compositionView), this._helperContainer.appendChild(this._compositionView), this.element.appendChild(r), this._theme = this.options.theme || this._theme, this._colorManager = new w.ColorManager(D, this.options.allowTransparency), this.register(this.optionsService.onOptionChange(function(e) {
                         return t._colorManager.onOptionsChange(e)
-                    }), this._colorManager.setTheme(this._theme);
+                    })), this._colorManager.setTheme(this._theme);
                     var n = this._createRenderer();
-                    this._renderService = this._instantiationService.createInstance(A.RenderService, n, this.rows, this.screenElement), this._instantiationService.setService(L.IRenderService, this._renderService), this._renderService.onRender(function(e) {
+                    this._renderService = this.register(this._instantiationService.createInstance(E.RenderService, n, this.rows, this.screenElement)), this._instantiationService.setService(A.IRenderService, this._renderService), this.register(this._renderService.onRenderedBufferChange(function(e) {
                         return t._onRender.fire(e)
-                    }), this.onResize(function(e) {
+                    })), this.onResize(function(e) {
                         return t._renderService.resize(e.cols, e.rows)
-                    }), this._soundService = this._instantiationService.createInstance(v.SoundService), this._instantiationService.setService(L.ISoundService, this._soundService), this._mouseService = this._instantiationService.createInstance(O.MouseService), this._instantiationService.setService(L.IMouseService, this._mouseService), this.viewport = this._instantiationService.createInstance(s.Viewport, function(e, r) {
+                    }), this._soundService = this._instantiationService.createInstance(v.SoundService), this._instantiationService.setService(A.ISoundService, this._soundService), this._mouseService = this._instantiationService.createInstance(x.MouseService), this._instantiationService.setService(A.IMouseService, this._mouseService), this.viewport = this._instantiationService.createInstance(s.Viewport, function(e, r) {
                         return t.scrollLines(e, r)
-                    }, this._viewportElement, this._viewportScrollArea), this.viewport.onThemeChange(this._colorManager.colors), this.register(this.viewport), this.register(this.onCursorMove(function() {
+                    }, this._viewportElement, this._viewportScrollArea), this.viewport.onThemeChange(this._colorManager.colors), this.register(this._inputHandler.onRequestSyncScrollBar(function() {
+                        return t.viewport.syncScrollArea()
+                    })), this.register(this.viewport), this.register(this.onCursorMove(function() {
                         return t._renderService.onCursorMove()
                     })), this.register(this.onResize(function() {
                         return t._renderService.onResize(t.cols, t.rows)
@@ -3073,11 +4199,11 @@
                         return t._renderService.onFocus()
                     })), this.register(this._renderService.onDimensionsChange(function() {
                         return t.viewport.syncScrollArea()
-                    })), this._selectionService = this._instantiationService.createInstance(f.SelectionService, function(e, r) {
-                        return t.scrollLines(e, r)
-                    }, this.element, this.screenElement), this._instantiationService.setService(L.ISelectionService, this._selectionService), this.register(this._selectionService.onSelectionChange(function() {
+                    })), this._selectionService = this.register(this._instantiationService.createInstance(f.SelectionService, this.element, this.screenElement)), this._instantiationService.setService(A.ISelectionService, this._selectionService), this.register(this._selectionService.onRequestScrollLines(function(e) {
+                        return t.scrollLines(e.amount, e.suppressScrollEvent)
+                    })), this.register(this._selectionService.onSelectionChange(function() {
                         return t._onSelectionChange.fire()
-                    })), this.register(this._selectionService.onRedrawRequest(function(e) {
+                    })), this.register(this._selectionService.onRequestRedraw(function(e) {
                         return t._renderService.onSelectionChanged(e.start, e.end, e.columnSelectMode)
                     })), this.register(this._selectionService.onLinuxMouseSelection(function(e) {
                         t.textarea.value = e, t.textarea.focus(), t.textarea.select()
@@ -3087,15 +4213,15 @@
                         return t._selectionService.refresh()
                     })), this._mouseZoneManager = this._instantiationService.createInstance(g.MouseZoneManager, this.element, this.screenElement), this.register(this._mouseZoneManager), this.register(this.onScroll(function() {
                         return t._mouseZoneManager.clearAll()
-                    })), this.linkifier.attachToDom(this.element, this._mouseZoneManager), this.register(d.addDisposableDomListener(this.element, "mousedown", function(e) {
+                    })), this.linkifier.attachToDom(this.element, this._mouseZoneManager), this.linkifier2.attachToDom(this.element, this._mouseService, this._renderService), this.register(d.addDisposableDomListener(this.element, "mousedown", function(e) {
                         return t._selectionService.onMouseDown(e)
-                    })), this.mouseEvents ? (this._selectionService.disable(), this.element.classList.add("enable-mouse-events")) : this._selectionService.enable(), this.options.screenReaderMode && (this._accessibilityManager = new y.AccessibilityManager(this, this._renderService)), this._charSizeService.measure(), this.refresh(0, this.rows - 1), this._initGlobal(), this.bindMouse()
+                    })), this._coreMouseService.areMouseEventsActive ? (this._selectionService.disable(), this.element.classList.add("enable-mouse-events")) : this._selectionService.enable(), this.options.screenReaderMode && (this._accessibilityManager = new y.AccessibilityManager(this, this._renderService)), this._charSizeService.measure(), this.refresh(0, this.rows - 1), this._initGlobal(), this.bindMouse()
                 }, t.prototype._createRenderer = function() {
                     switch (this.options.rendererType) {
                         case "canvas":
-                            return this._instantiationService.createInstance(h.Renderer, this._colorManager.colors, this.screenElement, this.linkifier);
+                            return this._instantiationService.createInstance(h.Renderer, this._colorManager.colors, this.screenElement, this.linkifier, this.linkifier2);
                         case "dom":
-                            return this._instantiationService.createInstance(b.DomRenderer, this._colorManager.colors, this.element, this.screenElement, this._viewportElement, this.linkifier);
+                            return this._instantiationService.createInstance(b.DomRenderer, this._colorManager.colors, this.element, this.screenElement, this._viewportElement, this.linkifier, this.linkifier2);
                         default:
                             throw new Error('Unrecognized rendererType "' + this.options.rendererType + '"')
                     }
@@ -3108,29 +4234,29 @@
                         r = this.element;
 
                     function i(e) {
-                        var r, i, n;
-                        if (!(r = t._mouseService.getRawByteCoords(e, t.screenElement, t.cols, t.rows))) return !1;
+                        var r, i, n = t._mouseService.getRawByteCoords(e, t.screenElement, t.cols, t.rows);
+                        if (!n) return !1;
                         switch (e.overrideType || e.type) {
                             case "mousemove":
-                                n = 32, void 0 === e.buttons ? (i = 3, void 0 !== e.button && (i = e.button < 3 ? e.button : 3)) : i = 1 & e.buttons ? 0 : 4 & e.buttons ? 1 : 2 & e.buttons ? 2 : 3;
+                                i = 32, void 0 === e.buttons ? (r = 3, void 0 !== e.button && (r = e.button < 3 ? e.button : 3)) : r = 1 & e.buttons ? 0 : 4 & e.buttons ? 1 : 2 & e.buttons ? 2 : 3;
                                 break;
                             case "mouseup":
-                                n = 0, i = e.button < 3 ? e.button : 3;
+                                i = 0, r = e.button < 3 ? e.button : 3;
                                 break;
                             case "mousedown":
-                                n = 1, i = e.button < 3 ? e.button : 3;
+                                i = 1, r = e.button < 3 ? e.button : 3;
                                 break;
                             case "wheel":
-                                0 !== e.deltaY && (n = e.deltaY < 0 ? 0 : 1), i = 4;
+                                0 !== e.deltaY && (i = e.deltaY < 0 ? 0 : 1), r = 4;
                                 break;
                             default:
                                 return !1
                         }
-                        return !(void 0 === n || void 0 === i || i > 4) && t._coreMouseService.triggerMouseEvent({
-                            col: r.x - 33,
-                            row: r.y - 33,
-                            button: i,
-                            action: n,
+                        return !(void 0 === i || void 0 === r || r > 4) && t._coreMouseService.triggerMouseEvent({
+                            col: n.x - 33,
+                            row: n.y - 33,
+                            button: r,
+                            action: i,
                             ctrl: e.ctrlKey,
                             alt: e.altKey,
                             shift: e.shiftKey
@@ -3154,10 +4280,12 @@
                         l = function(e) {
                             e.buttons || i(e)
                         };
-                    this._coreMouseService.onProtocolChange(function(t) {
-                        e.mouseEvents = t, t ? ("debug" === e.optionsService.options.logLevel && e._logService.debug("Binding to mouse events:", e._coreMouseService.explainEvents(t)), e.element.classList.add("enable-mouse-events"), e._selectionService.disable()) : (e._logService.debug("Unbinding from mouse events."), e.element.classList.remove("enable-mouse-events"), e._selectionService.enable()), 8 & t ? n.mousemove || (r.addEventListener("mousemove", l), n.mousemove = l) : (r.removeEventListener("mousemove", n.mousemove), n.mousemove = null), 16 & t ? n.wheel || (r.addEventListener("wheel", s), n.wheel = s) : (r.removeEventListener("wheel", n.wheel), n.wheel = null), 2 & t ? n.mouseup || (n.mouseup = o) : (e._document.removeEventListener("mouseup", n.mouseup), n.mouseup = null), 4 & t ? n.mousedrag || (n.mousedrag = a) : (e._document.removeEventListener("mousemove", n.mousedrag), n.mousedrag = null)
-                    }), this._coreMouseService.activeProtocol = this._coreMouseService.activeProtocol, this.register(d.addDisposableDomListener(r, "mousedown", function(t) {
-                        if (t.preventDefault(), e.focus(), e.mouseEvents && !e._selectionService.shouldForceSelection(t)) return i(t), n.mouseup && e._document.addEventListener("mouseup", n.mouseup), n.mousedrag && e._document.addEventListener("mousemove", n.mousedrag), e.cancel(t)
+                    this.register(this._coreMouseService.onProtocolChange(function(t) {
+                        t ? ("debug" === e.optionsService.options.logLevel && e._logService.debug("Binding to mouse events:", e._coreMouseService.explainEvents(t)), e.element.classList.add("enable-mouse-events"), e._selectionService.disable()) : (e._logService.debug("Unbinding from mouse events."), e.element.classList.remove("enable-mouse-events"), e._selectionService.enable()), 8 & t ? n.mousemove || (r.addEventListener("mousemove", l), n.mousemove = l) : (r.removeEventListener("mousemove", n.mousemove), n.mousemove = null), 16 & t ? n.wheel || (r.addEventListener("wheel", s, {
+                            passive: !1
+                        }), n.wheel = s) : (r.removeEventListener("wheel", n.wheel), n.wheel = null), 2 & t ? n.mouseup || (n.mouseup = o) : (e._document.removeEventListener("mouseup", n.mouseup), n.mouseup = null), 4 & t ? n.mousedrag || (n.mousedrag = a) : (e._document.removeEventListener("mousemove", n.mousedrag), n.mousedrag = null)
+                    })), this._coreMouseService.activeProtocol = this._coreMouseService.activeProtocol, this.register(d.addDisposableDomListener(r, "mousedown", function(t) {
+                        if (t.preventDefault(), e.focus(), e._coreMouseService.areMouseEventsActive && !e._selectionService.shouldForceSelection(t)) return i(t), n.mouseup && e._document.addEventListener("mouseup", n.mouseup), n.mousedrag && e._document.addEventListener("mousemove", n.mousedrag), e.cancel(t)
                     })), this.register(d.addDisposableDomListener(r, "wheel", function(t) {
                         if (n.wheel);
                         else if (!e.buffer.hasScrollback) {
@@ -3166,12 +4294,20 @@
                             for (var i = c.C0.ESC + (e._coreService.decPrivateModes.applicationCursorKeys ? "O" : "[") + (t.deltaY < 0 ? "A" : "B"), o = "", s = 0; s < Math.abs(r); s++) o += i;
                             e._coreService.triggerDataEvent(o, !0)
                         }
+                    }, {
+                        passive: !0
                     })), this.register(d.addDisposableDomListener(r, "wheel", function(t) {
                         if (!n.wheel) return e.viewport.onWheel(t) ? void 0 : e.cancel(t)
+                    }, {
+                        passive: !0
                     })), this.register(d.addDisposableDomListener(r, "touchstart", function(t) {
-                        if (!e.mouseEvents) return e.viewport.onTouchStart(t), e.cancel(t)
+                        if (!e._coreMouseService.areMouseEventsActive) return e.viewport.onTouchStart(t), e.cancel(t)
+                    }, {
+                        passive: !0
                     })), this.register(d.addDisposableDomListener(r, "touchmove", function(t) {
-                        if (!e.mouseEvents) return e.viewport.onTouchMove(t) ? void 0 : e.cancel(t)
+                        if (!e._coreMouseService.areMouseEventsActive) return e.viewport.onTouchMove(t) ? void 0 : e.cancel(t)
+                    }, {
+                        passive: !0
                     }))
                 }, t.prototype.refresh = function(e, t) {
                     var r;
@@ -3181,54 +4317,21 @@
                     null === (r = this.linkifier) || void 0 === r || r.linkifyRows(e, t)
                 }, t.prototype.updateCursorStyle = function(e) {
                     this._selectionService && this._selectionService.shouldColumnSelect(e) ? this.element.classList.add("column-select") : this.element.classList.remove("column-select")
-                }, t.prototype.showCursor = function() {
+                }, t.prototype._showCursor = function() {
                     this._coreService.isCursorInitialized || (this._coreService.isCursorInitialized = !0, this.refresh(this.buffer.y, this.buffer.y))
-                }, t.prototype.scroll = function(e, t) {
-                    var r;
-                    void 0 === t && (t = !1), (r = this._blankLine) && r.length === this.cols && r.getFg(0) === e.fg && r.getBg(0) === e.bg || (r = this.buffer.getBlankLine(e, t), this._blankLine = r), r.isWrapped = t;
-                    var i = this.buffer.ybase + this.buffer.scrollTop,
-                        n = this.buffer.ybase + this.buffer.scrollBottom;
-                    if (0 === this.buffer.scrollTop) {
-                        var o = this.buffer.lines.isFull;
-                        n === this.buffer.lines.length - 1 ? o ? this.buffer.lines.recycle().copyFrom(r) : this.buffer.lines.push(r.clone()) : this.buffer.lines.splice(n + 1, 0, r.clone()), o ? this._userScrolling && (this.buffer.ydisp = Math.max(this.buffer.ydisp - 1, 0)) : (this.buffer.ybase++, this._userScrolling || this.buffer.ydisp++)
-                    } else {
-                        var s = n - i + 1;
-                        this.buffer.lines.shiftElements(i + 1, s - 1, -1), this.buffer.lines.set(n, r.clone())
-                    }
-                    this._userScrolling || (this.buffer.ydisp = this.buffer.ybase), this._dirtyRowService.markRangeDirty(this.buffer.scrollTop, this.buffer.scrollBottom), this._onScroll.fire(this.buffer.ydisp)
-                }, t.prototype.scrollLines = function(e, t) {
-                    if (e < 0) {
-                        if (0 === this.buffer.ydisp) return;
-                        this._userScrolling = !0
-                    } else e + this.buffer.ydisp >= this.buffer.ybase && (this._userScrolling = !1);
-                    var r = this.buffer.ydisp;
-                    this.buffer.ydisp = Math.max(Math.min(this.buffer.ydisp + e, this.buffer.ybase), 0), r !== this.buffer.ydisp && (t || this._onScroll.fire(this.buffer.ydisp), this.refresh(0, this.rows - 1))
-                }, t.prototype.scrollPages = function(e) {
-                    this.scrollLines(e * (this.rows - 1))
-                }, t.prototype.scrollToTop = function() {
-                    this.scrollLines(-this.buffer.ydisp)
-                }, t.prototype.scrollToBottom = function() {
-                    this.scrollLines(this.buffer.ybase - this.buffer.ydisp)
-                }, t.prototype.scrollToLine = function(e) {
-                    var t = e - this.buffer.ydisp;
-                    0 !== t && this.scrollLines(t)
+                }, t.prototype.scrollLines = function(t, r) {
+                    e.prototype.scrollLines.call(this, t, r), this.refresh(0, this.rows - 1)
                 }, t.prototype.paste = function(e) {
-                    a.paste(e, this.textarea, this.bracketedPasteMode, this._coreService)
+                    a.paste(e, this.textarea, this._coreService)
                 }, t.prototype.attachCustomKeyEventHandler = function(e) {
                     this._customKeyEventHandler = e
-                }, t.prototype.addEscHandler = function(e, t) {
-                    return this._inputHandler.addEscHandler(e, t)
-                }, t.prototype.addDcsHandler = function(e, t) {
-                    return this._inputHandler.addDcsHandler(e, t)
-                }, t.prototype.addCsiHandler = function(e, t) {
-                    return this._inputHandler.addCsiHandler(e, t)
-                }, t.prototype.addOscHandler = function(e, t) {
-                    return this._inputHandler.addOscHandler(e, t)
                 }, t.prototype.registerLinkMatcher = function(e, t, r) {
                     var i = this.linkifier.registerLinkMatcher(e, t, r);
                     return this.refresh(0, this.rows - 1), i
                 }, t.prototype.deregisterLinkMatcher = function(e) {
                     this.linkifier.deregisterLinkMatcher(e) && this.refresh(0, this.rows - 1)
+                }, t.prototype.registerLinkProvider = function(e) {
+                    return this.linkifier2.registerLinkProvider(e)
                 }, t.prototype.registerCharacterJoiner = function(e) {
                     var t = this._renderService.registerCharacterJoiner(e);
                     return this.refresh(0, this.rows - 1), t
@@ -3238,7 +4341,7 @@
                     get: function() {
                         return this.buffer.markers
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.addMarker = function(e) {
                     if (this.buffer === this.buffers.normal) return this.buffer.addMarker(this.buffer.ybase + this.buffer.y + e)
@@ -3249,7 +4352,7 @@
                 }, t.prototype.getSelection = function() {
                     return this._selectionService ? this._selectionService.selectionText : ""
                 }, t.prototype.getSelectionPosition = function() {
-                    if (this._selectionService.hasSelection) return {
+                    if (this._selectionService && this._selectionService.hasSelection) return {
                         startColumn: this._selectionService.selectionStart[0],
                         startRow: this._selectionService.selectionStart[1],
                         endColumn: this._selectionService.selectionEnd[0],
@@ -3275,7 +4378,7 @@
                     return 1 === t.type && this.selectAll(), !!this._isThirdLevelShift(this.browser, e) || (t.cancel && this.cancel(e, !0), !t.key || (t.key !== c.C0.ETX && t.key !== c.C0.CR || (this.textarea.value = ""), this._onKey.fire({
                         key: t.key,
                         domEvent: e
-                    }), this.showCursor(), this._coreService.triggerDataEvent(t.key, !0), this.optionsService.options.screenReaderMode ? void(this._keyDownHandled = !0) : this.cancel(e, !0)))
+                    }), this._showCursor(), this._coreService.triggerDataEvent(t.key, !0), this.optionsService.options.screenReaderMode ? void(this._keyDownHandled = !0) : this.cancel(e, !0)))
                 }, t.prototype._isThirdLevelShift = function(e, t) {
                     var r = e.isMac && !this.options.macOptionIsMeta && t.altKey && !t.ctrlKey && !t.metaKey || e.isWindows && t.altKey && t.ctrlKey && !t.metaKey;
                     return "keypress" === t.type ? r : r && (!t.keyCode || t.keyCode > 47)
@@ -3296,47 +4399,46 @@
                     return !(!t || (e.altKey || e.ctrlKey || e.metaKey) && !this._isThirdLevelShift(this.browser, e) || (t = String.fromCharCode(t), this._onKey.fire({
                         key: t,
                         domEvent: e
-                    }), this.showCursor(), this._coreService.triggerDataEvent(t, !0), 0))
+                    }), this._showCursor(), this._coreService.triggerDataEvent(t, !0), 0))
                 }, t.prototype.bell = function() {
-                    var e = this;
-                    this._soundBell() && this._soundService.playBellSound(), this._visualBell() && (this.element.classList.add("visual-bell-active"), clearTimeout(this._visualBellTimer), this._visualBellTimer = window.setTimeout(function() {
-                        e.element.classList.remove("visual-bell-active")
-                    }, 200))
-                }, t.prototype.resize = function(e, t) {
+                    this._soundBell() && this._soundService.playBellSound()
+                }, t.prototype.resize = function(t, r) {
+                    t !== this.cols || r !== this.rows ? e.prototype.resize.call(this, t, r) : this._charSizeService && !this._charSizeService.hasValidSize && this._charSizeService.measure()
+                }, t.prototype._afterResize = function(e, t) {
                     var r, i;
-                    isNaN(e) || isNaN(t) || (e !== this.cols || t !== this.rows ? (e < T.MINIMUM_COLS && (e = T.MINIMUM_COLS), t < T.MINIMUM_ROWS && (t = T.MINIMUM_ROWS), this.buffers.resize(e, t), this._bufferService.resize(e, t), this.buffers.setupTabStops(this.cols), null === (r = this._charSizeService) || void 0 === r || r.measure(), null === (i = this.viewport) || void 0 === i || i.syncScrollArea(!0), this.refresh(0, this.rows - 1), this._onResize.fire({
-                        cols: e,
-                        rows: t
-                    })) : this._charSizeService && !this._charSizeService.hasValidSize && this._charSizeService.measure())
+                    null === (r = this._charSizeService) || void 0 === r || r.measure(), null === (i = this.viewport) || void 0 === i || i.syncScrollArea(!0)
                 }, t.prototype.clear = function() {
                     if (0 !== this.buffer.ybase || 0 !== this.buffer.y) {
                         this.buffer.lines.set(0, this.buffer.lines.get(this.buffer.ybase + this.buffer.y)), this.buffer.lines.length = 1, this.buffer.ydisp = 0, this.buffer.ybase = 0, this.buffer.y = 0;
                         for (var e = 1; e < this.rows; e++) this.buffer.lines.push(this.buffer.getBlankLine(S.DEFAULT_ATTR_DATA));
                         this.refresh(0, this.rows - 1), this._onScroll.fire(this.buffer.ydisp)
                     }
-                }, t.prototype.is = function(e) {
-                    return 0 === (this.options.termName + "").indexOf(e)
-                }, t.prototype.handleTitle = function(e) {
-                    this._onTitleChange.fire(e)
                 }, t.prototype.reset = function() {
-                    var e, t;
+                    var t, r;
                     this.options.rows = this.rows, this.options.cols = this.cols;
-                    var r = this._customKeyEventHandler,
-                        i = this._userScrolling;
-                    this._setup(), this._bufferService.reset(), this._charsetService.reset(), this._coreService.reset(), this._coreMouseService.reset(), null === (e = this._selectionService) || void 0 === e || e.reset(), this._customKeyEventHandler = r, this._userScrolling = i, this.refresh(0, this.rows - 1), null === (t = this.viewport) || void 0 === t || t.syncScrollArea()
+                    var i = this._customKeyEventHandler;
+                    this._setup(), e.prototype.reset.call(this), null === (t = this._selectionService) || void 0 === t || t.reset(), this._customKeyEventHandler = i, this.refresh(0, this.rows - 1), null === (r = this.viewport) || void 0 === r || r.syncScrollArea()
+                }, t.prototype._reportWindowsOptions = function(e) {
+                    if (this._renderService) switch (e) {
+                        case l.WindowsOptionsReportType.GET_WIN_SIZE_PIXELS:
+                            var t = this._renderService.dimensions.scaledCanvasWidth.toFixed(0),
+                                r = this._renderService.dimensions.scaledCanvasHeight.toFixed(0);
+                            this._coreService.triggerDataEvent(c.C0.ESC + "[4;" + r + ";" + t + "t");
+                            break;
+                        case l.WindowsOptionsReportType.GET_CELL_SIZE_PIXELS:
+                            var i = this._renderService.dimensions.scaledCellWidth.toFixed(0),
+                                n = this._renderService.dimensions.scaledCellHeight.toFixed(0);
+                            this._coreService.triggerDataEvent(c.C0.ESC + "[6;" + n + ";" + i + "t")
+                    }
                 }, t.prototype.cancel = function(e, t) {
                     if (this.options.cancelEvents || t) return e.preventDefault(), e.stopPropagation(), !1
                 }, t.prototype._visualBell = function() {
                     return !1
                 }, t.prototype._soundBell = function() {
                     return "sound" === this.options.bellStyle
-                }, t.prototype.write = function(e, t) {
-                    this._writeBuffer.write(e, t)
-                }, t.prototype.writeSync = function(e) {
-                    this._writeBuffer.writeSync(e)
                 }, t
-            }(D.Disposable);
-        t.Terminal = q
+            }(T.CoreTerminal);
+        t.Terminal = O
     }, function(e, t, r) {
         "use strict";
         var i = this && this.__decorate || function(e, t, r, i) {
@@ -3354,9 +4456,9 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(4),
-            s = r(0),
+        }), t.CompositionHelper = void 0;
+        var o = r(5),
+            s = r(1),
             a = function() {
                 function e(e, t, r, i, n, o) {
                     this._textarea = e, this._compositionView = t, this._bufferService = r, this._optionsService = i, this._charSizeService = n, this._coreService = o, this._isComposing = !1, this._isSendingComposition = !1, this._compositionPosition = {
@@ -3457,16 +4559,15 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.Viewport = void 0;
         var a = r(2),
-            c = r(8),
-            l = r(4),
-            h = r(0),
-            u = 15,
-            f = function(e) {
+            c = r(7),
+            l = r(5),
+            h = r(1),
+            u = function(e) {
                 function t(t, r, i, n, o, s, a) {
                     var l = e.call(this) || this;
-                    return l._scrollLines = t, l._viewportElement = r, l._scrollArea = i, l._bufferService = n, l._optionsService = o, l._charSizeService = s, l._renderService = a, l.scrollBarWidth = 0, l._currentRowHeight = 0, l._lastRecordedBufferLength = 0, l._lastRecordedViewportHeight = 0, l._lastRecordedBufferHeight = 0, l._lastTouchY = 0, l._lastScrollTop = 0, l._wheelPartialScroll = 0, l._refreshAnimationFrame = null, l._ignoreNextScrollEvent = !1, l.scrollBarWidth = l._viewportElement.offsetWidth - l._scrollArea.offsetWidth || u, l.register(c.addDisposableDomListener(l._viewportElement, "scroll", l._onScroll.bind(l))), setTimeout(function() {
+                    return l._scrollLines = t, l._viewportElement = r, l._scrollArea = i, l._bufferService = n, l._optionsService = o, l._charSizeService = s, l._renderService = a, l.scrollBarWidth = 0, l._currentRowHeight = 0, l._lastRecordedBufferLength = 0, l._lastRecordedViewportHeight = 0, l._lastRecordedBufferHeight = 0, l._lastTouchY = 0, l._lastScrollTop = 0, l._wheelPartialScroll = 0, l._refreshAnimationFrame = null, l._ignoreNextScrollEvent = !1, l.scrollBarWidth = l._viewportElement.offsetWidth - l._scrollArea.offsetWidth || 15, l.register(c.addDisposableDomListener(l._viewportElement, "scroll", l._onScroll.bind(l))), setTimeout(function() {
                         return l.syncScrollArea()
                     }, 0), l
                 }
@@ -3523,7 +4624,7 @@
                     return this._lastTouchY = e.touches[0].pageY, 0 !== t && (this._viewportElement.scrollTop += t, this._bubbleScroll(e, t))
                 }, o([s(3, h.IBufferService), s(4, h.IOptionsService), s(5, l.ICharSizeService), s(6, l.IRenderService)], t)
             }(a.Disposable);
-        t.Viewport = f
+        t.Viewport = u
     }, function(e, t, r) {
         "use strict";
 
@@ -3535,8 +4636,8 @@
             return t ? "[200~" + e + "[201~" : e
         }
 
-        function o(e, t, r, o) {
-            e = n(e = i(e), r), o.triggerDataEvent(e, !0), t.value = ""
+        function o(e, t, r) {
+            e = n(e = i(e), r.decPrivateModes.bracketedPasteMode), r.triggerDataEvent(e, !0), t.value = ""
         }
 
         function s(e, t, r) {
@@ -3549,10 +4650,10 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.prepareTextForTerminal = i, t.bracketTextForPaste = n, t.copyHandler = function(e, t) {
+        }), t.rightClickHandler = t.moveTextAreaUnderMouseCursor = t.paste = t.handlePasteEvent = t.copyHandler = t.bracketTextForPaste = t.prepareTextForTerminal = void 0, t.prepareTextForTerminal = i, t.bracketTextForPaste = n, t.copyHandler = function(e, t) {
             e.clipboardData && e.clipboardData.setData("text/plain", t.selectionText), e.preventDefault()
-        }, t.handlePasteEvent = function(e, t, r, i) {
-            e.stopPropagation(), e.clipboardData && o(e.clipboardData.getData("text/plain"), t, r, i)
+        }, t.handlePasteEvent = function(e, t, r) {
+            e.stopPropagation(), e.clipboardData && o(e.clipboardData.getData("text/plain"), t, r)
         }, t.paste = o, t.moveTextAreaUnderMouseCursor = s, t.rightClickHandler = function(e, t, r, i, n) {
             s(e, t, r), n && !i.isClickInSelection(e) && i.selectWordAtCursor(e), t.value = i.selectionText, t.select()
         }
@@ -3575,1045 +4676,12 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(12),
-            s = r(18),
-            a = r(38),
-            c = r(2),
-            l = r(15),
-            h = r(7),
-            u = r(16),
-            f = r(1),
-            _ = r(3),
-            d = r(5),
-            p = r(6),
-            v = r(20),
-            g = r(22),
-            y = r(4),
-            b = {
-                "(": 0,
-                ")": 1,
-                "*": 2,
-                "+": 3,
-                "-": 1,
-                ".": 2
-            };
-
-        function m(e, t) {
-            if (e > 24) return t.setWinLines || !1;
-            switch (e) {
-                case 1:
-                    return !!t.restoreWin;
-                case 2:
-                    return !!t.minimizeWin;
-                case 3:
-                    return !!t.setWinPosition;
-                case 4:
-                    return !!t.setWinSizePixels;
-                case 5:
-                    return !!t.raiseWin;
-                case 6:
-                    return !!t.lowerWin;
-                case 7:
-                    return !!t.refreshWin;
-                case 8:
-                    return !!t.setWinSizeChars;
-                case 9:
-                    return !!t.maximizeWin;
-                case 10:
-                    return !!t.fullscreenWin;
-                case 11:
-                    return !!t.getWinState;
-                case 13:
-                    return !!t.getWinPosition;
-                case 14:
-                    return !!t.getWinSizePixels;
-                case 15:
-                    return !!t.getScreenSizePixels;
-                case 16:
-                    return !!t.getCellSizePixels;
-                case 18:
-                    return !!t.getWinSizeChars;
-                case 19:
-                    return !!t.getScreenSizeChars;
-                case 20:
-                    return !!t.getIconTitle;
-                case 21:
-                    return !!t.getWinTitle;
-                case 22:
-                    return !!t.pushTitle;
-                case 23:
-                    return !!t.popTitle;
-                case 24:
-                    return !!t.setWinLines
-            }
-            return !1
-        }
-        var C = function() {
-                function e(e, t, r, i) {
-                    this._bufferService = e, this._coreService = t, this._logService = r, this._optionsService = i, this._data = new Uint32Array(0)
-                }
-                return e.prototype.hook = function(e) {
-                    this._data = new Uint32Array(0)
-                }, e.prototype.put = function(e, t, r) {
-                    this._data = l.concat(this._data, e.subarray(t, r))
-                }, e.prototype.unhook = function(e) {
-                    if (e) {
-                        var t = h.utf32ToString(this._data);
-                        switch (this._data = new Uint32Array(0), t) {
-                            case '"q':
-                                return this._coreService.triggerDataEvent(o.C0.ESC + 'P1$r0"q' + o.C0.ESC + "\\");
-                            case '"p':
-                                return this._coreService.triggerDataEvent(o.C0.ESC + 'P1$r61;1"p' + o.C0.ESC + "\\");
-                            case "r":
-                                var r = this._bufferService.buffer.scrollTop + 1 + ";" + (this._bufferService.buffer.scrollBottom + 1) + "r";
-                                return this._coreService.triggerDataEvent(o.C0.ESC + "P1$r" + r + o.C0.ESC + "\\");
-                            case "m":
-                                return this._coreService.triggerDataEvent(o.C0.ESC + "P1$r0m" + o.C0.ESC + "\\");
-                            case " q":
-                                var i = {
-                                    block: 2,
-                                    underline: 4,
-                                    bar: 6
-                                } [this._optionsService.options.cursorStyle];
-                                return i -= this._optionsService.options.cursorBlink ? 1 : 0, this._coreService.triggerDataEvent(o.C0.ESC + "P1$r" + i + " q" + o.C0.ESC + "\\");
-                            default:
-                                this._logService.debug("Unknown DCS $q %s", t), this._coreService.triggerDataEvent(o.C0.ESC + "P0$r" + o.C0.ESC + "\\")
-                        }
-                    } else this._data = new Uint32Array(0)
-                }, e
-            }(),
-            S = function(e) {
-                function t(t, r, i, n, c, l, _, p, g, y, b) {
-                    void 0 === b && (b = new a.EscapeSequenceParser);
-                    var m = e.call(this) || this;
-                    m._terminal = t, m._bufferService = r, m._charsetService = i, m._coreService = n, m._dirtyRowService = c, m._logService = l, m._optionsService = _, m._coreMouseService = p, m._unicodeService = g, m._instantiationService = y, m._parser = b, m._parseBuffer = new Uint32Array(4096), m._stringDecoder = new h.StringToUtf32, m._utf8Decoder = new h.Utf8ToUtf32, m._workCell = new d.CellData, m._windowTitle = "", m._iconName = "", m._windowTitleStack = [], m._iconNameStack = [], m._curAttrData = u.DEFAULT_ATTR_DATA.clone(), m._eraseAttrDataInternal = u.DEFAULT_ATTR_DATA.clone(), m._onRequestRefreshRows = new f.EventEmitter, m._onRequestReset = new f.EventEmitter, m._onRequestBell = new f.EventEmitter, m._onCursorMove = new f.EventEmitter, m._onLineFeed = new f.EventEmitter, m._onScroll = new f.EventEmitter, m.register(m._parser), m._parser.setCsiHandlerFallback(function(e, t) {
-                        m._logService.debug("Unknown CSI code: ", {
-                            identifier: m._parser.identToString(e),
-                            params: t.toArray()
-                        })
-                    }), m._parser.setEscHandlerFallback(function(e) {
-                        m._logService.debug("Unknown ESC code: ", {
-                            identifier: m._parser.identToString(e)
-                        })
-                    }), m._parser.setExecuteHandlerFallback(function(e) {
-                        m._logService.debug("Unknown EXECUTE code: ", {
-                            code: e
-                        })
-                    }), m._parser.setOscHandlerFallback(function(e, t, r) {
-                        m._logService.debug("Unknown OSC code: ", {
-                            identifier: e,
-                            action: t,
-                            data: r
-                        })
-                    }), m._parser.setDcsHandlerFallback(function(e, t, r) {
-                        "HOOK" === t && (r = r.toArray()), m._logService.debug("Unknown DCS code: ", {
-                            identifier: m._parser.identToString(e),
-                            action: t,
-                            payload: r
-                        })
-                    }), m._parser.setPrintHandler(function(e, t, r) {
-                        return m.print(e, t, r)
-                    }), m._parser.setCsiHandler({
-                        final: "@"
-                    }, function(e) {
-                        return m.insertChars(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: " ",
-                        final: "@"
-                    }, function(e) {
-                        return m.scrollLeft(e)
-                    }), m._parser.setCsiHandler({
-                        final: "A"
-                    }, function(e) {
-                        return m.cursorUp(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: " ",
-                        final: "A"
-                    }, function(e) {
-                        return m.scrollRight(e)
-                    }), m._parser.setCsiHandler({
-                        final: "B"
-                    }, function(e) {
-                        return m.cursorDown(e)
-                    }), m._parser.setCsiHandler({
-                        final: "C"
-                    }, function(e) {
-                        return m.cursorForward(e)
-                    }), m._parser.setCsiHandler({
-                        final: "D"
-                    }, function(e) {
-                        return m.cursorBackward(e)
-                    }), m._parser.setCsiHandler({
-                        final: "E"
-                    }, function(e) {
-                        return m.cursorNextLine(e)
-                    }), m._parser.setCsiHandler({
-                        final: "F"
-                    }, function(e) {
-                        return m.cursorPrecedingLine(e)
-                    }), m._parser.setCsiHandler({
-                        final: "G"
-                    }, function(e) {
-                        return m.cursorCharAbsolute(e)
-                    }), m._parser.setCsiHandler({
-                        final: "H"
-                    }, function(e) {
-                        return m.cursorPosition(e)
-                    }), m._parser.setCsiHandler({
-                        final: "I"
-                    }, function(e) {
-                        return m.cursorForwardTab(e)
-                    }), m._parser.setCsiHandler({
-                        final: "J"
-                    }, function(e) {
-                        return m.eraseInDisplay(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: "?",
-                        final: "J"
-                    }, function(e) {
-                        return m.eraseInDisplay(e)
-                    }), m._parser.setCsiHandler({
-                        final: "K"
-                    }, function(e) {
-                        return m.eraseInLine(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: "?",
-                        final: "K"
-                    }, function(e) {
-                        return m.eraseInLine(e)
-                    }), m._parser.setCsiHandler({
-                        final: "L"
-                    }, function(e) {
-                        return m.insertLines(e)
-                    }), m._parser.setCsiHandler({
-                        final: "M"
-                    }, function(e) {
-                        return m.deleteLines(e)
-                    }), m._parser.setCsiHandler({
-                        final: "P"
-                    }, function(e) {
-                        return m.deleteChars(e)
-                    }), m._parser.setCsiHandler({
-                        final: "S"
-                    }, function(e) {
-                        return m.scrollUp(e)
-                    }), m._parser.setCsiHandler({
-                        final: "T"
-                    }, function(e) {
-                        return m.scrollDown(e)
-                    }), m._parser.setCsiHandler({
-                        final: "X"
-                    }, function(e) {
-                        return m.eraseChars(e)
-                    }), m._parser.setCsiHandler({
-                        final: "Z"
-                    }, function(e) {
-                        return m.cursorBackwardTab(e)
-                    }), m._parser.setCsiHandler({
-                        final: "`"
-                    }, function(e) {
-                        return m.charPosAbsolute(e)
-                    }), m._parser.setCsiHandler({
-                        final: "a"
-                    }, function(e) {
-                        return m.hPositionRelative(e)
-                    }), m._parser.setCsiHandler({
-                        final: "b"
-                    }, function(e) {
-                        return m.repeatPrecedingCharacter(e)
-                    }), m._parser.setCsiHandler({
-                        final: "c"
-                    }, function(e) {
-                        return m.sendDeviceAttributesPrimary(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: ">",
-                        final: "c"
-                    }, function(e) {
-                        return m.sendDeviceAttributesSecondary(e)
-                    }), m._parser.setCsiHandler({
-                        final: "d"
-                    }, function(e) {
-                        return m.linePosAbsolute(e)
-                    }), m._parser.setCsiHandler({
-                        final: "e"
-                    }, function(e) {
-                        return m.vPositionRelative(e)
-                    }), m._parser.setCsiHandler({
-                        final: "f"
-                    }, function(e) {
-                        return m.hVPosition(e)
-                    }), m._parser.setCsiHandler({
-                        final: "g"
-                    }, function(e) {
-                        return m.tabClear(e)
-                    }), m._parser.setCsiHandler({
-                        final: "h"
-                    }, function(e) {
-                        return m.setMode(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: "?",
-                        final: "h"
-                    }, function(e) {
-                        return m.setModePrivate(e)
-                    }), m._parser.setCsiHandler({
-                        final: "l"
-                    }, function(e) {
-                        return m.resetMode(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: "?",
-                        final: "l"
-                    }, function(e) {
-                        return m.resetModePrivate(e)
-                    }), m._parser.setCsiHandler({
-                        final: "m"
-                    }, function(e) {
-                        return m.charAttributes(e)
-                    }), m._parser.setCsiHandler({
-                        final: "n"
-                    }, function(e) {
-                        return m.deviceStatus(e)
-                    }), m._parser.setCsiHandler({
-                        prefix: "?",
-                        final: "n"
-                    }, function(e) {
-                        return m.deviceStatusPrivate(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: "!",
-                        final: "p"
-                    }, function(e) {
-                        return m.softReset(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: " ",
-                        final: "q"
-                    }, function(e) {
-                        return m.setCursorStyle(e)
-                    }), m._parser.setCsiHandler({
-                        final: "r"
-                    }, function(e) {
-                        return m.setScrollRegion(e)
-                    }), m._parser.setCsiHandler({
-                        final: "s"
-                    }, function(e) {
-                        return m.saveCursor(e)
-                    }), m._parser.setCsiHandler({
-                        final: "t"
-                    }, function(e) {
-                        return m.windowOptions(e)
-                    }), m._parser.setCsiHandler({
-                        final: "u"
-                    }, function(e) {
-                        return m.restoreCursor(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: "'",
-                        final: "}"
-                    }, function(e) {
-                        return m.insertColumns(e)
-                    }), m._parser.setCsiHandler({
-                        intermediates: "'",
-                        final: "~"
-                    }, function(e) {
-                        return m.deleteColumns(e)
-                    }), m._parser.setExecuteHandler(o.C0.BEL, function() {
-                        return m.bell()
-                    }), m._parser.setExecuteHandler(o.C0.LF, function() {
-                        return m.lineFeed()
-                    }), m._parser.setExecuteHandler(o.C0.VT, function() {
-                        return m.lineFeed()
-                    }), m._parser.setExecuteHandler(o.C0.FF, function() {
-                        return m.lineFeed()
-                    }), m._parser.setExecuteHandler(o.C0.CR, function() {
-                        return m.carriageReturn()
-                    }), m._parser.setExecuteHandler(o.C0.BS, function() {
-                        return m.backspace()
-                    }), m._parser.setExecuteHandler(o.C0.HT, function() {
-                        return m.tab()
-                    }), m._parser.setExecuteHandler(o.C0.SO, function() {
-                        return m.shiftOut()
-                    }), m._parser.setExecuteHandler(o.C0.SI, function() {
-                        return m.shiftIn()
-                    }), m._parser.setExecuteHandler(o.C1.IND, function() {
-                        return m.index()
-                    }), m._parser.setExecuteHandler(o.C1.NEL, function() {
-                        return m.nextLine()
-                    }), m._parser.setExecuteHandler(o.C1.HTS, function() {
-                        return m.tabSet()
-                    }), m._parser.setOscHandler(0, new v.OscHandler(function(e) {
-                        m.setTitle(e), m.setIconName(e)
-                    })), m._parser.setOscHandler(1, new v.OscHandler(function(e) {
-                        return m.setIconName(e)
-                    })), m._parser.setOscHandler(2, new v.OscHandler(function(e) {
-                        return m.setTitle(e)
-                    })), m._parser.setEscHandler({
-                        final: "7"
-                    }, function() {
-                        return m.saveCursor()
-                    }), m._parser.setEscHandler({
-                        final: "8"
-                    }, function() {
-                        return m.restoreCursor()
-                    }), m._parser.setEscHandler({
-                        final: "D"
-                    }, function() {
-                        return m.index()
-                    }), m._parser.setEscHandler({
-                        final: "E"
-                    }, function() {
-                        return m.nextLine()
-                    }), m._parser.setEscHandler({
-                        final: "H"
-                    }, function() {
-                        return m.tabSet()
-                    }), m._parser.setEscHandler({
-                        final: "M"
-                    }, function() {
-                        return m.reverseIndex()
-                    }), m._parser.setEscHandler({
-                        final: "="
-                    }, function() {
-                        return m.keypadApplicationMode()
-                    }), m._parser.setEscHandler({
-                        final: ">"
-                    }, function() {
-                        return m.keypadNumericMode()
-                    }), m._parser.setEscHandler({
-                        final: "c"
-                    }, function() {
-                        return m.fullReset()
-                    }), m._parser.setEscHandler({
-                        final: "n"
-                    }, function() {
-                        return m.setgLevel(2)
-                    }), m._parser.setEscHandler({
-                        final: "o"
-                    }, function() {
-                        return m.setgLevel(3)
-                    }), m._parser.setEscHandler({
-                        final: "|"
-                    }, function() {
-                        return m.setgLevel(3)
-                    }), m._parser.setEscHandler({
-                        final: "}"
-                    }, function() {
-                        return m.setgLevel(2)
-                    }), m._parser.setEscHandler({
-                        final: "~"
-                    }, function() {
-                        return m.setgLevel(1)
-                    }), m._parser.setEscHandler({
-                        intermediates: "%",
-                        final: "@"
-                    }, function() {
-                        return m.selectDefaultCharset()
-                    }), m._parser.setEscHandler({
-                        intermediates: "%",
-                        final: "G"
-                    }, function() {
-                        return m.selectDefaultCharset()
-                    });
-                    var S = function(e) {
-                            w._parser.setEscHandler({
-                                intermediates: "(",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("(" + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: ")",
-                                final: e
-                            }, function() {
-                                return m.selectCharset(")" + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: "*",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("*" + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: "+",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("+" + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: "-",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("-" + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: ".",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("." + e)
-                            }), w._parser.setEscHandler({
-                                intermediates: "/",
-                                final: e
-                            }, function() {
-                                return m.selectCharset("/" + e)
-                            })
-                        },
-                        w = this;
-                    for (var E in s.CHARSETS) S(E);
-                    return m._parser.setEscHandler({
-                        intermediates: "#",
-                        final: "8"
-                    }, function() {
-                        return m.screenAlignmentPattern()
-                    }), m._parser.setErrorHandler(function(e) {
-                        return m._logService.error("Parsing error: ", e), e
-                    }), m._parser.setDcsHandler({
-                        intermediates: "$",
-                        final: "q"
-                    }, new C(m._bufferService, m._coreService, m._logService, m._optionsService)), m
-                }
-                return n(t, e), Object.defineProperty(t.prototype, "onRequestRefreshRows", {
-                    get: function() {
-                        return this._onRequestRefreshRows.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onRequestReset", {
-                    get: function() {
-                        return this._onRequestReset.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onRequestBell", {
-                    get: function() {
-                        return this._onRequestBell.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onCursorMove", {
-                    get: function() {
-                        return this._onCursorMove.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onLineFeed", {
-                    get: function() {
-                        return this._onLineFeed.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(t.prototype, "onScroll", {
-                    get: function() {
-                        return this._onScroll.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), t.prototype.dispose = function() {
-                    e.prototype.dispose.call(this)
-                }, t.prototype.parse = function(e) {
-                    var t = this._bufferService.buffer,
-                        r = t.x,
-                        i = t.y;
-                    if (this._logService.debug("parsing data", e), this._parseBuffer.length < e.length && this._parseBuffer.length < 131072 && (this._parseBuffer = new Uint32Array(Math.min(e.length, 131072))), this._dirtyRowService.clearRange(), e.length > 131072)
-                        for (var n = 0; n < e.length; n += 131072) {
-                            var o = n + 131072 < e.length ? n + 131072 : e.length,
-                                s = "string" == typeof e ? this._stringDecoder.decode(e.substring(n, o), this._parseBuffer) : this._utf8Decoder.decode(e.subarray(n, o), this._parseBuffer);
-                            this._parser.parse(this._parseBuffer, s)
-                        } else s = "string" == typeof e ? this._stringDecoder.decode(e, this._parseBuffer) : this._utf8Decoder.decode(e, this._parseBuffer), this._parser.parse(this._parseBuffer, s);
-                    (t = this._bufferService.buffer).x === r && t.y === i || this._onCursorMove.fire(), this._onRequestRefreshRows.fire(this._dirtyRowService.start, this._dirtyRowService.end)
-                }, t.prototype.print = function(e, t, r) {
-                    var i, n, o = this._bufferService.buffer,
-                        s = this._charsetService.charset,
-                        a = this._optionsService.options.screenReaderMode,
-                        c = this._bufferService.cols,
-                        l = this._coreService.decPrivateModes.wraparound,
-                        u = this._terminal.insertMode,
-                        f = this._curAttrData,
-                        d = o.lines.get(o.y + o.ybase);
-                    this._dirtyRowService.markDirty(o.y), o.x && r - t > 0 && 2 === d.getWidth(o.x - 1) && d.setCellFromCodePoint(o.x - 1, 0, 1, f.fg, f.bg);
-                    for (var p = t; p < r; ++p) {
-                        if (i = e[p], n = this._unicodeService.wcwidth(i), i < 127 && s) {
-                            var v = s[String.fromCharCode(i)];
-                            v && (i = v.charCodeAt(0))
-                        }
-                        if (a && this._terminal.onA11yCharEmitter.fire(h.stringFromCodePoint(i)), n || !o.x) {
-                            if (o.x + n - 1 >= c)
-                                if (l) o.x = 0, o.y++, o.y === o.scrollBottom + 1 ? (o.y--, this._terminal.scroll(this._eraseAttrData(), !0)) : (o.y >= this._bufferService.rows && (o.y = this._bufferService.rows - 1), o.lines.get(o.y).isWrapped = !0), d = o.lines.get(o.y + o.ybase);
-                                else if (o.x = c - 1, 2 === n) continue;
-                            if (u && (d.insertCells(o.x, n, o.getNullCell(f), f), 2 === d.getWidth(c - 1) && d.setCellFromCodePoint(c - 1, _.NULL_CELL_CODE, _.NULL_CELL_WIDTH, f.fg, f.bg)), d.setCellFromCodePoint(o.x++, i, n, f.fg, f.bg), n > 0)
-                                for (; --n;) d.setCellFromCodePoint(o.x++, 0, 0, f.fg, f.bg)
-                        } else d.getWidth(o.x - 1) ? d.addCodepointToCell(o.x - 1, i) : d.addCodepointToCell(o.x - 2, i)
-                    }
-                    r - t > 0 && (d.loadCell(o.x - 1, this._workCell), 2 === this._workCell.getWidth() || this._workCell.getCode() > 65535 ? this._parser.precedingCodepoint = 0 : this._workCell.isCombined() ? this._parser.precedingCodepoint = this._workCell.getChars().charCodeAt(0) : this._parser.precedingCodepoint = this._workCell.content), o.x < c && r - t > 0 && 0 === d.getWidth(o.x) && !d.hasContent(o.x) && d.setCellFromCodePoint(o.x, 0, 1, f.fg, f.bg), this._dirtyRowService.markDirty(o.y)
-                }, t.prototype.addCsiHandler = function(e, t) {
-                    var r = this;
-                    return "t" !== e.final || e.prefix || e.intermediates ? this._parser.addCsiHandler(e, t) : this._parser.addCsiHandler(e, function(e) {
-                        return !m(e.params[0], r._optionsService.options.windowOptions) || t(e)
-                    })
-                }, t.prototype.addDcsHandler = function(e, t) {
-                    return this._parser.addDcsHandler(e, new g.DcsHandler(t))
-                }, t.prototype.addEscHandler = function(e, t) {
-                    return this._parser.addEscHandler(e, t)
-                }, t.prototype.addOscHandler = function(e, t) {
-                    return this._parser.addOscHandler(e, new v.OscHandler(t))
-                }, t.prototype.bell = function() {
-                    this._onRequestBell.fire()
-                }, t.prototype.lineFeed = function() {
-                    var e = this._bufferService.buffer;
-                    this._dirtyRowService.markDirty(e.y), this._optionsService.options.convertEol && (e.x = 0), e.y++, e.y === e.scrollBottom + 1 ? (e.y--, this._terminal.scroll(this._eraseAttrData())) : e.y >= this._bufferService.rows && (e.y = this._bufferService.rows - 1), e.x >= this._bufferService.cols && e.x--, this._dirtyRowService.markDirty(e.y), this._onLineFeed.fire()
-                }, t.prototype.carriageReturn = function() {
-                    this._bufferService.buffer.x = 0
-                }, t.prototype.backspace = function() {
-                    this._restrictCursor(), this._bufferService.buffer.x > 0 && this._bufferService.buffer.x--
-                }, t.prototype.tab = function() {
-                    if (!(this._bufferService.buffer.x >= this._bufferService.cols)) {
-                        var e = this._bufferService.buffer.x;
-                        this._bufferService.buffer.x = this._bufferService.buffer.nextStop(), this._optionsService.options.screenReaderMode && this._terminal.onA11yTabEmitter.fire(this._bufferService.buffer.x - e)
-                    }
-                }, t.prototype.shiftOut = function() {
-                    this._charsetService.setgLevel(1)
-                }, t.prototype.shiftIn = function() {
-                    this._charsetService.setgLevel(0)
-                }, t.prototype._restrictCursor = function() {
-                    this._bufferService.buffer.x = Math.min(this._bufferService.cols - 1, Math.max(0, this._bufferService.buffer.x)), this._bufferService.buffer.y = this._coreService.decPrivateModes.origin ? Math.min(this._bufferService.buffer.scrollBottom, Math.max(this._bufferService.buffer.scrollTop, this._bufferService.buffer.y)) : Math.min(this._bufferService.rows - 1, Math.max(0, this._bufferService.buffer.y)), this._dirtyRowService.markDirty(this._bufferService.buffer.y)
-                }, t.prototype._setCursor = function(e, t) {
-                    this._dirtyRowService.markDirty(this._bufferService.buffer.y), this._coreService.decPrivateModes.origin ? (this._bufferService.buffer.x = e, this._bufferService.buffer.y = this._bufferService.buffer.scrollTop + t) : (this._bufferService.buffer.x = e, this._bufferService.buffer.y = t), this._restrictCursor(), this._dirtyRowService.markDirty(this._bufferService.buffer.y)
-                }, t.prototype._moveCursor = function(e, t) {
-                    this._restrictCursor(), this._setCursor(this._bufferService.buffer.x + e, this._bufferService.buffer.y + t)
-                }, t.prototype.cursorUp = function(e) {
-                    var t = this._bufferService.buffer.y - this._bufferService.buffer.scrollTop;
-                    t >= 0 ? this._moveCursor(0, -Math.min(t, e.params[0] || 1)) : this._moveCursor(0, -(e.params[0] || 1))
-                }, t.prototype.cursorDown = function(e) {
-                    var t = this._bufferService.buffer.scrollBottom - this._bufferService.buffer.y;
-                    t >= 0 ? this._moveCursor(0, Math.min(t, e.params[0] || 1)) : this._moveCursor(0, e.params[0] || 1)
-                }, t.prototype.cursorForward = function(e) {
-                    this._moveCursor(e.params[0] || 1, 0)
-                }, t.prototype.cursorBackward = function(e) {
-                    this._moveCursor(-(e.params[0] || 1), 0)
-                }, t.prototype.cursorNextLine = function(e) {
-                    this.cursorDown(e), this._bufferService.buffer.x = 0
-                }, t.prototype.cursorPrecedingLine = function(e) {
-                    this.cursorUp(e), this._bufferService.buffer.x = 0
-                }, t.prototype.cursorCharAbsolute = function(e) {
-                    this._setCursor((e.params[0] || 1) - 1, this._bufferService.buffer.y)
-                }, t.prototype.cursorPosition = function(e) {
-                    this._setCursor(e.length >= 2 ? (e.params[1] || 1) - 1 : 0, (e.params[0] || 1) - 1)
-                }, t.prototype.charPosAbsolute = function(e) {
-                    this._setCursor((e.params[0] || 1) - 1, this._bufferService.buffer.y)
-                }, t.prototype.hPositionRelative = function(e) {
-                    this._moveCursor(e.params[0] || 1, 0)
-                }, t.prototype.linePosAbsolute = function(e) {
-                    this._setCursor(this._bufferService.buffer.x, (e.params[0] || 1) - 1)
-                }, t.prototype.vPositionRelative = function(e) {
-                    this._moveCursor(0, e.params[0] || 1)
-                }, t.prototype.hVPosition = function(e) {
-                    this.cursorPosition(e)
-                }, t.prototype.tabClear = function(e) {
-                    var t = e.params[0];
-                    0 === t ? delete this._bufferService.buffer.tabs[this._bufferService.buffer.x] : 3 === t && (this._bufferService.buffer.tabs = {})
-                }, t.prototype.cursorForwardTab = function(e) {
-                    if (!(this._bufferService.buffer.x >= this._bufferService.cols))
-                        for (var t = e.params[0] || 1; t--;) this._bufferService.buffer.x = this._bufferService.buffer.nextStop()
-                }, t.prototype.cursorBackwardTab = function(e) {
-                    if (!(this._bufferService.buffer.x >= this._bufferService.cols))
-                        for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.x = r.prevStop()
-                }, t.prototype._eraseInBufferLine = function(e, t, r, i) {
-                    void 0 === i && (i = !1);
-                    var n = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + e);
-                    n.replaceCells(t, r, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), i && (n.isWrapped = !1)
-                }, t.prototype._resetBufferLine = function(e) {
-                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.ybase + e);
-                    t.fill(this._bufferService.buffer.getNullCell(this._eraseAttrData())), t.isWrapped = !1
-                }, t.prototype.eraseInDisplay = function(e) {
-                    var t;
-                    switch (this._restrictCursor(), e.params[0]) {
-                        case 0:
-                            for (t = this._bufferService.buffer.y, this._dirtyRowService.markDirty(t), this._eraseInBufferLine(t++, this._bufferService.buffer.x, this._bufferService.cols, 0 === this._bufferService.buffer.x); t < this._bufferService.rows; t++) this._resetBufferLine(t);
-                            this._dirtyRowService.markDirty(t);
-                            break;
-                        case 1:
-                            for (t = this._bufferService.buffer.y, this._dirtyRowService.markDirty(t), this._eraseInBufferLine(t, 0, this._bufferService.buffer.x + 1, !0), this._bufferService.buffer.x + 1 >= this._bufferService.cols && (this._bufferService.buffer.lines.get(t + 1).isWrapped = !1); t--;) this._resetBufferLine(t);
-                            this._dirtyRowService.markDirty(0);
-                            break;
-                        case 2:
-                            for (t = this._bufferService.rows, this._dirtyRowService.markDirty(t - 1); t--;) this._resetBufferLine(t);
-                            this._dirtyRowService.markDirty(0);
-                            break;
-                        case 3:
-                            var r = this._bufferService.buffer.lines.length - this._bufferService.rows;
-                            r > 0 && (this._bufferService.buffer.lines.trimStart(r), this._bufferService.buffer.ybase = Math.max(this._bufferService.buffer.ybase - r, 0), this._bufferService.buffer.ydisp = Math.max(this._bufferService.buffer.ydisp - r, 0), this._onScroll.fire(0))
-                    }
-                }, t.prototype.eraseInLine = function(e) {
-                    switch (this._restrictCursor(), e.params[0]) {
-                        case 0:
-                            this._eraseInBufferLine(this._bufferService.buffer.y, this._bufferService.buffer.x, this._bufferService.cols);
-                            break;
-                        case 1:
-                            this._eraseInBufferLine(this._bufferService.buffer.y, 0, this._bufferService.buffer.x + 1);
-                            break;
-                        case 2:
-                            this._eraseInBufferLine(this._bufferService.buffer.y, 0, this._bufferService.cols)
-                    }
-                    this._dirtyRowService.markDirty(this._bufferService.buffer.y)
-                }, t.prototype.insertLines = function(e) {
-                    this._restrictCursor();
-                    var t = e.params[0] || 1,
-                        r = this._bufferService.buffer;
-                    if (!(r.y > r.scrollBottom || r.y < r.scrollTop)) {
-                        for (var i = r.y + r.ybase, n = this._bufferService.rows - 1 - r.scrollBottom, o = this._bufferService.rows - 1 + r.ybase - n + 1; t--;) r.lines.splice(o - 1, 1), r.lines.splice(i, 0, r.getBlankLine(this._eraseAttrData()));
-                        this._dirtyRowService.markRangeDirty(r.y, r.scrollBottom), r.x = 0
-                    }
-                }, t.prototype.deleteLines = function(e) {
-                    this._restrictCursor();
-                    var t = e.params[0] || 1,
-                        r = this._bufferService.buffer;
-                    if (!(r.y > r.scrollBottom || r.y < r.scrollTop)) {
-                        var i, n = r.y + r.ybase;
-                        for (i = this._bufferService.rows - 1 - r.scrollBottom, i = this._bufferService.rows - 1 + r.ybase - i; t--;) r.lines.splice(n, 1), r.lines.splice(i, 0, r.getBlankLine(this._eraseAttrData()));
-                        this._dirtyRowService.markRangeDirty(r.y, r.scrollBottom), r.x = 0
-                    }
-                }, t.prototype.insertChars = function(e) {
-                    this._restrictCursor();
-                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.y + this._bufferService.buffer.ybase);
-                    t && (t.insertCells(this._bufferService.buffer.x, e.params[0] || 1, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
-                }, t.prototype.deleteChars = function(e) {
-                    this._restrictCursor();
-                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.y + this._bufferService.buffer.ybase);
-                    t && (t.deleteCells(this._bufferService.buffer.x, e.params[0] || 1, this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
-                }, t.prototype.scrollUp = function(e) {
-                    for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.lines.splice(r.ybase + r.scrollTop, 1), r.lines.splice(r.ybase + r.scrollBottom, 0, r.getBlankLine(this._eraseAttrData()));
-                    this._dirtyRowService.markRangeDirty(r.scrollTop, r.scrollBottom)
-                }, t.prototype.scrollDown = function(e) {
-                    for (var t = e.params[0] || 1, r = this._bufferService.buffer; t--;) r.lines.splice(r.ybase + r.scrollBottom, 1), r.lines.splice(r.ybase + r.scrollTop, 0, r.getBlankLine(u.DEFAULT_ATTR_DATA));
-                    this._dirtyRowService.markRangeDirty(r.scrollTop, r.scrollBottom)
-                }, t.prototype.scrollLeft = function(e) {
-                    var t = this._bufferService.buffer;
-                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
-                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
-                            var n = t.lines.get(t.ybase + i);
-                            n.deleteCells(0, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
-                        }
-                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
-                    }
-                }, t.prototype.scrollRight = function(e) {
-                    var t = this._bufferService.buffer;
-                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
-                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
-                            var n = t.lines.get(t.ybase + i);
-                            n.insertCells(0, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
-                        }
-                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
-                    }
-                }, t.prototype.insertColumns = function(e) {
-                    var t = this._bufferService.buffer;
-                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
-                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
-                            var n = this._bufferService.buffer.lines.get(t.ybase + i);
-                            n.insertCells(t.x, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
-                        }
-                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
-                    }
-                }, t.prototype.deleteColumns = function(e) {
-                    var t = this._bufferService.buffer;
-                    if (!(t.y > t.scrollBottom || t.y < t.scrollTop)) {
-                        for (var r = e.params[0] || 1, i = t.scrollTop; i <= t.scrollBottom; ++i) {
-                            var n = t.lines.get(t.ybase + i);
-                            n.deleteCells(t.x, r, t.getNullCell(this._eraseAttrData()), this._eraseAttrData()), n.isWrapped = !1
-                        }
-                        this._dirtyRowService.markRangeDirty(t.scrollTop, t.scrollBottom)
-                    }
-                }, t.prototype.eraseChars = function(e) {
-                    this._restrictCursor();
-                    var t = this._bufferService.buffer.lines.get(this._bufferService.buffer.y + this._bufferService.buffer.ybase);
-                    t && (t.replaceCells(this._bufferService.buffer.x, this._bufferService.buffer.x + (e.params[0] || 1), this._bufferService.buffer.getNullCell(this._eraseAttrData()), this._eraseAttrData()), this._dirtyRowService.markDirty(this._bufferService.buffer.y))
-                }, t.prototype.repeatPrecedingCharacter = function(e) {
-                    if (this._parser.precedingCodepoint) {
-                        for (var t = e.params[0] || 1, r = new Uint32Array(t), i = 0; i < t; ++i) r[i] = this._parser.precedingCodepoint;
-                        this.print(r, 0, r.length)
-                    }
-                }, t.prototype.sendDeviceAttributesPrimary = function(e) {
-                    e.params[0] > 0 || (this._terminal.is("xterm") || this._terminal.is("rxvt-unicode") || this._terminal.is("screen") ? this._coreService.triggerDataEvent(o.C0.ESC + "[?1;2c") : this._terminal.is("linux") && this._coreService.triggerDataEvent(o.C0.ESC + "[?6c"))
-                }, t.prototype.sendDeviceAttributesSecondary = function(e) {
-                    e.params[0] > 0 || (this._terminal.is("xterm") ? this._coreService.triggerDataEvent(o.C0.ESC + "[>0;276;0c") : this._terminal.is("rxvt-unicode") ? this._coreService.triggerDataEvent(o.C0.ESC + "[>85;95;0c") : this._terminal.is("linux") ? this._coreService.triggerDataEvent(e.params[0] + "c") : this._terminal.is("screen") && this._coreService.triggerDataEvent(o.C0.ESC + "[>83;40003;0c"))
-                }, t.prototype.setMode = function(e) {
-                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
-                        case 4:
-                            this._terminal.insertMode = !0
-                    }
-                }, t.prototype.setModePrivate = function(e) {
-                    for (var t, r, i = 0; i < e.length; i++) switch (e.params[i]) {
-                        case 1:
-                            this._coreService.decPrivateModes.applicationCursorKeys = !0;
-                            break;
-                        case 2:
-                            this._charsetService.setgCharset(0, s.DEFAULT_CHARSET), this._charsetService.setgCharset(1, s.DEFAULT_CHARSET), this._charsetService.setgCharset(2, s.DEFAULT_CHARSET), this._charsetService.setgCharset(3, s.DEFAULT_CHARSET);
-                            break;
-                        case 3:
-                            this._optionsService.options.windowOptions.setWinLines && (this._terminal.resize(132, this._bufferService.rows), this._onRequestReset.fire());
-                            break;
-                        case 6:
-                            this._coreService.decPrivateModes.origin = !0, this._setCursor(0, 0);
-                            break;
-                        case 7:
-                            this._coreService.decPrivateModes.wraparound = !0;
-                            break;
-                        case 12:
-                            break;
-                        case 66:
-                            this._logService.debug("Serial port requested application keypad."), this._coreService.decPrivateModes.applicationKeypad = !0, null === (t = this._terminal.viewport) || void 0 === t || t.syncScrollArea();
-                            break;
-                        case 9:
-                            this._coreMouseService.activeProtocol = "X10";
-                            break;
-                        case 1e3:
-                            this._coreMouseService.activeProtocol = "VT200";
-                            break;
-                        case 1002:
-                            this._coreMouseService.activeProtocol = "DRAG";
-                            break;
-                        case 1003:
-                            this._coreMouseService.activeProtocol = "ANY";
-                            break;
-                        case 1004:
-                            this._terminal.sendFocus = !0;
-                            break;
-                        case 1005:
-                            this._logService.debug("DECSET 1005 not supported (see #2507)");
-                            break;
-                        case 1006:
-                            this._coreMouseService.activeEncoding = "SGR";
-                            break;
-                        case 1015:
-                            this._logService.debug("DECSET 1015 not supported (see #2507)");
-                            break;
-                        case 25:
-                            this._coreService.isCursorHidden = !1;
-                            break;
-                        case 1048:
-                            this.saveCursor();
-                            break;
-                        case 1049:
-                            this.saveCursor();
-                        case 47:
-                        case 1047:
-                            this._bufferService.buffers.activateAltBuffer(this._eraseAttrData()), this._onRequestRefreshRows.fire(0, this._bufferService.rows - 1), null === (r = this._terminal.viewport) || void 0 === r || r.syncScrollArea(), this._terminal.showCursor();
-                            break;
-                        case 2004:
-                            this._terminal.bracketedPasteMode = !0
-                    }
-                }, t.prototype.resetMode = function(e) {
-                    for (var t = 0; t < e.length; t++) switch (e.params[t]) {
-                        case 4:
-                            this._terminal.insertMode = !1
-                    }
-                }, t.prototype.resetModePrivate = function(e) {
-                    for (var t, r, i = 0; i < e.length; i++) switch (e.params[i]) {
-                        case 1:
-                            this._coreService.decPrivateModes.applicationCursorKeys = !1;
-                            break;
-                        case 3:
-                            this._optionsService.options.windowOptions.setWinLines && (this._terminal.resize(80, this._bufferService.rows), this._onRequestReset.fire());
-                            break;
-                        case 6:
-                            this._coreService.decPrivateModes.origin = !1, this._setCursor(0, 0);
-                            break;
-                        case 7:
-                            this._coreService.decPrivateModes.wraparound = !1;
-                            break;
-                        case 12:
-                            break;
-                        case 66:
-                            this._logService.debug("Switching back to normal keypad."), this._coreService.decPrivateModes.applicationKeypad = !1, null === (t = this._terminal.viewport) || void 0 === t || t.syncScrollArea();
-                            break;
-                        case 9:
-                        case 1e3:
-                        case 1002:
-                        case 1003:
-                            this._coreMouseService.activeProtocol = "NONE";
-                            break;
-                        case 1004:
-                            this._terminal.sendFocus = !1;
-                            break;
-                        case 1005:
-                            this._logService.debug("DECRST 1005 not supported (see #2507)");
-                            break;
-                        case 1006:
-                            this._coreMouseService.activeEncoding = "DEFAULT";
-                            break;
-                        case 1015:
-                            this._logService.debug("DECRST 1015 not supported (see #2507)");
-                            break;
-                        case 25:
-                            this._coreService.isCursorHidden = !0;
-                            break;
-                        case 1048:
-                            this.restoreCursor();
-                            break;
-                        case 1049:
-                        case 47:
-                        case 1047:
-                            this._bufferService.buffers.activateNormalBuffer(), 1049 === e.params[i] && this.restoreCursor(), this._onRequestRefreshRows.fire(0, this._bufferService.rows - 1), null === (r = this._terminal.viewport) || void 0 === r || r.syncScrollArea(), this._terminal.showCursor();
-                            break;
-                        case 2004:
-                            this._terminal.bracketedPasteMode = !1
-                    }
-                }, t.prototype._extractColor = function(e, t, r) {
-                    var i = [0, 0, -1, 0, 0, 0],
-                        n = 0,
-                        o = 0;
-                    do {
-                        if (i[o + n] = e.params[t + o], e.hasSubParams(t + o)) {
-                            var s = e.getSubParams(t + o),
-                                a = 0;
-                            do {
-                                5 === i[1] && (n = 1), i[o + a + 1 + n] = s[a]
-                            } while (++a < s.length && a + o + 1 + n < i.length);
-                            break
-                        }
-                        if (5 === i[1] && o + n >= 2 || 2 === i[1] && o + n >= 5) break;
-                        i[1] && (n = 1)
-                    } while (++o + t < e.length && o + n < i.length);
-                    for (a = 2; a < i.length; ++a) - 1 === i[a] && (i[a] = 0);
-                    return 38 === i[0] ? 2 === i[1] ? (r.fg |= 50331648, r.fg &= -16777216, r.fg |= p.AttributeData.fromColorRGB([i[3], i[4], i[5]])) : 5 === i[1] && (r.fg &= -50331904, r.fg |= 33554432 | 255 & i[3]) : 48 === i[0] && (2 === i[1] ? (r.bg |= 50331648, r.bg &= -16777216, r.bg |= p.AttributeData.fromColorRGB([i[3], i[4], i[5]])) : 5 === i[1] && (r.bg &= -50331904, r.bg |= 33554432 | 255 & i[3])), o
-                }, t.prototype.charAttributes = function(e) {
-                    if (1 === e.length && 0 === e.params[0]) return this._curAttrData.fg = u.DEFAULT_ATTR_DATA.fg, void(this._curAttrData.bg = u.DEFAULT_ATTR_DATA.bg);
-                    for (var t, r = e.length, i = this._curAttrData, n = 0; n < r; n++)(t = e.params[n]) >= 30 && t <= 37 ? (i.fg &= -50331904, i.fg |= 16777216 | t - 30) : t >= 40 && t <= 47 ? (i.bg &= -50331904, i.bg |= 16777216 | t - 40) : t >= 90 && t <= 97 ? (i.fg &= -50331904, i.fg |= 16777224 | t - 90) : t >= 100 && t <= 107 ? (i.bg &= -50331904, i.bg |= 16777224 | t - 100) : 0 === t ? (i.fg = u.DEFAULT_ATTR_DATA.fg, i.bg = u.DEFAULT_ATTR_DATA.bg) : 1 === t ? i.fg |= 134217728 : 3 === t ? i.bg |= 67108864 : 4 === t ? i.fg |= 268435456 : 5 === t ? i.fg |= 536870912 : 7 === t ? i.fg |= 67108864 : 8 === t ? i.fg |= 1073741824 : 2 === t ? i.bg |= 134217728 : 22 === t ? (i.fg &= -134217729, i.bg &= -134217729) : 23 === t ? i.bg &= -67108865 : 24 === t ? i.fg &= -268435457 : 25 === t ? i.fg &= -536870913 : 27 === t ? i.fg &= -67108865 : 28 === t ? i.fg &= -1073741825 : 39 === t ? (i.fg &= -67108864, i.fg |= 16777215 & u.DEFAULT_ATTR_DATA.fg) : 49 === t ? (i.bg &= -67108864, i.bg |= 16777215 & u.DEFAULT_ATTR_DATA.bg) : 38 === t || 48 === t ? n += this._extractColor(e, n, i) : 100 === t ? (i.fg &= -67108864, i.fg |= 16777215 & u.DEFAULT_ATTR_DATA.fg, i.bg &= -67108864, i.bg |= 16777215 & u.DEFAULT_ATTR_DATA.bg) : this._logService.debug("Unknown SGR attribute: %d.", t)
-                }, t.prototype.deviceStatus = function(e) {
-                    switch (e.params[0]) {
-                        case 5:
-                            this._coreService.triggerDataEvent(o.C0.ESC + "[0n");
-                            break;
-                        case 6:
-                            var t = this._bufferService.buffer.y + 1,
-                                r = this._bufferService.buffer.x + 1;
-                            this._coreService.triggerDataEvent(o.C0.ESC + "[" + t + ";" + r + "R")
-                    }
-                }, t.prototype.deviceStatusPrivate = function(e) {
-                    switch (e.params[0]) {
-                        case 6:
-                            var t = this._bufferService.buffer.y + 1,
-                                r = this._bufferService.buffer.x + 1;
-                            this._coreService.triggerDataEvent(o.C0.ESC + "[?" + t + ";" + r + "R")
-                    }
-                }, t.prototype.softReset = function(e) {
-                    var t;
-                    this._coreService.isCursorHidden = !1, this._terminal.insertMode = !1, null === (t = this._terminal.viewport) || void 0 === t || t.syncScrollArea(), this._bufferService.buffer.scrollTop = 0, this._bufferService.buffer.scrollBottom = this._bufferService.rows - 1, this._curAttrData = u.DEFAULT_ATTR_DATA.clone(), this._bufferService.buffer.x = this._bufferService.buffer.y = 0, this._coreService.reset(), this._charsetService.reset()
-                }, t.prototype.setCursorStyle = function(e) {
-                    var t = e.params[0] || 1;
-                    switch (t) {
-                        case 1:
-                        case 2:
-                            this._optionsService.options.cursorStyle = "block";
-                            break;
-                        case 3:
-                        case 4:
-                            this._optionsService.options.cursorStyle = "underline";
-                            break;
-                        case 5:
-                        case 6:
-                            this._optionsService.options.cursorStyle = "bar"
-                    }
-                    var r = t % 2 == 1;
-                    this._optionsService.options.cursorBlink = r
-                }, t.prototype.setScrollRegion = function(e) {
-                    var t, r = e.params[0] || 1;
-                    (e.length < 2 || (t = e.params[1]) > this._bufferService.rows || 0 === t) && (t = this._bufferService.rows), t > r && (this._bufferService.buffer.scrollTop = r - 1, this._bufferService.buffer.scrollBottom = t - 1, this._setCursor(0, 0))
-                }, t.prototype.windowOptions = function(e) {
-                    if (m(e.params[0], this._optionsService.options.windowOptions)) {
-                        var t = e.length > 1 ? e.params[1] : 0,
-                            r = this._instantiationService.getService(y.IRenderService);
-                        switch (e.params[0]) {
-                            case 14:
-                                if (r && 2 !== t) {
-                                    console.log(r.dimensions);
-                                    var i = r.dimensions.scaledCanvasWidth.toFixed(0),
-                                        n = r.dimensions.scaledCanvasHeight.toFixed(0);
-                                    this._coreService.triggerDataEvent(o.C0.ESC + "[4;" + n + ";" + i + "t")
-                                }
-                                break;
-                            case 16:
-                                r && (i = r.dimensions.scaledCellWidth.toFixed(0), n = r.dimensions.scaledCellHeight.toFixed(0), this._coreService.triggerDataEvent(o.C0.ESC + "[6;" + n + ";" + i + "t"));
-                                break;
-                            case 18:
-                                this._bufferService && this._coreService.triggerDataEvent(o.C0.ESC + "[8;" + this._bufferService.rows + ";" + this._bufferService.cols + "t");
-                                break;
-                            case 22:
-                                0 !== t && 2 !== t || (this._windowTitleStack.push(this._windowTitle), this._windowTitleStack.length > 10 && this._windowTitleStack.shift()), 0 !== t && 1 !== t || (this._iconNameStack.push(this._iconName), this._iconNameStack.length > 10 && this._iconNameStack.shift());
-                                break;
-                            case 23:
-                                0 !== t && 2 !== t || this._windowTitleStack.length && this.setTitle(this._windowTitleStack.pop()), 0 !== t && 1 !== t || this._iconNameStack.length && this.setIconName(this._iconNameStack.pop())
-                        }
-                    }
-                }, t.prototype.saveCursor = function(e) {
-                    this._bufferService.buffer.savedX = this._bufferService.buffer.x, this._bufferService.buffer.savedY = this._bufferService.buffer.ybase + this._bufferService.buffer.y, this._bufferService.buffer.savedCurAttrData.fg = this._curAttrData.fg, this._bufferService.buffer.savedCurAttrData.bg = this._curAttrData.bg, this._bufferService.buffer.savedCharset = this._charsetService.charset
-                }, t.prototype.restoreCursor = function(e) {
-                    this._bufferService.buffer.x = this._bufferService.buffer.savedX || 0, this._bufferService.buffer.y = Math.max(this._bufferService.buffer.savedY - this._bufferService.buffer.ybase, 0), this._curAttrData.fg = this._bufferService.buffer.savedCurAttrData.fg, this._curAttrData.bg = this._bufferService.buffer.savedCurAttrData.bg, this._charsetService.charset = this._savedCharset, this._bufferService.buffer.savedCharset && (this._charsetService.charset = this._bufferService.buffer.savedCharset), this._restrictCursor()
-                }, t.prototype.setTitle = function(e) {
-                    this._windowTitle = e, this._terminal.handleTitle(e)
-                }, t.prototype.setIconName = function(e) {
-                    this._iconName = e
-                }, t.prototype.nextLine = function() {
-                    this._bufferService.buffer.x = 0, this.index()
-                }, t.prototype.keypadApplicationMode = function() {
-                    var e;
-                    this._logService.debug("Serial port requested application keypad."), this._coreService.decPrivateModes.applicationKeypad = !0, null === (e = this._terminal.viewport) || void 0 === e || e.syncScrollArea()
-                }, t.prototype.keypadNumericMode = function() {
-                    var e;
-                    this._logService.debug("Switching back to normal keypad."), this._coreService.decPrivateModes.applicationKeypad = !1, null === (e = this._terminal.viewport) || void 0 === e || e.syncScrollArea()
-                }, t.prototype.selectDefaultCharset = function() {
-                    this._charsetService.setgLevel(0), this._charsetService.setgCharset(0, s.DEFAULT_CHARSET)
-                }, t.prototype.selectCharset = function(e) {
-                    2 === e.length ? "/" !== e[0] && this._charsetService.setgCharset(b[e[0]], s.CHARSETS[e[1]] || s.DEFAULT_CHARSET) : this.selectDefaultCharset()
-                }, t.prototype.index = function() {
-                    this._restrictCursor();
-                    var e = this._bufferService.buffer;
-                    this._bufferService.buffer.y++, e.y === e.scrollBottom + 1 ? (e.y--, this._terminal.scroll(this._eraseAttrData())) : e.y >= this._bufferService.rows && (e.y = this._bufferService.rows - 1), this._restrictCursor()
-                }, t.prototype.tabSet = function() {
-                    this._bufferService.buffer.tabs[this._bufferService.buffer.x] = !0
-                }, t.prototype.reverseIndex = function() {
-                    this._restrictCursor();
-                    var e = this._bufferService.buffer;
-                    if (e.y === e.scrollTop) {
-                        var t = e.scrollBottom - e.scrollTop;
-                        e.lines.shiftElements(e.y + e.ybase, t, 1), e.lines.set(e.y + e.ybase, e.getBlankLine(this._eraseAttrData())), this._dirtyRowService.markRangeDirty(e.scrollTop, e.scrollBottom)
-                    } else e.y--, this._restrictCursor()
-                }, t.prototype.fullReset = function() {
-                    this._parser.reset(), this._onRequestReset.fire()
-                }, t.prototype.reset = function() {
-                    this._curAttrData = u.DEFAULT_ATTR_DATA.clone(), this._eraseAttrDataInternal = u.DEFAULT_ATTR_DATA.clone()
-                }, t.prototype._eraseAttrData = function() {
-                    return this._eraseAttrDataInternal.bg &= -67108864, this._eraseAttrDataInternal.bg |= 67108863 & this._curAttrData.bg, this._eraseAttrDataInternal
-                }, t.prototype.setgLevel = function(e) {
-                    this._charsetService.setgLevel(e)
-                }, t.prototype.screenAlignmentPattern = function() {
-                    var e = new d.CellData;
-                    e.content = 1 << 22 | "E".charCodeAt(0), e.fg = this._curAttrData.fg, e.bg = this._curAttrData.bg;
-                    var t = this._bufferService.buffer;
-                    this._setCursor(0, 0);
-                    for (var r = 0; r < this._bufferService.rows; ++r) {
-                        var i = t.y + t.ybase + r;
-                        t.lines.get(i).fill(e), t.lines.get(i).isWrapped = !1
-                    }
-                    this._dirtyRowService.markAllDirty(), this._setCursor(0, 0)
-                }, t
-            }(c.Disposable);
-        t.InputHandler = S
-    }, function(e, t, r) {
-        "use strict";
-        var i, n = this && this.__extends || (i = function(e, t) {
-            return (i = Object.setPrototypeOf || {
-                    __proto__: []
-                }
-                instanceof Array && function(e, t) {
-                    e.__proto__ = t
-                } || function(e, t) {
-                    for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
-                })(e, t)
-        }, function(e, t) {
-            function r() {
-                this.constructor = e
-            }
-            i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
-        });
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
+        }), t.EscapeSequenceParser = t.VT500_TRANSITION_TABLE = t.TransitionTable = void 0;
         var o = r(2),
             s = r(15),
-            a = r(19),
-            c = r(20),
-            l = r(22),
+            a = r(21),
+            c = r(22),
+            l = r(24),
             h = function() {
                 function e(e) {
                     this.table = new Uint8Array(e)
@@ -4645,7 +4713,7 @@
             function r(r) {
                 void 0 === r && (r = t.VT500_TRANSITION_TABLE);
                 var i = e.call(this) || this;
-                return i.TRANSITIONS = r, i.initialState = 0, i.currentState = i.initialState, i._params = new a.Params, i._params.addParam(0), i._collect = 0, i.precedingCodepoint = 0, i._printHandlerFb = function(e, t, r) {}, i._executeHandlerFb = function(e) {}, i._csiHandlerFb = function(e, t) {}, i._escHandlerFb = function(e) {}, i._errorHandlerFb = function(e) {
+                return i._transitions = r, i.initialState = 0, i.currentState = i.initialState, i._params = new a.Params, i._params.addParam(0), i._collect = 0, i.precedingCodepoint = 0, i._printHandlerFb = function(e, t, r) {}, i._executeHandlerFb = function(e) {}, i._csiHandlerFb = function(e, t) {}, i._escHandlerFb = function(e) {}, i._errorHandlerFb = function(e) {
                     return e
                 }, i._printHandler = i._printHandlerFb, i._executeHandlers = Object.create(null), i._csiHandlers = Object.create(null), i._escHandlers = Object.create(null), i._oscParser = new c.OscParser, i._dcsParser = new l.DcsParser, i._errorHandler = i._errorHandlerFb, i.setEscHandler({
                     final: "\\"
@@ -4738,7 +4806,7 @@
             }, r.prototype.reset = function() {
                 this.currentState = this.initialState, this._oscParser.reset(), this._dcsParser.reset(), this._params.reset(), this._params.addParam(0), this._collect = 0, this.precedingCodepoint = 0
             }, r.prototype.parse = function(e, t) {
-                for (var r = 0, i = 0, n = this.currentState, o = this._oscParser, s = this._dcsParser, a = this._collect, c = this._params, l = this.TRANSITIONS.table, h = 0; h < t; ++h) {
+                for (var r = 0, i = 0, n = this.currentState, o = this._oscParser, s = this._dcsParser, a = this._collect, c = this._params, l = this._transitions.table, h = 0; h < t; ++h) {
                     switch ((i = l[n << 8 | ((r = e[h]) < 160 ? r : 160)]) >> 4) {
                         case 2:
                             for (var u = h + 1;; ++u) {
@@ -4866,24 +4934,24 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var a = r(40),
-            c = r(46),
-            l = r(47),
-            h = r(48),
-            u = r(27),
+        }), t.Renderer = void 0;
+        var a = r(41),
+            c = r(47),
+            l = r(48),
+            h = r(49),
+            u = r(29),
             f = r(2),
-            _ = r(4),
-            d = r(0),
-            p = r(23),
-            v = r(1),
+            _ = r(5),
+            d = r(1),
+            p = r(25),
+            v = r(0),
             g = 1,
             y = function(e) {
-                function t(t, r, i, n, o, s, f, _) {
-                    var d = e.call(this) || this;
-                    d._colors = t, d._screenElement = r, d._linkifier = i, d._bufferService = n, d._charSizeService = o, d._optionsService = s, d.coreService = f, d.coreBrowserService = _, d._id = g++, d._onRequestRefreshRows = new v.EventEmitter;
-                    var p = d._optionsService.options.allowTransparency;
-                    return d._characterJoinerRegistry = new u.CharacterJoinerRegistry(d._bufferService), d._renderLayers = [new a.TextRenderLayer(d._screenElement, 0, d._colors, d._characterJoinerRegistry, p, d._id, d._bufferService, s), new c.SelectionRenderLayer(d._screenElement, 1, d._colors, d._id, d._bufferService, s), new h.LinkRenderLayer(d._screenElement, 2, d._colors, d._id, d._linkifier, d._bufferService, s), new l.CursorRenderLayer(d._screenElement, 3, d._colors, d._id, d._onRequestRefreshRows, d._bufferService, s, f, _)], d.dimensions = {
+                function t(t, r, i, n, o, s, f, _, d) {
+                    var p = e.call(this) || this;
+                    p._colors = t, p._screenElement = r, p._bufferService = o, p._charSizeService = s, p._optionsService = f, p._id = g++, p._onRequestRedraw = new v.EventEmitter;
+                    var y = p._optionsService.options.allowTransparency;
+                    return p._characterJoinerRegistry = new u.CharacterJoinerRegistry(p._bufferService), p._renderLayers = [new a.TextRenderLayer(p._screenElement, 0, p._colors, p._characterJoinerRegistry, y, p._id, p._bufferService, f), new c.SelectionRenderLayer(p._screenElement, 1, p._colors, p._id, p._bufferService, f), new h.LinkRenderLayer(p._screenElement, 2, p._colors, p._id, i, n, p._bufferService, f), new l.CursorRenderLayer(p._screenElement, 3, p._colors, p._id, p._onRequestRedraw, p._bufferService, f, _, d)], p.dimensions = {
                         scaledCharWidth: 0,
                         scaledCharHeight: 0,
                         scaledCellWidth: 0,
@@ -4896,30 +4964,29 @@
                         canvasHeight: 0,
                         actualCellWidth: 0,
                         actualCellHeight: 0
-                    }, d._devicePixelRatio = window.devicePixelRatio, d._updateDimensions(), d.onOptionsChanged(), d
+                    }, p._devicePixelRatio = window.devicePixelRatio, p._updateDimensions(), p.onOptionsChanged(), p
                 }
-                return n(t, e), Object.defineProperty(t.prototype, "onRequestRefreshRows", {
+                return n(t, e), Object.defineProperty(t.prototype, "onRequestRedraw", {
                     get: function() {
-                        return this._onRequestRefreshRows.event
+                        return this._onRequestRedraw.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.dispose = function() {
-                    e.prototype.dispose.call(this), this._renderLayers.forEach(function(e) {
-                        return e.dispose()
-                    }), p.removeTerminalFromCache(this._id)
+                    for (var t = 0, r = this._renderLayers; t < r.length; t++) r[t].dispose();
+                    e.prototype.dispose.call(this), p.removeTerminalFromCache(this._id)
                 }, t.prototype.onDevicePixelRatioChange = function() {
                     this._devicePixelRatio !== window.devicePixelRatio && (this._devicePixelRatio = window.devicePixelRatio, this.onResize(this._bufferService.cols, this._bufferService.rows))
                 }, t.prototype.setColors = function(e) {
-                    var t = this;
-                    this._colors = e, this._renderLayers.forEach(function(e) {
-                        e.setColors(t._colors), e.reset()
-                    })
+                    this._colors = e;
+                    for (var t = 0, r = this._renderLayers; t < r.length; t++) {
+                        var i = r[t];
+                        i.setColors(this._colors), i.reset()
+                    }
                 }, t.prototype.onResize = function(e, t) {
-                    var r = this;
-                    this._updateDimensions(), this._renderLayers.forEach(function(e) {
-                        return e.resize(r.dimensions)
-                    }), this._screenElement.style.width = this.dimensions.canvasWidth + "px", this._screenElement.style.height = this.dimensions.canvasHeight + "px"
+                    this._updateDimensions();
+                    for (var r = 0, i = this._renderLayers; r < i.length; r++) i[r].resize(this.dimensions);
+                    this._screenElement.style.width = this.dimensions.canvasWidth + "px", this._screenElement.style.height = this.dimensions.canvasHeight + "px"
                 }, t.prototype.onCharSizeChanged = function() {
                     this.onResize(this._bufferService.cols, this._bufferService.rows)
                 }, t.prototype.onBlur = function() {
@@ -4947,20 +5014,16 @@
                         return e.reset()
                     })
                 }, t.prototype._runOperation = function(e) {
-                    this._renderLayers.forEach(function(t) {
-                        return e(t)
-                    })
+                    for (var t = 0, r = this._renderLayers; t < r.length; t++) e(r[t])
                 }, t.prototype.renderRows = function(e, t) {
-                    this._renderLayers.forEach(function(r) {
-                        return r.onGridChanged(e, t)
-                    })
+                    for (var r = 0, i = this._renderLayers; r < i.length; r++) i[r].onGridChanged(e, t)
                 }, t.prototype._updateDimensions = function() {
                     this._charSizeService.hasValidSize && (this.dimensions.scaledCharWidth = Math.floor(this._charSizeService.width * window.devicePixelRatio), this.dimensions.scaledCharHeight = Math.ceil(this._charSizeService.height * window.devicePixelRatio), this.dimensions.scaledCellHeight = Math.floor(this.dimensions.scaledCharHeight * this._optionsService.options.lineHeight), this.dimensions.scaledCharTop = 1 === this._optionsService.options.lineHeight ? 0 : Math.round((this.dimensions.scaledCellHeight - this.dimensions.scaledCharHeight) / 2), this.dimensions.scaledCellWidth = this.dimensions.scaledCharWidth + Math.round(this._optionsService.options.letterSpacing), this.dimensions.scaledCharLeft = Math.floor(this._optionsService.options.letterSpacing / 2), this.dimensions.scaledCanvasHeight = this._bufferService.rows * this.dimensions.scaledCellHeight, this.dimensions.scaledCanvasWidth = this._bufferService.cols * this.dimensions.scaledCellWidth, this.dimensions.canvasHeight = Math.round(this.dimensions.scaledCanvasHeight / window.devicePixelRatio), this.dimensions.canvasWidth = Math.round(this.dimensions.scaledCanvasWidth / window.devicePixelRatio), this.dimensions.actualCellHeight = this.dimensions.canvasHeight / this._bufferService.rows, this.dimensions.actualCellWidth = this.dimensions.canvasWidth / this._bufferService.cols)
                 }, t.prototype.registerCharacterJoiner = function(e) {
                     return this._characterJoinerRegistry.registerCharacterJoiner(e)
                 }, t.prototype.deregisterCharacterJoiner = function(e) {
                     return this._characterJoinerRegistry.deregisterCharacterJoiner(e)
-                }, o([s(3, d.IBufferService), s(4, _.ICharSizeService), s(5, d.IOptionsService), s(6, d.ICoreService), s(7, _.ICoreBrowserService)], t)
+                }, o([s(4, d.IBufferService), s(5, _.ICharSizeService), s(6, d.IOptionsService), s(7, d.ICoreService), s(8, _.ICoreBrowserService)], t)
             }(f.Disposable);
         t.Renderer = y
     }, function(e, t, r) {
@@ -4982,17 +5045,17 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(41),
+        }), t.TextRenderLayer = void 0;
+        var o = r(42),
             s = r(13),
             a = r(6),
             c = r(3),
-            l = r(27),
-            h = r(5),
+            l = r(29),
+            h = r(4),
             u = function(e) {
                 function t(t, r, i, n, s, a, c, l) {
                     var u = e.call(this, t, "text", r, s, i, a, c, l) || this;
-                    return u.bufferService = c, u.optionsService = l, u._characterWidth = 0, u._characterFont = "", u._characterOverlapCache = {}, u._workCell = new h.CellData, u._state = new o.GridCache, u._characterJoinerRegistry = n, u
+                    return u._characterWidth = 0, u._characterFont = "", u._characterOverlapCache = {}, u._workCell = new h.CellData, u._state = new o.GridCache, u._characterJoinerRegistry = n, u
                 }
                 return n(t, e), t.prototype.resize = function(t) {
                     e.prototype.resize.call(this, t);
@@ -5064,7 +5127,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.GridCache = void 0;
         var i = function() {
             function e() {
                 this.cache = []
@@ -5101,35 +5164,33 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.NoneCharAtlas = t.DynamicCharAtlas = t.getGlyphCacheKey = void 0;
         var o = r(9),
-            s = r(43),
-            a = r(25),
-            c = r(45),
+            s = r(44),
+            a = r(27),
+            c = r(46),
             l = r(11),
-            h = r(26),
+            h = r(28),
             u = r(10),
-            f = 1024,
-            _ = 1024,
-            d = {
+            f = {
                 css: "rgba(0, 0, 0, 0)",
                 rgba: 0
             };
 
-        function p(e) {
+        function _(e) {
             return e.code << 21 | e.bg << 12 | e.fg << 3 | (e.bold ? 0 : 4) + (e.dim ? 0 : 2) + (e.italic ? 0 : 1)
         }
-        t.getGlyphCacheKey = p;
-        var v = function(e) {
+        t.getGlyphCacheKey = _;
+        var d = function(e) {
             function t(t, r) {
                 var i = e.call(this) || this;
-                i._config = r, i._drawToCacheCount = 0, i._glyphsWaitingOnBitmap = [], i._bitmapCommitTimeout = null, i._bitmap = null, i._cacheCanvas = t.createElement("canvas"), i._cacheCanvas.width = f, i._cacheCanvas.height = _, i._cacheCtx = h.throwIfFalsy(i._cacheCanvas.getContext("2d", {
+                i._config = r, i._drawToCacheCount = 0, i._glyphsWaitingOnBitmap = [], i._bitmapCommitTimeout = null, i._bitmap = null, i._cacheCanvas = t.createElement("canvas"), i._cacheCanvas.width = 1024, i._cacheCanvas.height = 1024, i._cacheCtx = h.throwIfFalsy(i._cacheCanvas.getContext("2d", {
                     alpha: !0
                 }));
                 var n = t.createElement("canvas");
                 n.width = i._config.scaledCharWidth, n.height = i._config.scaledCharHeight, i._tmpCtx = h.throwIfFalsy(n.getContext("2d", {
                     alpha: i._config.allowTransparency
-                })), i._width = Math.floor(f / i._config.scaledCharWidth), i._height = Math.floor(_ / i._config.scaledCharHeight);
+                })), i._width = Math.floor(1024 / i._config.scaledCharWidth), i._height = Math.floor(1024 / i._config.scaledCharHeight);
                 var o = i._width * i._height;
                 return i._cacheMap = new c.LRUMap(o), i._cacheMap.prealloc(o), i
             }
@@ -5140,7 +5201,7 @@
             }, t.prototype.draw = function(e, t, r, i) {
                 if (32 === t.code) return !0;
                 if (!this._canCache(t)) return !1;
-                var n = p(t),
+                var n = _(t),
                     o = this._cacheMap.get(n);
                 if (null != o) return this._drawFromCache(e, o, r, i), !0;
                 if (this._drawToCacheCount < 100) {
@@ -5165,7 +5226,7 @@
             }, t.prototype._getColorFromAnsiIndex = function(e) {
                 return e < this._config.colors.ansi.length ? this._config.colors.ansi[e] : a.DEFAULT_ANSI_COLORS[e]
             }, t.prototype._getBackgroundColor = function(e) {
-                return this._config.allowTransparency ? d : e.bg === o.INVERTED_DEFAULT_COLOR ? this._config.colors.foreground : e.bg < 256 ? this._getColorFromAnsiIndex(e.bg) : this._config.colors.background
+                return this._config.allowTransparency ? f : e.bg === o.INVERTED_DEFAULT_COLOR ? this._config.colors.foreground : e.bg < 256 ? this._getColorFromAnsiIndex(e.bg) : this._config.colors.background
             }, t.prototype._getForegroundColor = function(e) {
                 return e.fg === o.INVERTED_DEFAULT_COLOR ? u.color.opaque(this._config.colors.background) : e.fg < 256 ? this._getColorFromAnsiIndex(e.fg) : this._config.colors.foreground
             }, t.prototype._drawToCache = function(e, t) {
@@ -5192,7 +5253,7 @@
                 return this._addGlyphToBitmap(h), h
             }, t.prototype._addGlyphToBitmap = function(e) {
                 var t = this;
-                "createImageBitmap" in window && !l.isFirefox && !l.isSafari && (this._glyphsWaitingOnBitmap.push(e), null === this._bitmapCommitTimeout && (this._bitmapCommitTimeout = window.setTimeout(function() {
+                !("createImageBitmap" in window) || l.isFirefox || l.isSafari || (this._glyphsWaitingOnBitmap.push(e), null === this._bitmapCommitTimeout && (this._bitmapCommitTimeout = window.setTimeout(function() {
                     return t._generateBitmap()
                 }, 100)))
             }, t.prototype._generateBitmap = function() {
@@ -5204,8 +5265,8 @@
                 }), this._bitmapCommitTimeout = null
             }, t
         }(s.BaseCharAtlas);
-        t.DynamicCharAtlas = v;
-        var g = function(e) {
+        t.DynamicCharAtlas = d;
+        var p = function(e) {
             function t(t, r) {
                 return e.call(this) || this
             }
@@ -5213,12 +5274,12 @@
                 return !1
             }, t
         }(s.BaseCharAtlas);
-        t.NoneCharAtlas = g
+        t.NoneCharAtlas = p
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.BaseCharAtlas = void 0;
         var i = function() {
             function e() {
                 this._didWarmUp = !1
@@ -5232,7 +5293,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.ColorContrastCache = void 0;
         var i = function() {
             function e() {
                 this._color = {}, this._rgba = {}
@@ -5254,7 +5315,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.LRUMap = void 0;
         var i = function() {
             function e(e) {
                 this.capacity = e, this._map = {}, this._head = null, this._tail = null, this._nodePool = [], this.size = 0
@@ -5318,11 +5379,11 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.SelectionRenderLayer = void 0;
         var o = function(e) {
             function t(t, r, i, n, o, s) {
                 var a = e.call(this, t, "selection", r, !0, i, n, o, s) || this;
-                return a.bufferService = o, a.optionsService = s, a._clearState(), a
+                return a._clearState(), a
             }
             return n(t, e), t.prototype._clearState = function() {
                 this._state = {
@@ -5343,7 +5404,7 @@
                             o = Math.max(i, 0),
                             s = Math.min(n, this._bufferService.rows - 1);
                         if (!(o >= this._bufferService.rows || s < 0)) {
-                            if (this._ctx.fillStyle = this._colors.selection.css, r) {
+                            if (this._ctx.fillStyle = this._colors.selectionTransparent.css, r) {
                                 var a = e[0],
                                     c = t[0] - a,
                                     l = s - o + 1;
@@ -5387,13 +5448,13 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.CursorRenderLayer = void 0;
         var o = r(13),
-            s = r(5),
+            s = r(4),
             a = function(e) {
                 function t(t, r, i, n, o, a, c, l, h) {
                     var u = e.call(this, t, "cursor", r, !0, i, n, a, c) || this;
-                    return u._onRequestRefreshRowsEvent = o, u.bufferService = a, u.optionsService = c, u._coreService = l, u._coreBrowserService = h, u._cell = new s.CellData, u._state = {
+                    return u._onRequestRedraw = o, u._coreService = l, u._coreBrowserService = h, u._cell = new s.CellData, u._state = {
                         x: 0,
                         y: 0,
                         isFocused: !1,
@@ -5416,12 +5477,12 @@
                 }, t.prototype.reset = function() {
                     this._clearCursor(), this._cursorBlinkStateManager && (this._cursorBlinkStateManager.dispose(), this._cursorBlinkStateManager = void 0, this.onOptionsChanged())
                 }, t.prototype.onBlur = function() {
-                    this._cursorBlinkStateManager && this._cursorBlinkStateManager.pause(), this._onRequestRefreshRowsEvent.fire({
+                    this._cursorBlinkStateManager && this._cursorBlinkStateManager.pause(), this._onRequestRedraw.fire({
                         start: this._bufferService.buffer.y,
                         end: this._bufferService.buffer.y
                     })
                 }, t.prototype.onFocus = function() {
-                    this._cursorBlinkStateManager ? this._cursorBlinkStateManager.resume() : this._onRequestRefreshRowsEvent.fire({
+                    this._cursorBlinkStateManager ? this._cursorBlinkStateManager.resume() : this._onRequestRedraw.fire({
                         start: this._bufferService.buffer.y,
                         end: this._bufferService.buffer.y
                     })
@@ -5429,7 +5490,7 @@
                     var e, t = this;
                     this._optionsService.options.cursorBlink ? this._cursorBlinkStateManager || (this._cursorBlinkStateManager = new c(this._coreBrowserService.isFocused, function() {
                         t._render(!0)
-                    })) : (null === (e = this._cursorBlinkStateManager) || void 0 === e || e.dispose(), this._cursorBlinkStateManager = void 0), this._onRequestRefreshRowsEvent.fire({
+                    })) : (null === (e = this._cursorBlinkStateManager) || void 0 === e || e.dispose(), this._cursorBlinkStateManager = void 0), this._onRequestRedraw.fire({
                         start: this._bufferService.buffer.y,
                         end: this._bufferService.buffer.y
                     })
@@ -5442,19 +5503,22 @@
                         var t = this._bufferService.buffer.ybase + this._bufferService.buffer.y,
                             r = t - this._bufferService.buffer.ydisp;
                         if (r < 0 || r >= this._bufferService.rows) this._clearCursor();
-                        else if (this._bufferService.buffer.lines.get(t).loadCell(this._bufferService.buffer.x, this._cell), void 0 !== this._cell.content) {
-                            if (!this._coreBrowserService.isFocused) {
-                                this._clearCursor(), this._ctx.save(), this._ctx.fillStyle = this._colors.cursor.css;
-                                var i = this._optionsService.options.cursorStyle;
-                                return i && "block" !== i ? this._cursorRenderers[i](this._bufferService.buffer.x, r, this._cell) : this._renderBlurCursor(this._bufferService.buffer.x, r, this._cell), this._ctx.restore(), this._state.x = this._bufferService.buffer.x, this._state.y = r, this._state.isFocused = !1, this._state.style = i, void(this._state.width = this._cell.getWidth())
-                            }
-                            if (!this._cursorBlinkStateManager || this._cursorBlinkStateManager.isCursorVisible) {
-                                if (this._state) {
-                                    if (this._state.x === this._bufferService.buffer.x && this._state.y === r && this._state.isFocused === this._coreBrowserService.isFocused && this._state.style === this._optionsService.options.cursorStyle && this._state.width === this._cell.getWidth()) return;
-                                    this._clearCursor()
+                        else {
+                            var i = Math.min(this._bufferService.buffer.x, this._bufferService.cols - 1);
+                            if (this._bufferService.buffer.lines.get(t).loadCell(i, this._cell), void 0 !== this._cell.content) {
+                                if (!this._coreBrowserService.isFocused) {
+                                    this._clearCursor(), this._ctx.save(), this._ctx.fillStyle = this._colors.cursor.css;
+                                    var n = this._optionsService.options.cursorStyle;
+                                    return n && "block" !== n ? this._cursorRenderers[n](i, r, this._cell) : this._renderBlurCursor(i, r, this._cell), this._ctx.restore(), this._state.x = i, this._state.y = r, this._state.isFocused = !1, this._state.style = n, void(this._state.width = this._cell.getWidth())
                                 }
-                                this._ctx.save(), this._cursorRenderers[this._optionsService.options.cursorStyle || "block"](this._bufferService.buffer.x, r, this._cell), this._ctx.restore(), this._state.x = this._bufferService.buffer.x, this._state.y = r, this._state.isFocused = !1, this._state.style = this._optionsService.options.cursorStyle, this._state.width = this._cell.getWidth()
-                            } else this._clearCursor()
+                                if (!this._cursorBlinkStateManager || this._cursorBlinkStateManager.isCursorVisible) {
+                                    if (this._state) {
+                                        if (this._state.x === i && this._state.y === r && this._state.isFocused === this._coreBrowserService.isFocused && this._state.style === this._optionsService.options.cursorStyle && this._state.width === this._cell.getWidth()) return;
+                                        this._clearCursor()
+                                    }
+                                    this._ctx.save(), this._cursorRenderers[this._optionsService.options.cursorStyle || "block"](i, r, this._cell), this._ctx.restore(), this._state.x = i, this._state.y = r, this._state.isFocused = !1, this._state.style = this._optionsService.options.cursorStyle, this._state.width = this._cell.getWidth()
+                                } else this._clearCursor()
+                            }
                         }
                     } else this._clearCursor()
                 }, t.prototype._clearCursor = function() {
@@ -5484,7 +5548,7 @@
                 get: function() {
                     return !(this._blinkStartTimeout || this._blinkInterval)
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype.dispose = function() {
                 this._blinkInterval && (window.clearInterval(this._blinkInterval), this._blinkInterval = void 0), this._blinkStartTimeout && (window.clearTimeout(this._blinkStartTimeout), this._blinkStartTimeout = void 0), this._animationFrame && (window.cancelAnimationFrame(this._animationFrame), this._animationFrame = void 0)
@@ -5495,14 +5559,14 @@
                 })))
             }, e.prototype._restartInterval = function(e) {
                 var t = this;
-                void 0 === e && (e = 600), this._blinkInterval && window.clearInterval(this._blinkInterval), this._blinkStartTimeout = setTimeout(function() {
+                void 0 === e && (e = 600), this._blinkInterval && window.clearInterval(this._blinkInterval), this._blinkStartTimeout = window.setTimeout(function() {
                     if (t._animationTimeRestarted) {
                         var e = 600 - (Date.now() - t._animationTimeRestarted);
                         if (t._animationTimeRestarted = void 0, e > 0) return void t._restartInterval(e)
                     }
                     t.isCursorVisible = !1, t._animationFrame = window.requestAnimationFrame(function() {
                         t._renderCallback(), t._animationFrame = void 0
-                    }), t._blinkInterval = setInterval(function() {
+                    }), t._blinkInterval = window.setInterval(function() {
                         if (t._animationTimeRestarted) {
                             var e = 600 - (Date.now() - t._animationTimeRestarted);
                             return t._animationTimeRestarted = void 0, void t._restartInterval(e)
@@ -5515,7 +5579,7 @@
             }, e.prototype.pause = function() {
                 this.isCursorVisible = !0, this._blinkInterval && (window.clearInterval(this._blinkInterval), this._blinkInterval = void 0), this._blinkStartTimeout && (window.clearTimeout(this._blinkStartTimeout), this._blinkStartTimeout = void 0), this._animationFrame && (window.cancelAnimationFrame(this._animationFrame), this._animationFrame = void 0)
             }, e.prototype.resume = function() {
-                this._animationTimeRestarted = void 0, this._restartInterval(), this.restartBlinkAnimation()
+                this.pause(), this._animationTimeRestarted = void 0, this._restartInterval(), this.restartBlinkAnimation()
             }, e
         }()
     }, function(e, t, r) {
@@ -5537,18 +5601,22 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.LinkRenderLayer = void 0;
         var o = r(13),
             s = r(9),
-            a = r(24),
+            a = r(26),
             c = function(e) {
-                function t(t, r, i, n, o, s, a) {
-                    var c = e.call(this, t, "link", r, !0, i, n, s, a) || this;
-                    return c.bufferService = s, c.optionsService = a, o.onLinkHover(function(e) {
-                        return c._onLinkHover(e)
-                    }), o.onLinkLeave(function(e) {
-                        return c._onLinkLeave(e)
-                    }), c
+                function t(t, r, i, n, o, s, a, c) {
+                    var l = e.call(this, t, "link", r, !0, i, n, a, c) || this;
+                    return o.onShowLinkUnderline(function(e) {
+                        return l._onShowLinkUnderline(e)
+                    }), o.onHideLinkUnderline(function(e) {
+                        return l._onHideLinkUnderline(e)
+                    }), s.onShowLinkUnderline(function(e) {
+                        return l._onShowLinkUnderline(e)
+                    }), s.onHideLinkUnderline(function(e) {
+                        return l._onHideLinkUnderline(e)
+                    }), l
                 }
                 return n(t, e), t.prototype.resize = function(t) {
                     e.prototype.resize.call(this, t), this._state = void 0
@@ -5560,7 +5628,7 @@
                         var e = this._state.y2 - this._state.y1 - 1;
                         e > 0 && this._clearCells(0, this._state.y1 + 1, this._state.cols, e), this._clearCells(0, this._state.y2, this._state.x2, 1), this._state = void 0
                     }
-                }, t.prototype._onLinkHover = function(e) {
+                }, t.prototype._onShowLinkUnderline = function(e) {
                     if (e.fg === s.INVERTED_DEFAULT_COLOR ? this._ctx.fillStyle = this._colors.background.css : e.fg && a.is256Color(e.fg) ? this._ctx.fillStyle = this._colors.ansi[e.fg].css : this._ctx.fillStyle = this._colors.foreground.css, e.y1 === e.y2) this._fillBottomLineAtCells(e.x1, e.y1, e.x2 - e.x1);
                     else {
                         this._fillBottomLineAtCells(e.x1, e.y1, e.cols - e.x1);
@@ -5568,41 +5636,55 @@
                         this._fillBottomLineAtCells(0, e.y2, e.x2)
                     }
                     this._state = e
-                }, t.prototype._onLinkLeave = function(e) {
+                }, t.prototype._onHideLinkUnderline = function(e) {
                     this._clearCurrentLink()
                 }, t
             }(o.BaseRenderLayer);
         t.LinkRenderLayer = c
     }, function(e, t, r) {
         "use strict";
+        var i = this && this.__decorate || function(e, t, r, i) {
+                var n, o = arguments.length,
+                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
+                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
+                else
+                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
+                return o > 3 && s && Object.defineProperty(t, r, s), s
+            },
+            n = this && this.__param || function(e, t) {
+                return function(r, i) {
+                    t(r, i, e)
+                }
+            };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(1),
-            n = function() {
-                function e(e, t, r, n) {
-                    this._bufferService = e, this._logService = t, this._optionsService = r, this._unicodeService = n, this._linkMatchers = [], this._nextLinkMatcherId = 0, this._onLinkHover = new i.EventEmitter, this._onLinkLeave = new i.EventEmitter, this._onLinkTooltip = new i.EventEmitter, this._rowsToLinkify = {
+        }), t.MouseZone = t.Linkifier = void 0;
+        var o = r(0),
+            s = r(1),
+            a = function() {
+                function e(e, t, r) {
+                    this._bufferService = e, this._logService = t, this._unicodeService = r, this._linkMatchers = [], this._nextLinkMatcherId = 0, this._onShowLinkUnderline = new o.EventEmitter, this._onHideLinkUnderline = new o.EventEmitter, this._onLinkTooltip = new o.EventEmitter, this._rowsToLinkify = {
                         start: void 0,
                         end: void 0
                     }
                 }
-                return Object.defineProperty(e.prototype, "onLinkHover", {
+                return Object.defineProperty(e.prototype, "onShowLinkUnderline", {
                     get: function() {
-                        return this._onLinkHover.event
+                        return this._onShowLinkUnderline.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "onLinkLeave", {
+                }), Object.defineProperty(e.prototype, "onHideLinkUnderline", {
                     get: function() {
-                        return this._onLinkLeave.event
+                        return this._onHideLinkUnderline.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onLinkTooltip", {
                     get: function() {
                         return this._onLinkTooltip.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.attachToDom = function(e, t) {
                     this._element = e, this._mouseZoneManager = t
@@ -5662,23 +5744,23 @@
                             }) : c._addLink(l[1], l[0] - c._bufferService.buffer.ydisp, a, r, f)
                         }, c = this; null !== (i = o.exec(t)) && "break" !== a(););
                 }, e.prototype._addLink = function(e, t, r, i, n) {
-                    var s = this;
+                    var o = this;
                     if (this._mouseZoneManager && this._element) {
-                        var a = this._unicodeService.getStringCellWidth(r),
-                            c = e % this._bufferService.cols,
+                        var s = this._unicodeService.getStringCellWidth(r),
+                            a = e % this._bufferService.cols,
                             l = t + Math.floor(e / this._bufferService.cols),
-                            h = (c + a) % this._bufferService.cols,
-                            u = l + Math.floor((c + a) / this._bufferService.cols);
-                        0 === h && (h = this._bufferService.cols, u--), this._mouseZoneManager.add(new o(c + 1, l + 1, h + 1, u + 1, function(e) {
+                            h = (a + s) % this._bufferService.cols,
+                            u = l + Math.floor((a + s) / this._bufferService.cols);
+                        0 === h && (h = this._bufferService.cols, u--), this._mouseZoneManager.add(new c(a + 1, l + 1, h + 1, u + 1, function(e) {
                             if (i.handler) return i.handler(e, r);
                             var t = window.open();
                             t ? (t.opener = null, t.location.href = r) : console.warn("Opening link blocked as opener could not be cleared")
                         }, function() {
-                            s._onLinkHover.fire(s._createLinkHoverEvent(c, l, h, u, n)), s._element.classList.add("xterm-cursor-pointer")
+                            o._onShowLinkUnderline.fire(o._createLinkHoverEvent(a, l, h, u, n)), o._element.classList.add("xterm-cursor-pointer")
                         }, function(e) {
-                            s._onLinkTooltip.fire(s._createLinkHoverEvent(c, l, h, u, n)), i.hoverTooltipCallback && i.hoverTooltipCallback(e, r, {
+                            o._onLinkTooltip.fire(o._createLinkHoverEvent(a, l, h, u, n)), i.hoverTooltipCallback && i.hoverTooltipCallback(e, r, {
                                 start: {
-                                    x: c,
+                                    x: a,
                                     y: l
                                 },
                                 end: {
@@ -5687,7 +5769,7 @@
                                 }
                             })
                         }, function() {
-                            s._onLinkLeave.fire(s._createLinkHoverEvent(c, l, h, u, n)), s._element.classList.remove("xterm-cursor-pointer"), i.hoverLeaveCallback && i.hoverLeaveCallback()
+                            o._onHideLinkUnderline.fire(o._createLinkHoverEvent(a, l, h, u, n)), o._element.classList.remove("xterm-cursor-pointer"), i.hoverLeaveCallback && i.hoverLeaveCallback()
                         }, function(e) {
                             return !i.willLinkActivate || i.willLinkActivate(e, r)
                         }))
@@ -5701,16 +5783,31 @@
                         cols: this._bufferService.cols,
                         fg: n
                     }
-                }, e._timeBeforeLatency = 200, e
+                }, e._timeBeforeLatency = 200, e = i([n(0, s.IBufferService), n(1, s.ILogService), n(2, s.IUnicodeService)], e)
             }();
-        t.Linkifier = n;
-        var o = function(e, t, r, i, n, o, s, a, c) {
+        t.Linkifier = a;
+        var c = function(e, t, r, i, n, o, s, a, c) {
             this.x1 = e, this.y1 = t, this.x2 = r, this.y2 = i, this.clickCallback = n, this.hoverCallback = o, this.tooltipCallback = s, this.leaveCallback = a, this.willLinkActivate = c
         };
-        t.MouseZone = o
+        t.MouseZone = c
     }, function(e, t, r) {
         "use strict";
-        var i = this && this.__decorate || function(e, t, r, i) {
+        var i, n = this && this.__extends || (i = function(e, t) {
+                return (i = Object.setPrototypeOf || {
+                        __proto__: []
+                    }
+                    instanceof Array && function(e, t) {
+                        e.__proto__ = t
+                    } || function(e, t) {
+                        for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                    })(e, t)
+            }, function(e, t) {
+                function r() {
+                    this.constructor = e
+                }
+                i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+            }),
+            o = this && this.__decorate || function(e, t, r, i) {
                 var n, o = arguments.length,
                     s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
                 if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
@@ -5718,86 +5815,93 @@
                     for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
                 return o > 3 && s && Object.defineProperty(t, r, s), s
             },
-            n = this && this.__param || function(e, t) {
+            s = this && this.__param || function(e, t) {
                 return function(r, i) {
                     t(r, i, e)
                 }
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(11),
-            s = r(51),
-            a = r(5),
-            c = r(1),
+        }), t.SelectionService = void 0;
+        var a = r(11),
+            c = r(52),
             l = r(4),
             h = r(0),
-            u = r(28),
-            f = r(52),
-            _ = String.fromCharCode(160),
-            d = new RegExp(_, "g"),
-            p = function() {
-                function e(e, t, r, i, n, o, l, h) {
-                    var u = this;
-                    this._scrollLines = e, this._element = t, this._screenElement = r, this._charSizeService = i, this._bufferService = n, this._coreService = o, this._mouseService = l, this._optionsService = h, this._dragScrollAmount = 0, this._enabled = !0, this._workCell = new a.CellData, this._mouseDownTimeStamp = 0, this._onLinuxMouseSelection = new c.EventEmitter, this._onRedrawRequest = new c.EventEmitter, this._onSelectionChange = new c.EventEmitter, this._mouseMoveListener = function(e) {
+            u = r(5),
+            f = r(1),
+            _ = r(30),
+            d = r(53),
+            p = r(2),
+            v = String.fromCharCode(160),
+            g = new RegExp(v, "g"),
+            y = function(e) {
+                function t(t, r, i, n, o, s, a) {
+                    var u = e.call(this) || this;
+                    return u._element = t, u._screenElement = r, u._bufferService = i, u._coreService = n, u._mouseService = o, u._optionsService = s, u._renderService = a, u._dragScrollAmount = 0, u._enabled = !0, u._workCell = new l.CellData, u._mouseDownTimeStamp = 0, u._onLinuxMouseSelection = u.register(new h.EventEmitter), u._onRedrawRequest = u.register(new h.EventEmitter), u._onSelectionChange = u.register(new h.EventEmitter), u._onRequestScrollLines = u.register(new h.EventEmitter), u._mouseMoveListener = function(e) {
                         return u._onMouseMove(e)
-                    }, this._mouseUpListener = function(e) {
+                    }, u._mouseUpListener = function(e) {
                         return u._onMouseUp(e)
-                    }, this._coreService.onUserInput(function() {
+                    }, u._coreService.onUserInput(function() {
                         u.hasSelection && u.clearSelection()
-                    }), this._trimListener = this._bufferService.buffer.lines.onTrim(function(e) {
+                    }), u._trimListener = u._bufferService.buffer.lines.onTrim(function(e) {
                         return u._onTrim(e)
-                    }), this._bufferService.buffers.onBufferActivate(function(e) {
+                    }), u.register(u._bufferService.buffers.onBufferActivate(function(e) {
                         return u._onBufferActivate(e)
-                    }), this.enable(), this._model = new s.SelectionModel(this._bufferService), this._activeSelectionMode = 0
+                    })), u.enable(), u._model = new c.SelectionModel(u._bufferService), u._activeSelectionMode = 0, u
                 }
-                return Object.defineProperty(e.prototype, "onLinuxMouseSelection", {
+                return n(t, e), Object.defineProperty(t.prototype, "onLinuxMouseSelection", {
                     get: function() {
                         return this._onLinuxMouseSelection.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "onRedrawRequest", {
+                }), Object.defineProperty(t.prototype, "onRequestRedraw", {
                     get: function() {
                         return this._onRedrawRequest.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "onSelectionChange", {
+                }), Object.defineProperty(t.prototype, "onSelectionChange", {
                     get: function() {
                         return this._onSelectionChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), e.prototype.dispose = function() {
+                }), Object.defineProperty(t.prototype, "onRequestScrollLines", {
+                    get: function() {
+                        return this._onRequestScrollLines.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), t.prototype.dispose = function() {
                     this._removeMouseDownListeners()
-                }, e.prototype.reset = function() {
+                }, t.prototype.reset = function() {
                     this.clearSelection()
-                }, e.prototype.disable = function() {
+                }, t.prototype.disable = function() {
                     this.clearSelection(), this._enabled = !1
-                }, e.prototype.enable = function() {
+                }, t.prototype.enable = function() {
                     this._enabled = !0
-                }, Object.defineProperty(e.prototype, "selectionStart", {
+                }, Object.defineProperty(t.prototype, "selectionStart", {
                     get: function() {
                         return this._model.finalSelectionStart
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "selectionEnd", {
+                }), Object.defineProperty(t.prototype, "selectionEnd", {
                     get: function() {
                         return this._model.finalSelectionEnd
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "hasSelection", {
+                }), Object.defineProperty(t.prototype, "hasSelection", {
                     get: function() {
                         var e = this._model.finalSelectionStart,
                             t = this._model.finalSelectionEnd;
                         return !(!e || !t || e[0] === t[0] && e[1] === t[1])
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "selectionText", {
+                }), Object.defineProperty(t.prototype, "selectionText", {
                     get: function() {
                         var e = this._model.finalSelectionStart,
                             t = this._model.finalSelectionEnd;
@@ -5807,62 +5911,62 @@
                         if (3 === this._activeSelectionMode) {
                             if (e[0] === t[0]) return "";
                             for (var n = e[1]; n <= t[1]; n++) {
-                                var s = r.translateBufferLineToString(n, !0, e[0], t[0]);
-                                i.push(s)
+                                var o = r.translateBufferLineToString(n, !0, e[0], t[0]);
+                                i.push(o)
                             }
                         } else {
-                            var a = e[1] === t[1] ? t[0] : void 0;
-                            for (i.push(r.translateBufferLineToString(e[1], !0, e[0], a)), n = e[1] + 1; n <= t[1] - 1; n++) {
+                            var s = e[1] === t[1] ? t[0] : void 0;
+                            for (i.push(r.translateBufferLineToString(e[1], !0, e[0], s)), n = e[1] + 1; n <= t[1] - 1; n++) {
                                 var c = r.lines.get(n);
-                                s = r.translateBufferLineToString(n, !0), c && c.isWrapped ? i[i.length - 1] += s : i.push(s)
+                                o = r.translateBufferLineToString(n, !0), c && c.isWrapped ? i[i.length - 1] += o : i.push(o)
                             }
-                            e[1] !== t[1] && (c = r.lines.get(t[1]), s = r.translateBufferLineToString(t[1], !0, 0, t[0]), c && c.isWrapped ? i[i.length - 1] += s : i.push(s))
+                            e[1] !== t[1] && (c = r.lines.get(t[1]), o = r.translateBufferLineToString(t[1], !0, 0, t[0]), c && c.isWrapped ? i[i.length - 1] += o : i.push(o))
                         }
                         return i.map(function(e) {
-                            return e.replace(d, " ")
-                        }).join(o.isWindows ? "\r\n" : "\n")
+                            return e.replace(g, " ")
+                        }).join(a.isWindows ? "\r\n" : "\n")
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), e.prototype.clearSelection = function() {
+                }), t.prototype.clearSelection = function() {
                     this._model.clearSelection(), this._removeMouseDownListeners(), this.refresh(), this._onSelectionChange.fire()
-                }, e.prototype.refresh = function(e) {
+                }, t.prototype.refresh = function(e) {
                     var t = this;
                     this._refreshAnimationFrame || (this._refreshAnimationFrame = window.requestAnimationFrame(function() {
                         return t._refresh()
-                    })), o.isLinux && e && this.selectionText.length && this._onLinuxMouseSelection.fire(this.selectionText)
-                }, e.prototype._refresh = function() {
+                    })), a.isLinux && e && this.selectionText.length && this._onLinuxMouseSelection.fire(this.selectionText)
+                }, t.prototype._refresh = function() {
                     this._refreshAnimationFrame = void 0, this._onRedrawRequest.fire({
                         start: this._model.finalSelectionStart,
                         end: this._model.finalSelectionEnd,
                         columnSelectMode: 3 === this._activeSelectionMode
                     })
-                }, e.prototype.isClickInSelection = function(e) {
+                }, t.prototype.isClickInSelection = function(e) {
                     var t = this._getMouseBufferCoords(e),
                         r = this._model.finalSelectionStart,
                         i = this._model.finalSelectionEnd;
                     return !!(r && i && t) && this._areCoordsInSelection(t, r, i)
-                }, e.prototype._areCoordsInSelection = function(e, t, r) {
+                }, t.prototype._areCoordsInSelection = function(e, t, r) {
                     return e[1] > t[1] && e[1] < r[1] || t[1] === r[1] && e[1] === t[1] && e[0] >= t[0] && e[0] < r[0] || t[1] < r[1] && e[1] === r[1] && e[0] < r[0] || t[1] < r[1] && e[1] === t[1] && e[0] >= t[0]
-                }, e.prototype.selectWordAtCursor = function(e) {
+                }, t.prototype.selectWordAtCursor = function(e) {
                     var t = this._getMouseBufferCoords(e);
                     t && (this._selectWordAt(t, !1), this._model.selectionEnd = void 0, this.refresh(!0))
-                }, e.prototype.selectAll = function() {
+                }, t.prototype.selectAll = function() {
                     this._model.isSelectAllActive = !0, this.refresh(), this._onSelectionChange.fire()
-                }, e.prototype.selectLines = function(e, t) {
+                }, t.prototype.selectLines = function(e, t) {
                     this._model.clearSelection(), e = Math.max(e, 0), t = Math.min(t, this._bufferService.buffer.lines.length - 1), this._model.selectionStart = [0, e], this._model.selectionEnd = [this._bufferService.cols, t], this.refresh(), this._onSelectionChange.fire()
-                }, e.prototype._onTrim = function(e) {
+                }, t.prototype._onTrim = function(e) {
                     this._model.onTrim(e) && this.refresh()
-                }, e.prototype._getMouseBufferCoords = function(e) {
+                }, t.prototype._getMouseBufferCoords = function(e) {
                     var t = this._mouseService.getCoords(e, this._screenElement, this._bufferService.cols, this._bufferService.rows, !0);
                     if (t) return t[0]--, t[1]--, t[1] += this._bufferService.buffer.ydisp, t
-                }, e.prototype._getMouseEventScrollAmount = function(e) {
-                    var t = u.getCoordsRelativeToElement(e, this._screenElement)[1],
-                        r = this._bufferService.rows * Math.ceil(this._charSizeService.height * this._optionsService.options.lineHeight);
+                }, t.prototype._getMouseEventScrollAmount = function(e) {
+                    var t = _.getCoordsRelativeToElement(e, this._screenElement)[1],
+                        r = this._renderService.dimensions.canvasHeight;
                     return t >= 0 && t <= r ? 0 : (t > r && (t -= r), t = Math.min(Math.max(t, -50), 50), (t /= 50) / Math.abs(t) + Math.round(14 * t))
-                }, e.prototype.shouldForceSelection = function(e) {
-                    return o.isMac ? e.altKey && this._optionsService.options.macOptionClickForcesSelection : e.shiftKey
-                }, e.prototype.onMouseDown = function(e) {
+                }, t.prototype.shouldForceSelection = function(e) {
+                    return a.isMac ? e.altKey && this._optionsService.options.macOptionClickForcesSelection : e.shiftKey
+                }, t.prototype.onMouseDown = function(e) {
                     if (this._mouseDownTimeStamp = e.timeStamp, (2 !== e.button || !this.hasSelection) && 0 === e.button) {
                         if (!this._enabled) {
                             if (!this.shouldForceSelection(e)) return;
@@ -5870,30 +5974,30 @@
                         }
                         e.preventDefault(), this._dragScrollAmount = 0, this._enabled && e.shiftKey ? this._onIncrementalClick(e) : 1 === e.detail ? this._onSingleClick(e) : 2 === e.detail ? this._onDoubleClick(e) : 3 === e.detail && this._onTripleClick(e), this._addMouseDownListeners(), this.refresh(!0)
                     }
-                }, e.prototype._addMouseDownListeners = function() {
+                }, t.prototype._addMouseDownListeners = function() {
                     var e = this;
                     this._screenElement.ownerDocument && (this._screenElement.ownerDocument.addEventListener("mousemove", this._mouseMoveListener), this._screenElement.ownerDocument.addEventListener("mouseup", this._mouseUpListener)), this._dragScrollIntervalTimer = window.setInterval(function() {
                         return e._dragScroll()
                     }, 50)
-                }, e.prototype._removeMouseDownListeners = function() {
+                }, t.prototype._removeMouseDownListeners = function() {
                     this._screenElement.ownerDocument && (this._screenElement.ownerDocument.removeEventListener("mousemove", this._mouseMoveListener), this._screenElement.ownerDocument.removeEventListener("mouseup", this._mouseUpListener)), clearInterval(this._dragScrollIntervalTimer), this._dragScrollIntervalTimer = void 0
-                }, e.prototype._onIncrementalClick = function(e) {
+                }, t.prototype._onIncrementalClick = function(e) {
                     this._model.selectionStart && (this._model.selectionEnd = this._getMouseBufferCoords(e))
-                }, e.prototype._onSingleClick = function(e) {
+                }, t.prototype._onSingleClick = function(e) {
                     if (this._model.selectionStartLength = 0, this._model.isSelectAllActive = !1, this._activeSelectionMode = this.shouldColumnSelect(e) ? 3 : 0, this._model.selectionStart = this._getMouseBufferCoords(e), this._model.selectionStart) {
                         this._model.selectionEnd = void 0;
                         var t = this._bufferService.buffer.lines.get(this._model.selectionStart[1]);
                         t && t.length !== this._model.selectionStart[0] && 0 === t.hasWidth(this._model.selectionStart[0]) && this._model.selectionStart[0]++
                     }
-                }, e.prototype._onDoubleClick = function(e) {
+                }, t.prototype._onDoubleClick = function(e) {
                     var t = this._getMouseBufferCoords(e);
                     t && (this._activeSelectionMode = 1, this._selectWordAt(t, !0))
-                }, e.prototype._onTripleClick = function(e) {
+                }, t.prototype._onTripleClick = function(e) {
                     var t = this._getMouseBufferCoords(e);
                     t && (this._activeSelectionMode = 2, this._selectLineAt(t[1]))
-                }, e.prototype.shouldColumnSelect = function(e) {
-                    return e.altKey && !(o.isMac && this._optionsService.options.macOptionClickForcesSelection)
-                }, e.prototype._onMouseMove = function(e) {
+                }, t.prototype.shouldColumnSelect = function(e) {
+                    return e.altKey && !(a.isMac && this._optionsService.options.macOptionClickForcesSelection)
+                }, t.prototype._onMouseMove = function(e) {
                     if (e.stopImmediatePropagation(), this._model.selectionStart) {
                         var t = this._model.selectionEnd ? [this._model.selectionEnd[0], this._model.selectionEnd[1]] : null;
                         if (this._model.selectionEnd = this._getMouseBufferCoords(e), this._model.selectionEnd) {
@@ -5906,37 +6010,40 @@
                             t && t[0] === this._model.selectionEnd[0] && t[1] === this._model.selectionEnd[1] || this.refresh(!0)
                         } else this.refresh(!0)
                     }
-                }, e.prototype._dragScroll = function() {
+                }, t.prototype._dragScroll = function() {
                     if (this._model.selectionEnd && this._model.selectionStart && this._dragScrollAmount) {
-                        this._scrollLines(this._dragScrollAmount, !1);
+                        this._onRequestScrollLines.fire({
+                            amount: this._dragScrollAmount,
+                            suppressScrollEvent: !1
+                        });
                         var e = this._bufferService.buffer;
                         this._dragScrollAmount > 0 ? (3 !== this._activeSelectionMode && (this._model.selectionEnd[0] = this._bufferService.cols), this._model.selectionEnd[1] = Math.min(e.ydisp + this._bufferService.rows, e.lines.length - 1)) : (3 !== this._activeSelectionMode && (this._model.selectionEnd[0] = 0), this._model.selectionEnd[1] = e.ydisp), this.refresh()
                     }
-                }, e.prototype._onMouseUp = function(e) {
+                }, t.prototype._onMouseUp = function(e) {
                     var t = e.timeStamp - this._mouseDownTimeStamp;
-                    if (this._removeMouseDownListeners(), this.selectionText.length <= 1 && t < 500) {
-                        if (e.altKey && this._bufferService.buffer.ybase === this._bufferService.buffer.ydisp) {
+                    if (this._removeMouseDownListeners(), this.selectionText.length <= 1 && t < 500 && e.altKey) {
+                        if (this._bufferService.buffer.ybase === this._bufferService.buffer.ydisp) {
                             var r = this._mouseService.getCoords(e, this._element, this._bufferService.cols, this._bufferService.rows, !1);
                             if (r && void 0 !== r[0] && void 0 !== r[1]) {
-                                var i = f.moveToCellSequence(r[0] - 1, r[1] - 1, this._bufferService, this._coreService.decPrivateModes.applicationCursorKeys);
+                                var i = d.moveToCellSequence(r[0] - 1, r[1] - 1, this._bufferService, this._coreService.decPrivateModes.applicationCursorKeys);
                                 this._coreService.triggerDataEvent(i, !0)
                             }
                         }
                     } else this.hasSelection && this._onSelectionChange.fire()
-                }, e.prototype._onBufferActivate = function(e) {
+                }, t.prototype._onBufferActivate = function(e) {
                     var t = this;
                     this.clearSelection(), this._trimListener.dispose(), this._trimListener = e.activeBuffer.lines.onTrim(function(e) {
                         return t._onTrim(e)
                     })
-                }, e.prototype._convertViewportColToCharacterIndex = function(e, t) {
+                }, t.prototype._convertViewportColToCharacterIndex = function(e, t) {
                     for (var r = t[0], i = 0; t[0] >= i; i++) {
                         var n = e.loadCell(i, this._workCell).getChars().length;
                         0 === this._workCell.getWidth() ? r-- : n > 1 && t[0] !== i && (r += n - 1)
                     }
                     return r
-                }, e.prototype.setSelection = function(e, t, r) {
+                }, t.prototype.setSelection = function(e, t, r) {
                     this._model.clearSelection(), this._removeMouseDownListeners(), this._model.selectionStart = [e, t], this._model.selectionStartLength = r, this.refresh()
-                }, e.prototype._getWordAt = function(e, t, r, i) {
+                }, t.prototype._getWordAt = function(e, t, r, i) {
                     if (void 0 === r && (r = !0), void 0 === i && (i = !0), !(e[0] >= this._bufferService.cols)) {
                         var n = this._bufferService.buffer,
                             o = n.lines.get(e[1]);
@@ -5996,13 +6103,13 @@
                             }
                         }
                     }
-                }, e.prototype._selectWordAt = function(e, t) {
+                }, t.prototype._selectWordAt = function(e, t) {
                     var r = this._getWordAt(e, t);
                     if (r) {
                         for (; r.start < 0;) r.start += this._bufferService.cols, e[1]--;
                         this._model.selectionStart = [r.start, e[1]], this._model.selectionStartLength = r.length
                     }
-                }, e.prototype._selectToWordAt = function(e) {
+                }, t.prototype._selectToWordAt = function(e) {
                     var t = this._getWordAt(e, !0);
                     if (t) {
                         for (var r = e[1]; t.start < 0;) t.start += this._bufferService.cols, r--;
@@ -6010,19 +6117,19 @@
                             for (; t.start + t.length > this._bufferService.cols;) t.length -= this._bufferService.cols, r++;
                         this._model.selectionEnd = [this._model.areSelectionValuesReversed() ? t.start : t.start + t.length, r]
                     }
-                }, e.prototype._isCharWordSeparator = function(e) {
+                }, t.prototype._isCharWordSeparator = function(e) {
                     return 0 !== e.getWidth() && this._optionsService.options.wordSeparator.indexOf(e.getChars()) >= 0
-                }, e.prototype._selectLineAt = function(e) {
+                }, t.prototype._selectLineAt = function(e) {
                     var t = this._bufferService.buffer.getWrappedRangeForLine(e);
                     this._model.selectionStart = [0, t.first], this._model.selectionEnd = [this._bufferService.cols, t.last], this._model.selectionStartLength = 0
-                }, i([n(3, l.ICharSizeService), n(4, h.IBufferService), n(5, h.ICoreService), n(6, l.IMouseService), n(7, h.IOptionsService)], e)
-            }();
-        t.SelectionService = p
+                }, o([s(2, f.IBufferService), s(3, f.ICoreService), s(4, u.IMouseService), s(5, f.IOptionsService), s(6, u.IRenderService)], t)
+            }(p.Disposable);
+        t.SelectionService = y
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.SelectionModel = void 0;
         var i = function() {
             function e(e) {
                 this._bufferService = e, this.isSelectAllActive = !1, this.selectionStartLength = 0
@@ -6033,7 +6140,7 @@
                 get: function() {
                     return this.isSelectAllActive ? [0, 0] : this.selectionEnd && this.selectionStart && this.areSelectionValuesReversed() ? this.selectionEnd : this.selectionStart
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), Object.defineProperty(e.prototype, "finalSelectionEnd", {
                 get: function() {
@@ -6046,7 +6153,7 @@
                         return this.selectionStartLength && this.selectionEnd[1] === this.selectionStart[1] ? [Math.max(this.selectionStart[0] + this.selectionStartLength, this.selectionEnd[0]), this.selectionEnd[1]] : this.selectionEnd
                     }
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype.areSelectionValuesReversed = function() {
                 var e = this.selectionStart,
@@ -6061,7 +6168,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.moveToCellSequence = void 0;
         var i = r(12);
 
         function n(e, t, r, i) {
@@ -6140,8 +6247,8 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(0),
+        }), t.SoundService = void 0;
+        var o = r(1),
             s = function() {
                 function e(e) {
                     this._optionsService = e
@@ -6155,7 +6262,7 @@
                         }
                         return e._audioContext
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.playBellSound = function() {
                     var t = e.audioContext;
@@ -6205,23 +6312,23 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.MouseZoneManager = void 0;
         var a = r(2),
-            c = r(8),
-            l = r(4),
-            h = r(0),
+            c = r(7),
+            l = r(5),
+            h = r(1),
             u = function(e) {
-                function t(t, r, i, n, o) {
-                    var s = e.call(this) || this;
-                    return s._element = t, s._screenElement = r, s._bufferService = i, s._mouseService = n, s._selectionService = o, s._zones = [], s._areZonesActive = !1, s._lastHoverCoords = [void 0, void 0], s._initialSelectionLength = 0, s.register(c.addDisposableDomListener(s._element, "mousedown", function(e) {
-                        return s._onMouseDown(e)
-                    })), s._mouseMoveListener = function(e) {
-                        return s._onMouseMove(e)
-                    }, s._mouseLeaveListener = function(e) {
-                        return s._onMouseLeave(e)
-                    }, s._clickListener = function(e) {
-                        return s._onClick(e)
-                    }, s
+                function t(t, r, i, n, o, s) {
+                    var a = e.call(this) || this;
+                    return a._element = t, a._screenElement = r, a._bufferService = i, a._mouseService = n, a._selectionService = o, a._optionsService = s, a._zones = [], a._areZonesActive = !1, a._lastHoverCoords = [void 0, void 0], a._initialSelectionLength = 0, a.register(c.addDisposableDomListener(a._element, "mousedown", function(e) {
+                        return a._onMouseDown(e)
+                    })), a._mouseMoveListener = function(e) {
+                        return a._onMouseMove(e)
+                    }, a._mouseLeaveListener = function(e) {
+                        return a._onMouseLeave(e)
+                    }, a._clickListener = function(e) {
+                        return a._onClick(e)
+                    }, a
                 }
                 return n(t, e), t.prototype.dispose = function() {
                     e.prototype.dispose.call(this), this._deactivate()
@@ -6245,16 +6352,18 @@
                 }, t.prototype._onHover = function(e) {
                     var t = this,
                         r = this._findZoneEventAt(e);
-                    r !== this._currentZone && (this._currentZone && (this._currentZone.leaveCallback(), this._currentZone = void 0, this._tooltipTimeout && clearTimeout(this._tooltipTimeout)), r && (this._currentZone = r, r.hoverCallback && r.hoverCallback(e), this._tooltipTimeout = setTimeout(function() {
+                    r !== this._currentZone && (this._currentZone && (this._currentZone.leaveCallback(), this._currentZone = void 0, this._tooltipTimeout && clearTimeout(this._tooltipTimeout)), r && (this._currentZone = r, r.hoverCallback && r.hoverCallback(e), this._tooltipTimeout = window.setTimeout(function() {
                         return t._onTooltip(e)
-                    }, 500)))
+                    }, this._optionsService.options.linkTooltipHoverDuration)))
                 }, t.prototype._onTooltip = function(e) {
                     this._tooltipTimeout = void 0;
                     var t = this._findZoneEventAt(e);
                     t && t.tooltipCallback && t.tooltipCallback(e)
                 }, t.prototype._onMouseDown = function(e) {
-                    var t;
-                    this._initialSelectionLength = this._getSelectionLength(), this._areZonesActive && (null === (t = this._findZoneEventAt(e)) || void 0 === t ? void 0 : t.willLinkActivate(e)) && (e.preventDefault(), e.stopImmediatePropagation())
+                    if (this._initialSelectionLength = this._getSelectionLength(), this._areZonesActive) {
+                        var t = this._findZoneEventAt(e);
+                        (null == t ? void 0 : t.willLinkActivate(e)) && (e.preventDefault(), e.stopImmediatePropagation())
+                    }
                 }, t.prototype._onMouseLeave = function(e) {
                     this._currentZone && (this._currentZone.leaveCallback(), this._currentZone = void 0, this._tooltipTimeout && clearTimeout(this._tooltipTimeout))
                 }, t.prototype._onClick = function(e) {
@@ -6273,7 +6382,7 @@
                                 if (i === o.y1 && r >= o.x1 && r < o.x2) return o
                             } else if (i === o.y1 && r >= o.x1 || i === o.y2 && r < o.x2 || i > o.y1 && i < o.y2) return o
                         }
-                }, o([s(2, h.IBufferService), s(3, l.IMouseService), s(4, l.ISelectionService)], t)
+                }, o([s(2, h.IBufferService), s(3, l.IMouseService), s(4, l.ISelectionService), s(5, h.IOptionsService)], t)
             }(a.Disposable);
         t.MouseZoneManager = u
     }, function(e, t, r) {
@@ -6295,23 +6404,25 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(17),
+        }), t.AccessibilityManager = void 0;
+        var o = r(18),
             s = r(11),
-            a = r(29),
-            c = r(8),
+            a = r(31),
+            c = r(7),
             l = r(2),
-            h = r(30),
-            u = function(e) {
+            h = r(32),
+            u = r(17),
+            f = function(e) {
                 function t(t, r) {
                     var i = e.call(this) || this;
-                    i._terminal = t, i._renderService = r, i._liveRegionLineCount = 0, i._charsToConsume = [], i._charsToAnnounce = "", i._accessibilityTreeRoot = document.createElement("div"), i._accessibilityTreeRoot.classList.add("xterm-accessibility"), i._rowContainer = document.createElement("div"), i._rowContainer.classList.add("xterm-accessibility-tree"), i._rowElements = [];
+                    i._terminal = t, i._renderService = r, i._liveRegionLineCount = 0, i._charsToConsume = [], i._charsToAnnounce = "", i._accessibilityTreeRoot = document.createElement("div"), i._accessibilityTreeRoot.classList.add("xterm-accessibility"), i._rowContainer = document.createElement("div"), i._rowContainer.classList.add("xterm-accessibility-tree"), i._rowContainer.setAttribute("role", "list"), i._rowElements = [];
                     for (var n = 0; n < i._terminal.rows; n++) i._rowElements[n] = i._createAccessibilityTreeNode(), i._rowContainer.appendChild(i._rowElements[n]);
-                    return i._topBoundaryFocusListener = function(e) {
-                        return i._onBoundaryFocus(e, 0)
-                    }, i._bottomBoundaryFocusListener = function(e) {
-                        return i._onBoundaryFocus(e, 1)
-                    }, i._rowElements[0].addEventListener("focus", i._topBoundaryFocusListener), i._rowElements[i._rowElements.length - 1].addEventListener("focus", i._bottomBoundaryFocusListener), i._refreshRowsDimensions(), i._accessibilityTreeRoot.appendChild(i._rowContainer), i._renderRowsDebouncer = new a.RenderDebouncer(i._renderRows.bind(i)), i._refreshRows(), i._liveRegion = document.createElement("div"), i._liveRegion.classList.add("live-region"), i._liveRegion.setAttribute("aria-live", "assertive"), i._accessibilityTreeRoot.appendChild(i._liveRegion), i._terminal.element.insertAdjacentElement("afterbegin", i._accessibilityTreeRoot), i.register(i._renderRowsDebouncer), i.register(i._terminal.onResize(function(e) {
+                    if (i._topBoundaryFocusListener = function(e) {
+                            return i._onBoundaryFocus(e, 0)
+                        }, i._bottomBoundaryFocusListener = function(e) {
+                            return i._onBoundaryFocus(e, 1)
+                        }, i._rowElements[0].addEventListener("focus", i._topBoundaryFocusListener), i._rowElements[i._rowElements.length - 1].addEventListener("focus", i._bottomBoundaryFocusListener), i._refreshRowsDimensions(), i._accessibilityTreeRoot.appendChild(i._rowContainer), i._renderRowsDebouncer = new a.RenderDebouncer(i._renderRows.bind(i)), i._refreshRows(), i._liveRegion = document.createElement("div"), i._liveRegion.classList.add("live-region"), i._liveRegion.setAttribute("aria-live", "assertive"), i._accessibilityTreeRoot.appendChild(i._liveRegion), !i._terminal.element) throw new Error("Cannot enable accessibility before Terminal.open");
+                    return i._terminal.element.insertAdjacentElement("afterbegin", i._accessibilityTreeRoot), i.register(i._renderRowsDebouncer), i.register(i._terminal.onResize(function(e) {
                         return i._onResize(e.rows)
                     })), i.register(i._terminal.onRender(function(e) {
                         return i._refreshRows(e.start, e.end)
@@ -6336,7 +6447,7 @@
                     })), i
                 }
                 return n(t, e), t.prototype.dispose = function() {
-                    e.prototype.dispose.call(this), this._terminal.element.removeChild(this._accessibilityTreeRoot), this._rowElements.length = 0
+                    e.prototype.dispose.call(this), u.removeElementFromParent(this._accessibilityTreeRoot), this._rowElements.length = 0
                 }, t.prototype._onBoundaryFocus = function(e, t) {
                     var r = e.target,
                         i = this._rowElements[0 === t ? 1 : this._rowElements.length - 2];
@@ -6364,7 +6475,7 @@
                         t._accessibilityTreeRoot.appendChild(t._liveRegion)
                     }, 0))
                 }, t.prototype._clearLiveRegion = function() {
-                    this._liveRegion.textContent = "", this._liveRegionLineCount = 0, s.isMac && this._liveRegion.parentNode && this._accessibilityTreeRoot.removeChild(this._liveRegion)
+                    this._liveRegion.textContent = "", this._liveRegionLineCount = 0, s.isMac && u.removeElementFromParent(this._liveRegion)
                 }, t.prototype._onKey = function(e) {
                     this._clearLiveRegion(), this._charsToConsume.push(e)
                 }, t.prototype._refreshRows = function(e, t) {
@@ -6388,7 +6499,7 @@
                     0 !== this._charsToAnnounce.length && (this._liveRegion.textContent += this._charsToAnnounce, this._charsToAnnounce = "")
                 }, t
             }(l.Disposable);
-        t.AccessibilityManager = u
+        t.AccessibilityManager = f
     }, function(e, t, r) {
         "use strict";
         var i, n = this && this.__extends || (i = function(e, t) {
@@ -6421,22 +6532,20 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var a = r(57),
+        }), t.DomRenderer = void 0;
+        var a = r(58),
             c = r(9),
             l = r(2),
-            h = r(4),
-            u = r(0),
-            f = r(1),
+            h = r(5),
+            u = r(1),
+            f = r(0),
             _ = r(10),
-            d = "xterm-dom-renderer-owner-",
-            p = "xterm-rows",
-            v = "xterm-selection",
-            g = 1,
-            y = function(e) {
-                function t(t, r, i, n, o, s, c, l) {
-                    var h = e.call(this) || this;
-                    return h._colors = t, h._element = r, h._screenElement = i, h._viewportElement = n, h._linkifier = o, h._charSizeService = s, h._optionsService = c, h._bufferService = l, h._terminalClass = g++, h._rowElements = [], h._onRequestRefreshRows = new f.EventEmitter, h._rowContainer = document.createElement("div"), h._rowContainer.classList.add(p), h._rowContainer.style.lineHeight = "normal", h._rowContainer.setAttribute("aria-hidden", "true"), h._refreshRowElements(h._bufferService.cols, h._bufferService.rows), h._selectionContainer = document.createElement("div"), h._selectionContainer.classList.add(v), h._selectionContainer.setAttribute("aria-hidden", "true"), h.dimensions = {
+            d = r(17),
+            p = 1,
+            v = function(e) {
+                function t(t, r, i, n, o, s, c, l, h) {
+                    var u = e.call(this) || this;
+                    return u._colors = t, u._element = r, u._screenElement = i, u._viewportElement = n, u._linkifier = o, u._linkifier2 = s, u._charSizeService = c, u._optionsService = l, u._bufferService = h, u._terminalClass = p++, u._rowElements = [], u._rowContainer = document.createElement("div"), u._rowContainer.classList.add("xterm-rows"), u._rowContainer.style.lineHeight = "normal", u._rowContainer.setAttribute("aria-hidden", "true"), u._refreshRowElements(u._bufferService.cols, u._bufferService.rows), u._selectionContainer = document.createElement("div"), u._selectionContainer.classList.add("xterm-selection"), u._selectionContainer.setAttribute("aria-hidden", "true"), u.dimensions = {
                         scaledCharWidth: 0,
                         scaledCharHeight: 0,
                         scaledCellWidth: 0,
@@ -6449,34 +6558,40 @@
                         canvasHeight: 0,
                         actualCellWidth: 0,
                         actualCellHeight: 0
-                    }, h._updateDimensions(), h._injectCss(), h._rowFactory = new a.DomRendererRowFactory(document, h._optionsService, h._colors), h._element.classList.add(d + h._terminalClass), h._screenElement.appendChild(h._rowContainer), h._screenElement.appendChild(h._selectionContainer), h._linkifier.onLinkHover(function(e) {
-                        return h._onLinkHover(e)
-                    }), h._linkifier.onLinkLeave(function(e) {
-                        return h._onLinkLeave(e)
-                    }), h
+                    }, u._updateDimensions(), u._injectCss(), u._rowFactory = new a.DomRendererRowFactory(document, u._optionsService, u._colors), u._element.classList.add("xterm-dom-renderer-owner-" + u._terminalClass), u._screenElement.appendChild(u._rowContainer), u._screenElement.appendChild(u._selectionContainer), u._linkifier.onShowLinkUnderline(function(e) {
+                        return u._onLinkHover(e)
+                    }), u._linkifier.onHideLinkUnderline(function(e) {
+                        return u._onLinkLeave(e)
+                    }), u._linkifier2.onShowLinkUnderline(function(e) {
+                        return u._onLinkHover(e)
+                    }), u._linkifier2.onHideLinkUnderline(function(e) {
+                        return u._onLinkLeave(e)
+                    }), u
                 }
-                return n(t, e), Object.defineProperty(t.prototype, "onRequestRefreshRows", {
+                return n(t, e), Object.defineProperty(t.prototype, "onRequestRedraw", {
                     get: function() {
-                        return this._onRequestRefreshRows.event
+                        return (new f.EventEmitter).event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.dispose = function() {
-                    this._element.classList.remove(d + this._terminalClass), this._screenElement.removeChild(this._rowContainer), this._screenElement.removeChild(this._selectionContainer), this._screenElement.removeChild(this._themeStyleElement), this._screenElement.removeChild(this._dimensionsStyleElement), e.prototype.dispose.call(this)
+                    this._element.classList.remove("xterm-dom-renderer-owner-" + this._terminalClass), d.removeElementFromParent(this._rowContainer, this._selectionContainer, this._themeStyleElement, this._dimensionsStyleElement), e.prototype.dispose.call(this)
                 }, t.prototype._updateDimensions = function() {
-                    var e = this;
-                    this.dimensions.scaledCharWidth = this._charSizeService.width * window.devicePixelRatio, this.dimensions.scaledCharHeight = Math.ceil(this._charSizeService.height * window.devicePixelRatio), this.dimensions.scaledCellWidth = this.dimensions.scaledCharWidth + Math.round(this._optionsService.options.letterSpacing), this.dimensions.scaledCellHeight = Math.floor(this.dimensions.scaledCharHeight * this._optionsService.options.lineHeight), this.dimensions.scaledCharLeft = 0, this.dimensions.scaledCharTop = 0, this.dimensions.scaledCanvasWidth = this.dimensions.scaledCellWidth * this._bufferService.cols, this.dimensions.scaledCanvasHeight = this.dimensions.scaledCellHeight * this._bufferService.rows, this.dimensions.canvasWidth = Math.round(this.dimensions.scaledCanvasWidth / window.devicePixelRatio), this.dimensions.canvasHeight = Math.round(this.dimensions.scaledCanvasHeight / window.devicePixelRatio), this.dimensions.actualCellWidth = this.dimensions.canvasWidth / this._bufferService.cols, this.dimensions.actualCellHeight = this.dimensions.canvasHeight / this._bufferService.rows, this._rowElements.forEach(function(t) {
-                        t.style.width = e.dimensions.canvasWidth + "px", t.style.height = e.dimensions.actualCellHeight + "px", t.style.lineHeight = e.dimensions.actualCellHeight + "px", t.style.overflow = "hidden"
-                    }), this._dimensionsStyleElement || (this._dimensionsStyleElement = document.createElement("style"), this._screenElement.appendChild(this._dimensionsStyleElement));
-                    var t = this._terminalSelector + " ." + p + " span { display: inline-block; height: 100%; vertical-align: top; width: " + this.dimensions.actualCellWidth + "px}";
-                    this._dimensionsStyleElement.innerHTML = t, this._selectionContainer.style.height = this._viewportElement.style.height, this._screenElement.style.width = this.dimensions.canvasWidth + "px", this._screenElement.style.height = this.dimensions.canvasHeight + "px"
+                    this.dimensions.scaledCharWidth = this._charSizeService.width * window.devicePixelRatio, this.dimensions.scaledCharHeight = Math.ceil(this._charSizeService.height * window.devicePixelRatio), this.dimensions.scaledCellWidth = this.dimensions.scaledCharWidth + Math.round(this._optionsService.options.letterSpacing), this.dimensions.scaledCellHeight = Math.floor(this.dimensions.scaledCharHeight * this._optionsService.options.lineHeight), this.dimensions.scaledCharLeft = 0, this.dimensions.scaledCharTop = 0, this.dimensions.scaledCanvasWidth = this.dimensions.scaledCellWidth * this._bufferService.cols, this.dimensions.scaledCanvasHeight = this.dimensions.scaledCellHeight * this._bufferService.rows, this.dimensions.canvasWidth = Math.round(this.dimensions.scaledCanvasWidth / window.devicePixelRatio), this.dimensions.canvasHeight = Math.round(this.dimensions.scaledCanvasHeight / window.devicePixelRatio), this.dimensions.actualCellWidth = this.dimensions.canvasWidth / this._bufferService.cols, this.dimensions.actualCellHeight = this.dimensions.canvasHeight / this._bufferService.rows;
+                    for (var e = 0, t = this._rowElements; e < t.length; e++) {
+                        var r = t[e];
+                        r.style.width = this.dimensions.canvasWidth + "px", r.style.height = this.dimensions.actualCellHeight + "px", r.style.lineHeight = this.dimensions.actualCellHeight + "px", r.style.overflow = "hidden"
+                    }
+                    this._dimensionsStyleElement || (this._dimensionsStyleElement = document.createElement("style"), this._screenElement.appendChild(this._dimensionsStyleElement));
+                    var i = this._terminalSelector + " .xterm-rows span { display: inline-block; height: 100%; vertical-align: top; width: " + this.dimensions.actualCellWidth + "px}";
+                    this._dimensionsStyleElement.innerHTML = i, this._selectionContainer.style.height = this._viewportElement.style.height, this._screenElement.style.width = this.dimensions.canvasWidth + "px", this._screenElement.style.height = this.dimensions.canvasHeight + "px"
                 }, t.prototype.setColors = function(e) {
                     this._colors = e, this._injectCss()
                 }, t.prototype._injectCss = function() {
                     var e = this;
                     this._themeStyleElement || (this._themeStyleElement = document.createElement("style"), this._screenElement.appendChild(this._themeStyleElement));
-                    var t = this._terminalSelector + " ." + p + " { color: " + this._colors.foreground.css + "; background-color: " + this._colors.background.css + "; font-family: " + this._optionsService.options.fontFamily + "; font-size: " + this._optionsService.options.fontSize + "px;}";
-                    t += this._terminalSelector + " span:not(." + a.BOLD_CLASS + ") { font-weight: " + this._optionsService.options.fontWeight + ";}" + this._terminalSelector + " span." + a.BOLD_CLASS + " { font-weight: " + this._optionsService.options.fontWeightBold + ";}" + this._terminalSelector + " span." + a.ITALIC_CLASS + " { font-style: italic;}", t += "@keyframes blink_box_shadow_" + this._terminalClass + " { 50% {  box-shadow: none; }}", t += "@keyframes blink_block_" + this._terminalClass + " { 0% {  background-color: " + this._colors.cursor.css + ";  color: " + this._colors.cursorAccent.css + "; } 50% {  background-color: " + this._colors.cursorAccent.css + ";  color: " + this._colors.cursor.css + "; }}", t += this._terminalSelector + " ." + p + ":not(.xterm-focus) ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { outline: 1px solid " + this._colors.cursor.css + "; outline-offset: -1px;}" + this._terminalSelector + " ." + p + ".xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_BLINK_CLASS + ":not(." + a.CURSOR_STYLE_BLOCK_CLASS + ") { animation: blink_box_shadow_" + this._terminalClass + " 1s step-end infinite;}" + this._terminalSelector + " ." + p + ".xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_BLINK_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { animation: blink_block_" + this._terminalClass + " 1s step-end infinite;}" + this._terminalSelector + " ." + p + ".xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { background-color: " + this._colors.cursor.css + "; color: " + this._colors.cursorAccent.css + ";}" + this._terminalSelector + " ." + p + " ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BAR_CLASS + " { box-shadow: " + this._optionsService.options.cursorWidth + "px 0 0 " + this._colors.cursor.css + " inset;}" + this._terminalSelector + " ." + p + " ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_UNDERLINE_CLASS + " { box-shadow: 0 -1px 0 " + this._colors.cursor.css + " inset;}", t += this._terminalSelector + " ." + v + " { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;}" + this._terminalSelector + " ." + v + " div { position: absolute; background-color: " + this._colors.selection.css + ";}", this._colors.ansi.forEach(function(r, i) {
+                    var t = this._terminalSelector + " .xterm-rows { color: " + this._colors.foreground.css + "; font-family: " + this._optionsService.options.fontFamily + "; font-size: " + this._optionsService.options.fontSize + "px;}";
+                    t += this._terminalSelector + " span:not(." + a.BOLD_CLASS + ") { font-weight: " + this._optionsService.options.fontWeight + ";}" + this._terminalSelector + " span." + a.BOLD_CLASS + " { font-weight: " + this._optionsService.options.fontWeightBold + ";}" + this._terminalSelector + " span." + a.ITALIC_CLASS + " { font-style: italic;}", t += "@keyframes blink_box_shadow_" + this._terminalClass + " { 50% {  box-shadow: none; }}", t += "@keyframes blink_block_" + this._terminalClass + " { 0% {  background-color: " + this._colors.cursor.css + ";  color: " + this._colors.cursorAccent.css + "; } 50% {  background-color: " + this._colors.cursorAccent.css + ";  color: " + this._colors.cursor.css + "; }}", t += this._terminalSelector + " .xterm-rows:not(.xterm-focus) ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { outline: 1px solid " + this._colors.cursor.css + "; outline-offset: -1px;}" + this._terminalSelector + " .xterm-rows.xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_BLINK_CLASS + ":not(." + a.CURSOR_STYLE_BLOCK_CLASS + ") { animation: blink_box_shadow_" + this._terminalClass + " 1s step-end infinite;}" + this._terminalSelector + " .xterm-rows.xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_BLINK_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { animation: blink_block_" + this._terminalClass + " 1s step-end infinite;}" + this._terminalSelector + " .xterm-rows.xterm-focus ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BLOCK_CLASS + " { background-color: " + this._colors.cursor.css + "; color: " + this._colors.cursorAccent.css + ";}" + this._terminalSelector + " .xterm-rows ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_BAR_CLASS + " { box-shadow: " + this._optionsService.options.cursorWidth + "px 0 0 " + this._colors.cursor.css + " inset;}" + this._terminalSelector + " .xterm-rows ." + a.CURSOR_CLASS + "." + a.CURSOR_STYLE_UNDERLINE_CLASS + " { box-shadow: 0 -1px 0 " + this._colors.cursor.css + " inset;}", t += this._terminalSelector + " .xterm-selection { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;}" + this._terminalSelector + " .xterm-selection div { position: absolute; background-color: " + this._colors.selectionTransparent.css + ";}", this._colors.ansi.forEach(function(r, i) {
                         t += e._terminalSelector + " .xterm-fg-" + i + " { color: " + r.css + "; }" + e._terminalSelector + " .xterm-bg-" + i + " { background-color: " + r.css + "; }"
                     }), t += this._terminalSelector + " .xterm-fg-" + c.INVERTED_DEFAULT_COLOR + " { color: " + _.color.opaque(this._colors.background).css + "; }" + this._terminalSelector + " .xterm-bg-" + c.INVERTED_DEFAULT_COLOR + " { background-color: " + this._colors.foreground.css + "; }", this._themeStyleElement.innerHTML = t
                 }, t.prototype.onDevicePixelRatioChange = function() {
@@ -6525,11 +6640,9 @@
                 }, t.prototype.onCursorMove = function() {}, t.prototype.onOptionsChanged = function() {
                     this._updateDimensions(), this._injectCss()
                 }, t.prototype.clear = function() {
-                    this._rowElements.forEach(function(e) {
-                        return e.innerHTML = ""
-                    })
+                    for (var e = 0, t = this._rowElements; e < t.length; e++) t[e].innerHTML = ""
                 }, t.prototype.renderRows = function(e, t) {
-                    for (var r = this._bufferService.buffer.ybase + this._bufferService.buffer.y, i = this._bufferService.buffer.x, n = this._optionsService.options.cursorBlink, o = e; o <= t; o++) {
+                    for (var r = this._bufferService.buffer.ybase + this._bufferService.buffer.y, i = Math.min(this._bufferService.buffer.x, this._bufferService.cols - 1), n = this._optionsService.options.cursorBlink, o = e; o <= t; o++) {
                         var s = this._rowElements[o];
                         s.innerHTML = "";
                         var a = o + this._bufferService.buffer.ydisp,
@@ -6539,9 +6652,9 @@
                     }
                 }, Object.defineProperty(t.prototype, "_terminalSelector", {
                     get: function() {
-                        return "." + d + this._terminalClass
+                        return ".xterm-dom-renderer-owner-" + this._terminalClass
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.registerCharacterJoiner = function(e) {
                     return -1
@@ -6558,17 +6671,17 @@
                         var a = s.children[e];
                         a && (a.style.textDecoration = o ? "underline" : "none"), ++e >= n && (e = 0, r++)
                     }
-                }, o([s(5, h.ICharSizeService), s(6, u.IOptionsService), s(7, u.IBufferService)], t)
+                }, o([s(6, h.ICharSizeService), s(7, u.IOptionsService), s(8, u.IBufferService)], t)
             }(l.Disposable);
-        t.DomRenderer = y
+        t.DomRenderer = v
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.DomRendererRowFactory = t.CURSOR_STYLE_UNDERLINE_CLASS = t.CURSOR_STYLE_BAR_CLASS = t.CURSOR_STYLE_BLOCK_CLASS = t.CURSOR_BLINK_CLASS = t.CURSOR_CLASS = t.UNDERLINE_CLASS = t.ITALIC_CLASS = t.DIM_CLASS = t.BOLD_CLASS = void 0;
         var i = r(9),
             n = r(3),
-            o = r(5),
+            o = r(4),
             s = r(10);
         t.BOLD_CLASS = "xterm-bold", t.DIM_CLASS = "xterm-dim", t.ITALIC_CLASS = "xterm-italic", t.UNDERLINE_CLASS = "xterm-underline", t.CURSOR_CLASS = "xterm-cursor", t.CURSOR_BLINK_CLASS = "xterm-cursor-blink", t.CURSOR_STYLE_BLOCK_CLASS = "xterm-cursor-block", t.CURSOR_STYLE_BAR_CLASS = "xterm-cursor-bar", t.CURSOR_STYLE_UNDERLINE_CLASS = "xterm-cursor-underline";
         var a = function() {
@@ -6656,7 +6769,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.evaluateKeyboardEvent = void 0;
         var i = r(12),
             n = {
                 48: ["0", ")"],
@@ -6711,10 +6824,10 @@
                     s.key = i.C0.HT, s.cancel = !0;
                     break;
                 case 13:
-                    s.key = i.C0.CR, s.cancel = !0;
+                    s.key = e.altKey ? i.C0.ESC + i.C0.CR : i.C0.CR, s.cancel = !0;
                     break;
                 case 27:
-                    s.key = i.C0.ESC, s.cancel = !0;
+                    s.key = i.C0.ESC, e.altKey && (s.key = i.C0.ESC + i.C0.ESC), s.cancel = !0;
                     break;
                 case 37:
                     if (e.metaKey) break;
@@ -6804,17 +6917,6 @@
         }
     }, function(e, t, r) {
         "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var i = r(3);
-        t.updateWindowsModeWrappedState = function(e) {
-            var t, r = null === (t = e.buffer.lines.get(e.buffer.ybase + e.buffer.y - 1)) || void 0 === t ? void 0 : t.get(e.cols - 1),
-                n = e.buffer.lines.get(e.buffer.ybase + e.buffer.y);
-            n && r && (n.isWrapped = r[i.CHAR_DATA_CODE_INDEX] !== i.NULL_CELL_CODE && r[i.CHAR_DATA_CODE_INDEX] !== i.WHITESPACE_CELL_CODE)
-        }
-    }, function(e, t, r) {
-        "use strict";
         var i, n = this && this.__extends || (i = function(e, t) {
                 return (i = Object.setPrototypeOf || {
                         __proto__: []
@@ -6845,76 +6947,86 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var a = r(29),
-            c = r(1),
+        }), t.RenderService = void 0;
+        var a = r(31),
+            c = r(0),
             l = r(2),
-            h = r(30),
-            u = r(8),
-            f = r(0),
-            _ = r(4),
+            h = r(32),
+            u = r(7),
+            f = r(1),
+            _ = r(5),
             d = function(e) {
-                function t(t, r, i, n, o) {
-                    var s = e.call(this) || this;
-                    if (s._renderer = t, s._rowCount = r, s.screenElement = i, s.optionsService = n, s.charSizeService = o, s._isPaused = !1, s._needsFullRefresh = !1, s._canvasWidth = 0, s._canvasHeight = 0, s._onDimensionsChange = new c.EventEmitter, s._onRender = new c.EventEmitter, s._onRefreshRequest = new c.EventEmitter, s._renderDebouncer = new a.RenderDebouncer(function(e, t) {
-                            return s._renderRows(e, t)
-                        }), s.register(s._renderDebouncer), s._screenDprMonitor = new h.ScreenDprMonitor, s._screenDprMonitor.setListener(function() {
-                            return s.onDevicePixelRatioChange()
-                        }), s.register(s._screenDprMonitor), s.register(n.onOptionChange(function() {
-                            return s._renderer.onOptionsChanged()
-                        })), s.register(o.onCharSizeChange(function() {
-                            return s.onCharSizeChanged()
-                        })), s._renderer.onRequestRefreshRows(function(e) {
-                            return s.refreshRows(e.start, e.end)
-                        }), s.register(u.addDisposableDomListener(window, "resize", function() {
-                            return s.onDevicePixelRatioChange()
+                function t(t, r, i, n, o, s) {
+                    var l = e.call(this) || this;
+                    if (l._renderer = t, l._rowCount = r, l._isPaused = !1, l._needsFullRefresh = !1, l._isNextRenderRedrawOnly = !0, l._needsSelectionRefresh = !1, l._canvasWidth = 0, l._canvasHeight = 0, l._selectionState = {
+                            start: void 0,
+                            end: void 0,
+                            columnSelectMode: !1
+                        }, l._onDimensionsChange = new c.EventEmitter, l._onRender = new c.EventEmitter, l._onRefreshRequest = new c.EventEmitter, l.register({
+                            dispose: function() {
+                                return l._renderer.dispose()
+                            }
+                        }), l._renderDebouncer = new a.RenderDebouncer(function(e, t) {
+                            return l._renderRows(e, t)
+                        }), l.register(l._renderDebouncer), l._screenDprMonitor = new h.ScreenDprMonitor, l._screenDprMonitor.setListener(function() {
+                            return l.onDevicePixelRatioChange()
+                        }), l.register(l._screenDprMonitor), l.register(s.onResize(function(e) {
+                            return l._fullRefresh()
+                        })), l.register(n.onOptionChange(function() {
+                            return l._renderer.onOptionsChanged()
+                        })), l.register(o.onCharSizeChange(function() {
+                            return l.onCharSizeChanged()
+                        })), l._renderer.onRequestRedraw(function(e) {
+                            return l.refreshRows(e.start, e.end, !0)
+                        }), l.register(u.addDisposableDomListener(window, "resize", function() {
+                            return l.onDevicePixelRatioChange()
                         })), "IntersectionObserver" in window) {
-                        var l = new IntersectionObserver(function(e) {
-                            return s._onIntersectionChange(e[e.length - 1])
+                        var f = new IntersectionObserver(function(e) {
+                            return l._onIntersectionChange(e[e.length - 1])
                         }, {
                             threshold: 0
                         });
-                        l.observe(i), s.register({
+                        f.observe(i), l.register({
                             dispose: function() {
-                                return l.disconnect()
+                                return f.disconnect()
                             }
                         })
                     }
-                    return s
+                    return l
                 }
                 return n(t, e), Object.defineProperty(t.prototype, "onDimensionsChange", {
                     get: function() {
                         return this._onDimensionsChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(t.prototype, "onRender", {
+                }), Object.defineProperty(t.prototype, "onRenderedBufferChange", {
                     get: function() {
                         return this._onRender.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onRefreshRequest", {
                     get: function() {
                         return this._onRefreshRequest.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "dimensions", {
                     get: function() {
                         return this._renderer.dimensions
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype._onIntersectionChange = function(e) {
                     this._isPaused = 0 === e.intersectionRatio, !this._isPaused && this._needsFullRefresh && (this.refreshRows(0, this._rowCount - 1), this._needsFullRefresh = !1)
-                }, t.prototype.refreshRows = function(e, t) {
-                    this._isPaused ? this._needsFullRefresh = !0 : this._renderDebouncer.refresh(e, t, this._rowCount)
+                }, t.prototype.refreshRows = function(e, t, r) {
+                    void 0 === r && (r = !1), this._isPaused ? this._needsFullRefresh = !0 : (r || (this._isNextRenderRedrawOnly = !1), this._renderDebouncer.refresh(e, t, this._rowCount))
                 }, t.prototype._renderRows = function(e, t) {
-                    this._renderer.renderRows(e, t), this._onRender.fire({
+                    this._renderer.renderRows(e, t), this._needsSelectionRefresh && (this._renderer.onSelectionChanged(this._selectionState.start, this._selectionState.end, this._selectionState.columnSelectMode), this._needsSelectionRefresh = !1), this._isNextRenderRedrawOnly || this._onRender.fire({
                         start: e,
                         end: t
-                    })
+                    }), this._isNextRenderRedrawOnly = !0
                 }, t.prototype.resize = function(e, t) {
                     this._rowCount = t, this._fireOnCanvasResize()
                 }, t.prototype.changeOptions = function() {
@@ -6922,12 +7034,12 @@
                 }, t.prototype._fireOnCanvasResize = function() {
                     this._renderer.dimensions.canvasWidth === this._canvasWidth && this._renderer.dimensions.canvasHeight === this._canvasHeight || this._onDimensionsChange.fire(this._renderer.dimensions)
                 }, t.prototype.dispose = function() {
-                    this._renderer.dispose(), e.prototype.dispose.call(this)
+                    e.prototype.dispose.call(this)
                 }, t.prototype.setRenderer = function(e) {
                     var t = this;
-                    this._renderer.dispose(), this._renderer = e, this._renderer.onRequestRefreshRows(function(e) {
-                        return t.refreshRows(e.start, e.end)
-                    }), this.refreshRows(0, this._rowCount - 1)
+                    this._renderer.dispose(), this._renderer = e, this._renderer.onRequestRedraw(function(e) {
+                        return t.refreshRows(e.start, e.end, !0)
+                    }), this._needsSelectionRefresh = !0, this._fullRefresh()
                 }, t.prototype._fullRefresh = function() {
                     this._isPaused ? this._needsFullRefresh = !0 : this.refreshRows(0, this._rowCount - 1)
                 }, t.prototype.setColors = function(e) {
@@ -6943,7 +7055,7 @@
                 }, t.prototype.onFocus = function() {
                     this._renderer.onFocus()
                 }, t.prototype.onSelectionChanged = function(e, t, r) {
-                    this._renderer.onSelectionChanged(e, t, r)
+                    this._selectionState.start = e, this._selectionState.end = t, this._selectionState.columnSelectMode = r, this._renderer.onSelectionChanged(e, t, r)
                 }, t.prototype.onCursorMove = function() {
                     this._renderer.onCursorMove()
                 }, t.prototype.clear = function() {
@@ -6952,108 +7064,9 @@
                     return this._renderer.registerCharacterJoiner(e)
                 }, t.prototype.deregisterCharacterJoiner = function(e) {
                     return this._renderer.deregisterCharacterJoiner(e)
-                }, o([s(3, f.IOptionsService), s(4, _.ICharSizeService)], t)
+                }, o([s(3, f.IOptionsService), s(4, _.ICharSizeService), s(5, f.IBufferService)], t)
             }(l.Disposable);
         t.RenderService = d
-    }, function(e, t, r) {
-        "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var i = r(1),
-            n = r(11),
-            o = r(31);
-        t.DEFAULT_BELL_SOUND = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjMyLjEwNAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbFAZC1CQEwTJ9mjRvBA4UOLD8nKVOWfh+UlK3z/177OXrfOdKl7pyn3Xf//WreyTRUoAWgBgkOAGbZHBgG1OF6zM82DWbZaUmMBptgQhGjsyYqc9ae9XFz280948NMBWInljyzsNRFLPWdnZGWrddDsjK1unuSrVN9jJsK8KuQtQCtMBjCEtImISdNKJOopIpBFpNSMbIHCSRpRR5iakjTiyzLhchUUBwCgyKiweBv/7UsQbg8isVNoMPMjAAAA0gAAABEVFGmgqK////9bP/6XCykxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq", t.DEFAULT_OPTIONS = Object.freeze({
-            cols: 80,
-            rows: 24,
-            cursorBlink: !1,
-            cursorStyle: "block",
-            cursorWidth: 1,
-            bellSound: t.DEFAULT_BELL_SOUND,
-            bellStyle: "none",
-            drawBoldTextInBrightColors: !0,
-            fastScrollModifier: "alt",
-            fastScrollSensitivity: 5,
-            fontFamily: "courier-new, courier, monospace",
-            fontSize: 15,
-            fontWeight: "normal",
-            fontWeightBold: "bold",
-            lineHeight: 1,
-            letterSpacing: 0,
-            logLevel: "info",
-            scrollback: 1e3,
-            scrollSensitivity: 1,
-            screenReaderMode: !1,
-            macOptionIsMeta: !1,
-            macOptionClickForcesSelection: !1,
-            minimumContrastRatio: 1,
-            disableStdin: !1,
-            allowTransparency: !1,
-            tabStopWidth: 8,
-            theme: {},
-            rightClickSelectsWord: n.isMac,
-            rendererType: "canvas",
-            windowOptions: {},
-            windowsMode: !1,
-            wordSeparator: " ()[]{}',\"`",
-            convertEol: !1,
-            termName: "xterm",
-            cancelEvents: !1
-        });
-        var s = ["cols", "rows"],
-            a = function() {
-                function e(e) {
-                    var r = this;
-                    this._onOptionChange = new i.EventEmitter, this.options = o.clone(t.DEFAULT_OPTIONS), Object.keys(e).forEach(function(t) {
-                        if (t in r.options) {
-                            var i = e[t];
-                            r.options[t] = i
-                        }
-                    })
-                }
-                return Object.defineProperty(e.prototype, "onOptionChange", {
-                    get: function() {
-                        return this._onOptionChange.event
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), e.prototype.setOption = function(e, r) {
-                    if (!(e in t.DEFAULT_OPTIONS)) throw new Error('No option with key "' + e + '"');
-                    if (-1 !== s.indexOf(e)) throw new Error('Option "' + e + '" can only be set in the constructor');
-                    this.options[e] !== r && (r = this._sanitizeAndValidateOption(e, r), this.options[e] !== r && (this.options[e] = r, this._onOptionChange.fire(e)))
-                }, e.prototype._sanitizeAndValidateOption = function(e, r) {
-                    switch (e) {
-                        case "bellStyle":
-                        case "cursorStyle":
-                        case "fontWeight":
-                        case "fontWeightBold":
-                        case "rendererType":
-                        case "wordSeparator":
-                            r || (r = t.DEFAULT_OPTIONS[e]);
-                            break;
-                        case "cursorWidth":
-                            r = Math.floor(r);
-                        case "lineHeight":
-                        case "tabStopWidth":
-                            if (r < 1) throw new Error(e + " cannot be less than 1, value: " + r);
-                            break;
-                        case "minimumContrastRatio":
-                            r = Math.max(1, Math.min(21, Math.round(10 * r) / 10));
-                            break;
-                        case "scrollback":
-                            if ((r = Math.min(r, 4294967295)) < 0) throw new Error(e + " cannot be less than 0, value: " + r);
-                            break;
-                        case "fastScrollSensitivity":
-                        case "scrollSensitivity":
-                            if (r <= 0) throw new Error(e + " cannot be less than or equal to 0, value: " + r)
-                    }
-                    return r
-                }, e.prototype.getOption = function(e) {
-                    if (!(e in t.DEFAULT_OPTIONS)) throw new Error('No option with key "' + e + '"');
-                    return this.options[e]
-                }, e
-            }();
-        t.OptionsService = a
     }, function(e, t, r) {
         "use strict";
         var i = this && this.__decorate || function(e, t, r, i) {
@@ -7071,24 +7084,24 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(0),
-            s = r(1),
+        }), t.CharSizeService = void 0;
+        var o = r(1),
+            s = r(0),
             a = function() {
                 function e(e, t, r) {
-                    this.document = e, this.parentElement = t, this._optionsService = r, this.width = 0, this.height = 0, this._onCharSizeChange = new s.EventEmitter, this._measureStrategy = new c(e, t, this._optionsService)
+                    this._optionsService = r, this.width = 0, this.height = 0, this._onCharSizeChange = new s.EventEmitter, this._measureStrategy = new c(e, t, this._optionsService)
                 }
                 return Object.defineProperty(e.prototype, "hasValidSize", {
                     get: function() {
                         return this.width > 0 && this.height > 0
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onCharSizeChange", {
                     get: function() {
                         return this._onCharSizeChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.measure = function() {
                     var e = this._measureStrategy.measure();
@@ -7126,114 +7139,722 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(0),
-            s = r(64);
-        t.MINIMUM_COLS = 2, t.MINIMUM_ROWS = 1;
-        var a = function() {
-            function e(e) {
-                this._optionsService = e, this.cols = Math.max(e.options.cols, t.MINIMUM_COLS), this.rows = Math.max(e.options.rows, t.MINIMUM_ROWS), this.buffers = new s.BufferSet(e, this)
-            }
-            return Object.defineProperty(e.prototype, "buffer", {
-                get: function() {
-                    return this.buffers.active
-                },
-                enumerable: !0,
-                configurable: !0
-            }), e.prototype.resize = function(e, t) {
-                this.cols = e, this.rows = t
-            }, e.prototype.reset = function() {
-                this.buffers = new s.BufferSet(this._optionsService, this)
-            }, i([n(0, o.IOptionsService)], e)
-        }();
-        t.BufferService = a
+        }), t.MouseService = void 0;
+        var o = r(5),
+            s = r(30),
+            a = function() {
+                function e(e, t) {
+                    this._renderService = e, this._charSizeService = t
+                }
+                return e.prototype.getCoords = function(e, t, r, i, n) {
+                    return s.getCoords(e, t, r, i, this._charSizeService.hasValidSize, this._renderService.dimensions.actualCellWidth, this._renderService.dimensions.actualCellHeight, n)
+                }, e.prototype.getRawByteCoords = function(e, t, r, i) {
+                    var n = this.getCoords(e, t, r, i);
+                    return s.getRawByteCoords(n)
+                }, i([n(0, o.IRenderService), n(1, o.ICharSizeService)], e)
+            }();
+        t.MouseService = a
+    }, function(e, t, r) {
+        "use strict";
+        var i, n = this && this.__extends || (i = function(e, t) {
+                return (i = Object.setPrototypeOf || {
+                        __proto__: []
+                    }
+                    instanceof Array && function(e, t) {
+                        e.__proto__ = t
+                    } || function(e, t) {
+                        for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                    })(e, t)
+            }, function(e, t) {
+                function r() {
+                    this.constructor = e
+                }
+                i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+            }),
+            o = this && this.__decorate || function(e, t, r, i) {
+                var n, o = arguments.length,
+                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
+                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
+                else
+                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
+                return o > 3 && s && Object.defineProperty(t, r, s), s
+            },
+            s = this && this.__param || function(e, t) {
+                return function(r, i) {
+                    t(r, i, e)
+                }
+            };
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.Linkifier2 = void 0;
+        var a = r(1),
+            c = r(0),
+            l = r(2),
+            h = r(7),
+            u = function(e) {
+                function t(t) {
+                    var r = e.call(this) || this;
+                    return r._bufferService = t, r._linkProviders = [], r._linkCacheDisposables = [], r._isMouseOut = !0, r._activeLine = -1, r._onShowLinkUnderline = r.register(new c.EventEmitter), r._onHideLinkUnderline = r.register(new c.EventEmitter), r.register(l.getDisposeArrayDisposable(r._linkCacheDisposables)), r
+                }
+                return n(t, e), Object.defineProperty(t.prototype, "onShowLinkUnderline", {
+                    get: function() {
+                        return this._onShowLinkUnderline.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onHideLinkUnderline", {
+                    get: function() {
+                        return this._onHideLinkUnderline.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), t.prototype.registerLinkProvider = function(e) {
+                    var t = this;
+                    return this._linkProviders.push(e), {
+                        dispose: function() {
+                            var r = t._linkProviders.indexOf(e); - 1 !== r && t._linkProviders.splice(r, 1)
+                        }
+                    }
+                }, t.prototype.attachToDom = function(e, t, r) {
+                    var i = this;
+                    this._element = e, this._mouseService = t, this._renderService = r, this.register(h.addDisposableDomListener(this._element, "mouseleave", function() {
+                        i._isMouseOut = !0, i._clearCurrentLink()
+                    })), this.register(h.addDisposableDomListener(this._element, "mousemove", this._onMouseMove.bind(this))), this.register(h.addDisposableDomListener(this._element, "click", this._onClick.bind(this)))
+                }, t.prototype._onMouseMove = function(e) {
+                    if (this._lastMouseEvent = e, this._element && this._mouseService) {
+                        var t = this._positionFromMouseEvent(e, this._element, this._mouseService);
+                        if (t) {
+                            this._isMouseOut = !1;
+                            for (var r = e.composedPath(), i = 0; i < r.length; i++) {
+                                var n = r[i];
+                                if (n.classList.contains("xterm")) break;
+                                if (n.classList.contains("xterm-hover")) return
+                            }
+                            this._lastBufferCell && t.x === this._lastBufferCell.x && t.y === this._lastBufferCell.y || (this._onHover(t), this._lastBufferCell = t)
+                        }
+                    }
+                }, t.prototype._onHover = function(e) {
+                    if (this._activeLine !== e.y) return this._clearCurrentLink(), void this._askForLink(e, !1);
+                    this._currentLink && this._linkAtPosition(this._currentLink.link, e) || (this._clearCurrentLink(), this._askForLink(e, !0))
+                }, t.prototype._askForLink = function(e, t) {
+                    var r = this;
+                    this._activeProviderReplies && t || (this._activeProviderReplies = new Map, this._activeLine = e.y);
+                    var i = !1;
+                    this._linkProviders.forEach(function(n, o) {
+                        var s;
+                        t ? (null === (s = r._activeProviderReplies) || void 0 === s ? void 0 : s.get(o)) && (i = r._checkLinkProviderResult(o, e, i)) : n.provideLinks(e.y, function(t) {
+                            var n, s;
+                            if (!r._isMouseOut) {
+                                var a = null == t ? void 0 : t.map(function(e) {
+                                    return {
+                                        link: e
+                                    }
+                                });
+                                null === (n = r._activeProviderReplies) || void 0 === n || n.set(o, a), i = r._checkLinkProviderResult(o, e, i), (null === (s = r._activeProviderReplies) || void 0 === s ? void 0 : s.size) === r._linkProviders.length && r._removeIntersectingLinks(e.y, r._activeProviderReplies)
+                            }
+                        })
+                    })
+                }, t.prototype._removeIntersectingLinks = function(e, t) {
+                    for (var r = new Set, i = 0; i < t.size; i++) {
+                        var n = t.get(i);
+                        if (n)
+                            for (var o = 0; o < n.length; o++)
+                                for (var s = n[o], a = s.link.range.start.y < e ? 0 : s.link.range.start.x, c = s.link.range.end.y > e ? this._bufferService.cols : s.link.range.end.x, l = a; l <= c; l++) {
+                                    if (r.has(l)) {
+                                        n.splice(o--, 1);
+                                        break
+                                    }
+                                    r.add(l)
+                                }
+                    }
+                }, t.prototype._checkLinkProviderResult = function(e, t, r) {
+                    var i, n = this;
+                    if (!this._activeProviderReplies) return r;
+                    for (var o = this._activeProviderReplies.get(e), s = !1, a = 0; a < e; a++) this._activeProviderReplies.has(a) && !this._activeProviderReplies.get(a) || (s = !0);
+                    if (!s && o) {
+                        var c = o.find(function(e) {
+                            return n._linkAtPosition(e.link, t)
+                        });
+                        c && (r = !0, this._handleNewLink(c))
+                    }
+                    if (this._activeProviderReplies.size === this._linkProviders.length && !r)
+                        for (a = 0; a < this._activeProviderReplies.size; a++) {
+                            var l = null === (i = this._activeProviderReplies.get(a)) || void 0 === i ? void 0 : i.find(function(e) {
+                                return n._linkAtPosition(e.link, t)
+                            });
+                            if (l) {
+                                r = !0, this._handleNewLink(l);
+                                break
+                            }
+                        }
+                    return r
+                }, t.prototype._onClick = function(e) {
+                    if (this._element && this._mouseService && this._currentLink) {
+                        var t = this._positionFromMouseEvent(e, this._element, this._mouseService);
+                        t && this._linkAtPosition(this._currentLink.link, t) && this._currentLink.link.activate(e, this._currentLink.link.text)
+                    }
+                }, t.prototype._clearCurrentLink = function(e, t) {
+                    this._element && this._currentLink && this._lastMouseEvent && (!e || !t || this._currentLink.link.range.start.y >= e && this._currentLink.link.range.end.y <= t) && (this._linkLeave(this._element, this._currentLink.link, this._lastMouseEvent), this._currentLink = void 0, l.disposeArray(this._linkCacheDisposables))
+                }, t.prototype._handleNewLink = function(e) {
+                    var t = this;
+                    if (this._element && this._lastMouseEvent && this._mouseService) {
+                        var r = this._positionFromMouseEvent(this._lastMouseEvent, this._element, this._mouseService);
+                        r && this._linkAtPosition(e.link, r) && (this._currentLink = e, this._currentLink.state = {
+                            decorations: {
+                                underline: void 0 === e.link.decorations || e.link.decorations.underline,
+                                pointerCursor: void 0 === e.link.decorations || e.link.decorations.pointerCursor
+                            },
+                            isHovered: !0
+                        }, this._linkHover(this._element, e.link, this._lastMouseEvent), e.link.decorations = {}, Object.defineProperties(e.link.decorations, {
+                            pointerCursor: {
+                                get: function() {
+                                    var e, r;
+                                    return null === (r = null === (e = t._currentLink) || void 0 === e ? void 0 : e.state) || void 0 === r ? void 0 : r.decorations.pointerCursor
+                                },
+                                set: function(e) {
+                                    var r, i;
+                                    (null === (r = t._currentLink) || void 0 === r ? void 0 : r.state) && t._currentLink.state.decorations.pointerCursor !== e && (t._currentLink.state.decorations.pointerCursor = e, t._currentLink.state.isHovered && (null === (i = t._element) || void 0 === i || i.classList.toggle("xterm-cursor-pointer", e)))
+                                }
+                            },
+                            underline: {
+                                get: function() {
+                                    var e, r;
+                                    return null === (r = null === (e = t._currentLink) || void 0 === e ? void 0 : e.state) || void 0 === r ? void 0 : r.decorations.underline
+                                },
+                                set: function(r) {
+                                    var i, n, o;
+                                    (null === (i = t._currentLink) || void 0 === i ? void 0 : i.state) && (null === (o = null === (n = t._currentLink) || void 0 === n ? void 0 : n.state) || void 0 === o ? void 0 : o.decorations.underline) !== r && (t._currentLink.state.decorations.underline = r, t._currentLink.state.isHovered && t._fireUnderlineEvent(e.link, r))
+                                }
+                            }
+                        }), this._renderService && this._linkCacheDisposables.push(this._renderService.onRenderedBufferChange(function(e) {
+                            var r = 0 === e.start ? 0 : e.start + 1 + t._bufferService.buffer.ydisp;
+                            t._clearCurrentLink(r, e.end + 1 + t._bufferService.buffer.ydisp)
+                        })))
+                    }
+                }, t.prototype._linkHover = function(e, t, r) {
+                    var i;
+                    (null === (i = this._currentLink) || void 0 === i ? void 0 : i.state) && (this._currentLink.state.isHovered = !0, this._currentLink.state.decorations.underline && this._fireUnderlineEvent(t, !0), this._currentLink.state.decorations.pointerCursor && e.classList.add("xterm-cursor-pointer")), t.hover && t.hover(r, t.text)
+                }, t.prototype._fireUnderlineEvent = function(e, t) {
+                    var r = e.range,
+                        i = this._bufferService.buffer.ydisp,
+                        n = this._createLinkUnderlineEvent(r.start.x - 1, r.start.y - i - 1, r.end.x, r.end.y - i - 1, void 0);
+                    (t ? this._onShowLinkUnderline : this._onHideLinkUnderline).fire(n)
+                }, t.prototype._linkLeave = function(e, t, r) {
+                    var i;
+                    (null === (i = this._currentLink) || void 0 === i ? void 0 : i.state) && (this._currentLink.state.isHovered = !1, this._currentLink.state.decorations.underline && this._fireUnderlineEvent(t, !1), this._currentLink.state.decorations.pointerCursor && e.classList.remove("xterm-cursor-pointer")), t.leave && t.leave(r, t.text)
+                }, t.prototype._linkAtPosition = function(e, t) {
+                    var r = e.range.start.y === e.range.end.y,
+                        i = e.range.start.y < t.y,
+                        n = e.range.end.y > t.y;
+                    return (r && e.range.start.x <= t.x && e.range.end.x >= t.x || i && e.range.end.x >= t.x || n && e.range.start.x <= t.x || i && n) && e.range.start.y <= t.y && e.range.end.y >= t.y
+                }, t.prototype._positionFromMouseEvent = function(e, t, r) {
+                    var i = r.getCoords(e, t, this._bufferService.cols, this._bufferService.rows);
+                    if (i) return {
+                        x: i[0],
+                        y: i[1] + this._bufferService.buffer.ydisp
+                    }
+                }, t.prototype._createLinkUnderlineEvent = function(e, t, r, i, n) {
+                    return {
+                        x1: e,
+                        y1: t,
+                        x2: r,
+                        y2: i,
+                        cols: this._bufferService.cols,
+                        fg: n
+                    }
+                }, o([s(0, a.IBufferService)], t)
+            }(l.Disposable);
+        t.Linkifier2 = u
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(65),
-            n = r(1),
-            o = function() {
-                function e(e, t) {
-                    this.optionsService = e, this.bufferService = t, this._onBufferActivate = new n.EventEmitter, this._normal = new i.Buffer(!0, e, t), this._normal.fillViewportRows(), this._alt = new i.Buffer(!1, e, t), this._activeBuffer = this._normal, this.setupTabStops()
+        }), t.CoreBrowserService = void 0;
+        var i = function() {
+            function e(e) {
+                this._textarea = e
+            }
+            return Object.defineProperty(e.prototype, "isFocused", {
+                get: function() {
+                    return document.activeElement === this._textarea && document.hasFocus()
+                },
+                enumerable: !1,
+                configurable: !0
+            }), e
+        }();
+        t.CoreBrowserService = i
+    }, function(e, t, r) {
+        "use strict";
+        var i, n = this && this.__extends || (i = function(e, t) {
+            return (i = Object.setPrototypeOf || {
+                    __proto__: []
                 }
-                return Object.defineProperty(e.prototype, "onBufferActivate", {
+                instanceof Array && function(e, t) {
+                    e.__proto__ = t
+                } || function(e, t) {
+                    for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                })(e, t)
+        }, function(e, t) {
+            function r() {
+                this.constructor = e
+            }
+            i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+        });
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.CoreTerminal = void 0;
+        var o = r(2),
+            s = r(1),
+            a = r(66),
+            c = r(67),
+            l = r(68),
+            h = r(74),
+            u = r(75),
+            f = r(0),
+            _ = r(76),
+            d = r(77),
+            p = r(78),
+            v = r(80),
+            g = r(81),
+            y = r(19),
+            b = r(82),
+            m = function(e) {
+                function t(t) {
+                    var r = e.call(this) || this;
+                    return r._onBinary = new f.EventEmitter, r._onData = new f.EventEmitter, r._onLineFeed = new f.EventEmitter, r._onResize = new f.EventEmitter, r._onScroll = new f.EventEmitter, r._instantiationService = new a.InstantiationService, r.optionsService = new h.OptionsService(t), r._instantiationService.setService(s.IOptionsService, r.optionsService), r._bufferService = r.register(r._instantiationService.createInstance(l.BufferService)), r._instantiationService.setService(s.IBufferService, r._bufferService), r._logService = r._instantiationService.createInstance(c.LogService), r._instantiationService.setService(s.ILogService, r._logService), r._coreService = r.register(r._instantiationService.createInstance(u.CoreService, function() {
+                        return r.scrollToBottom()
+                    })), r._instantiationService.setService(s.ICoreService, r._coreService), r._coreMouseService = r._instantiationService.createInstance(_.CoreMouseService), r._instantiationService.setService(s.ICoreMouseService, r._coreMouseService), r._dirtyRowService = r._instantiationService.createInstance(d.DirtyRowService), r._instantiationService.setService(s.IDirtyRowService, r._dirtyRowService), r.unicodeService = r._instantiationService.createInstance(p.UnicodeService), r._instantiationService.setService(s.IUnicodeService, r.unicodeService), r._charsetService = r._instantiationService.createInstance(v.CharsetService), r._instantiationService.setService(s.ICharsetService, r._charsetService), r._inputHandler = new y.InputHandler(r._bufferService, r._charsetService, r._coreService, r._dirtyRowService, r._logService, r.optionsService, r._coreMouseService, r.unicodeService), r.register(f.forwardEvent(r._inputHandler.onLineFeed, r._onLineFeed)), r.register(r._inputHandler), r.register(f.forwardEvent(r._bufferService.onResize, r._onResize)), r.register(f.forwardEvent(r._coreService.onData, r._onData)), r.register(f.forwardEvent(r._coreService.onBinary, r._onBinary)), r.register(r.optionsService.onOptionChange(function(e) {
+                        return r._updateOptions(e)
+                    })), r._writeBuffer = new b.WriteBuffer(function(e) {
+                        return r._inputHandler.parse(e)
+                    }), r
+                }
+                return n(t, e), Object.defineProperty(t.prototype, "onBinary", {
+                    get: function() {
+                        return this._onBinary.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onData", {
+                    get: function() {
+                        return this._onData.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onLineFeed", {
+                    get: function() {
+                        return this._onLineFeed.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onResize", {
+                    get: function() {
+                        return this._onResize.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "onScroll", {
+                    get: function() {
+                        return this._onScroll.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "cols", {
+                    get: function() {
+                        return this._bufferService.cols
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "rows", {
+                    get: function() {
+                        return this._bufferService.rows
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(t.prototype, "buffers", {
+                    get: function() {
+                        return this._bufferService.buffers
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), t.prototype.dispose = function() {
+                    var t;
+                    this._isDisposed || (e.prototype.dispose.call(this), null === (t = this._windowsMode) || void 0 === t || t.dispose(), this._windowsMode = void 0)
+                }, t.prototype.write = function(e, t) {
+                    this._writeBuffer.write(e, t)
+                }, t.prototype.writeSync = function(e) {
+                    this._writeBuffer.writeSync(e)
+                }, t.prototype.resize = function(e, t) {
+                    isNaN(e) || isNaN(t) || (e = Math.max(e, l.MINIMUM_COLS), t = Math.max(t, l.MINIMUM_ROWS), this._bufferService.resize(e, t))
+                }, t.prototype.scroll = function(e, t) {
+                    void 0 === t && (t = !1);
+                    var r, i = this._bufferService.buffer;
+                    (r = this._cachedBlankLine) && r.length === this.cols && r.getFg(0) === e.fg && r.getBg(0) === e.bg || (r = i.getBlankLine(e, t), this._cachedBlankLine = r), r.isWrapped = t;
+                    var n = i.ybase + i.scrollTop,
+                        o = i.ybase + i.scrollBottom;
+                    if (0 === i.scrollTop) {
+                        var s = i.lines.isFull;
+                        o === i.lines.length - 1 ? s ? i.lines.recycle().copyFrom(r) : i.lines.push(r.clone()) : i.lines.splice(o + 1, 0, r.clone()), s ? this._bufferService.isUserScrolling && (i.ydisp = Math.max(i.ydisp - 1, 0)) : (i.ybase++, this._bufferService.isUserScrolling || i.ydisp++)
+                    } else {
+                        var a = o - n + 1;
+                        i.lines.shiftElements(n + 1, a - 1, -1), i.lines.set(o, r.clone())
+                    }
+                    this._bufferService.isUserScrolling || (i.ydisp = i.ybase), this._dirtyRowService.markRangeDirty(i.scrollTop, i.scrollBottom), this._onScroll.fire(i.ydisp)
+                }, t.prototype.scrollLines = function(e, t) {
+                    var r = this._bufferService.buffer;
+                    if (e < 0) {
+                        if (0 === r.ydisp) return;
+                        this._bufferService.isUserScrolling = !0
+                    } else e + r.ydisp >= r.ybase && (this._bufferService.isUserScrolling = !1);
+                    var i = r.ydisp;
+                    r.ydisp = Math.max(Math.min(r.ydisp + e, r.ybase), 0), i !== r.ydisp && (t || this._onScroll.fire(r.ydisp))
+                }, t.prototype.scrollPages = function(e) {
+                    this.scrollLines(e * (this.rows - 1))
+                }, t.prototype.scrollToTop = function() {
+                    this.scrollLines(-this._bufferService.buffer.ydisp)
+                }, t.prototype.scrollToBottom = function() {
+                    this.scrollLines(this._bufferService.buffer.ybase - this._bufferService.buffer.ydisp)
+                }, t.prototype.scrollToLine = function(e) {
+                    var t = e - this._bufferService.buffer.ydisp;
+                    0 !== t && this.scrollLines(t)
+                }, t.prototype.addEscHandler = function(e, t) {
+                    return this._inputHandler.addEscHandler(e, t)
+                }, t.prototype.addDcsHandler = function(e, t) {
+                    return this._inputHandler.addDcsHandler(e, t)
+                }, t.prototype.addCsiHandler = function(e, t) {
+                    return this._inputHandler.addCsiHandler(e, t)
+                }, t.prototype.addOscHandler = function(e, t) {
+                    return this._inputHandler.addOscHandler(e, t)
+                }, t.prototype._setup = function() {
+                    this.optionsService.options.windowsMode && this._enableWindowsMode()
+                }, t.prototype.reset = function() {
+                    this._inputHandler.reset(), this._bufferService.reset(), this._charsetService.reset(), this._coreService.reset(), this._coreMouseService.reset()
+                }, t.prototype._updateOptions = function(e) {
+                    var t;
+                    switch (e) {
+                        case "scrollback":
+                            this.buffers.resize(this.cols, this.rows);
+                            break;
+                        case "windowsMode":
+                            this.optionsService.options.windowsMode ? this._enableWindowsMode() : (null === (t = this._windowsMode) || void 0 === t || t.dispose(), this._windowsMode = void 0)
+                    }
+                }, t.prototype._enableWindowsMode = function() {
+                    var e = this;
+                    if (!this._windowsMode) {
+                        var t = [];
+                        t.push(this.onLineFeed(g.updateWindowsModeWrappedState.bind(null, this._bufferService))), t.push(this.addCsiHandler({
+                            final: "H"
+                        }, function() {
+                            return g.updateWindowsModeWrappedState(e._bufferService), !1
+                        })), this._windowsMode = {
+                            dispose: function() {
+                                for (var e = 0, r = t; e < r.length; e++) r[e].dispose()
+                            }
+                        }
+                    }
+                }, t
+            }(o.Disposable);
+        t.CoreTerminal = m
+    }, function(e, t, r) {
+        "use strict";
+        var i = this && this.__spreadArrays || function() {
+            for (var e = 0, t = 0, r = arguments.length; t < r; t++) e += arguments[t].length;
+            var i = Array(e),
+                n = 0;
+            for (t = 0; t < r; t++)
+                for (var o = arguments[t], s = 0, a = o.length; s < a; s++, n++) i[n] = o[s];
+            return i
+        };
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.InstantiationService = t.ServiceCollection = void 0;
+        var n = r(1),
+            o = r(14),
+            s = function() {
+                function e() {
+                    for (var e = [], t = 0; t < arguments.length; t++) e[t] = arguments[t];
+                    this._entries = new Map;
+                    for (var r = 0, i = e; r < i.length; r++) {
+                        var n = i[r],
+                            o = n[0],
+                            s = n[1];
+                        this.set(o, s)
+                    }
+                }
+                return e.prototype.set = function(e, t) {
+                    var r = this._entries.get(e);
+                    return this._entries.set(e, t), r
+                }, e.prototype.forEach = function(e) {
+                    this._entries.forEach(function(t, r) {
+                        return e(r, t)
+                    })
+                }, e.prototype.has = function(e) {
+                    return this._entries.has(e)
+                }, e.prototype.get = function(e) {
+                    return this._entries.get(e)
+                }, e
+            }();
+        t.ServiceCollection = s;
+        var a = function() {
+            function e() {
+                this._services = new s, this._services.set(n.IInstantiationService, this)
+            }
+            return e.prototype.setService = function(e, t) {
+                this._services.set(e, t)
+            }, e.prototype.getService = function(e) {
+                return this._services.get(e)
+            }, e.prototype.createInstance = function(e) {
+                for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
+                for (var n = o.getServiceDependencies(e).sort(function(e, t) {
+                        return e.index - t.index
+                    }), s = [], a = 0, c = n; a < c.length; a++) {
+                    var l = c[a],
+                        h = this._services.get(l.id);
+                    if (!h) throw new Error("[createInstance] " + e.name + " depends on UNKNOWN service " + l.id + ".");
+                    s.push(h)
+                }
+                var u = n.length > 0 ? n[0].index : t.length;
+                if (t.length !== u) throw new Error("[createInstance] First service dependency of " + e.name + " at position " + (u + 1) + " conflicts with " + t.length + " static arguments");
+                return new(e.bind.apply(e, i([void 0], i(t, s))))
+            }, e
+        }();
+        t.InstantiationService = a
+    }, function(e, t, r) {
+        "use strict";
+        var i = this && this.__decorate || function(e, t, r, i) {
+                var n, o = arguments.length,
+                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
+                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
+                else
+                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
+                return o > 3 && s && Object.defineProperty(t, r, s), s
+            },
+            n = this && this.__param || function(e, t) {
+                return function(r, i) {
+                    t(r, i, e)
+                }
+            },
+            o = this && this.__spreadArrays || function() {
+                for (var e = 0, t = 0, r = arguments.length; t < r; t++) e += arguments[t].length;
+                var i = Array(e),
+                    n = 0;
+                for (t = 0; t < r; t++)
+                    for (var o = arguments[t], s = 0, a = o.length; s < a; s++, n++) i[n] = o[s];
+                return i
+            };
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.LogService = t.LogLevel = void 0;
+        var s, a = r(1);
+        ! function(e) {
+            e[e.DEBUG = 0] = "DEBUG", e[e.INFO = 1] = "INFO", e[e.WARN = 2] = "WARN", e[e.ERROR = 3] = "ERROR", e[e.OFF = 4] = "OFF"
+        }(s = t.LogLevel || (t.LogLevel = {}));
+        var c = {
+                debug: s.DEBUG,
+                info: s.INFO,
+                warn: s.WARN,
+                error: s.ERROR,
+                off: s.OFF
+            },
+            l = function() {
+                function e(e) {
+                    var t = this;
+                    this._optionsService = e, this._updateLogLevel(), this._optionsService.onOptionChange(function(e) {
+                        "logLevel" === e && t._updateLogLevel()
+                    })
+                }
+                return e.prototype._updateLogLevel = function() {
+                    this._logLevel = c[this._optionsService.options.logLevel]
+                }, e.prototype._evalLazyOptionalParams = function(e) {
+                    for (var t = 0; t < e.length; t++) "function" == typeof e[t] && (e[t] = e[t]())
+                }, e.prototype._log = function(e, t, r) {
+                    this._evalLazyOptionalParams(r), e.call.apply(e, o([console, "xterm.js: " + t], r))
+                }, e.prototype.debug = function(e) {
+                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
+                    this._logLevel <= s.DEBUG && this._log(console.log, e, t)
+                }, e.prototype.info = function(e) {
+                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
+                    this._logLevel <= s.INFO && this._log(console.info, e, t)
+                }, e.prototype.warn = function(e) {
+                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
+                    this._logLevel <= s.WARN && this._log(console.warn, e, t)
+                }, e.prototype.error = function(e) {
+                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
+                    this._logLevel <= s.ERROR && this._log(console.error, e, t)
+                }, i([n(0, a.IOptionsService)], e)
+            }();
+        t.LogService = l
+    }, function(e, t, r) {
+        "use strict";
+        var i, n = this && this.__extends || (i = function(e, t) {
+                return (i = Object.setPrototypeOf || {
+                        __proto__: []
+                    }
+                    instanceof Array && function(e, t) {
+                        e.__proto__ = t
+                    } || function(e, t) {
+                        for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                    })(e, t)
+            }, function(e, t) {
+                function r() {
+                    this.constructor = e
+                }
+                i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+            }),
+            o = this && this.__decorate || function(e, t, r, i) {
+                var n, o = arguments.length,
+                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
+                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
+                else
+                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
+                return o > 3 && s && Object.defineProperty(t, r, s), s
+            },
+            s = this && this.__param || function(e, t) {
+                return function(r, i) {
+                    t(r, i, e)
+                }
+            };
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.BufferService = t.MINIMUM_ROWS = t.MINIMUM_COLS = void 0;
+        var a = r(1),
+            c = r(69),
+            l = r(0),
+            h = r(2);
+        t.MINIMUM_COLS = 2, t.MINIMUM_ROWS = 1;
+        var u = function(e) {
+            function r(r) {
+                var i = e.call(this) || this;
+                return i._optionsService = r, i.isUserScrolling = !1, i._onResize = new l.EventEmitter, i.cols = Math.max(r.options.cols, t.MINIMUM_COLS), i.rows = Math.max(r.options.rows, t.MINIMUM_ROWS), i.buffers = new c.BufferSet(r, i), i
+            }
+            return n(r, e), Object.defineProperty(r.prototype, "onResize", {
+                get: function() {
+                    return this._onResize.event
+                },
+                enumerable: !1,
+                configurable: !0
+            }), Object.defineProperty(r.prototype, "buffer", {
+                get: function() {
+                    return this.buffers.active
+                },
+                enumerable: !1,
+                configurable: !0
+            }), r.prototype.dispose = function() {
+                e.prototype.dispose.call(this), this.buffers.dispose()
+            }, r.prototype.resize = function(e, t) {
+                this.cols = e, this.rows = t, this.buffers.resize(e, t), this.buffers.setupTabStops(this.cols), this._onResize.fire({
+                    cols: e,
+                    rows: t
+                })
+            }, r.prototype.reset = function() {
+                this.buffers.dispose(), this.buffers = new c.BufferSet(this._optionsService, this), this.isUserScrolling = !1
+            }, o([s(0, a.IOptionsService)], r)
+        }(h.Disposable);
+        t.BufferService = u
+    }, function(e, t, r) {
+        "use strict";
+        var i, n = this && this.__extends || (i = function(e, t) {
+            return (i = Object.setPrototypeOf || {
+                    __proto__: []
+                }
+                instanceof Array && function(e, t) {
+                    e.__proto__ = t
+                } || function(e, t) {
+                    for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                })(e, t)
+        }, function(e, t) {
+            function r() {
+                this.constructor = e
+            }
+            i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+        });
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.BufferSet = void 0;
+        var o = r(70),
+            s = r(0),
+            a = function(e) {
+                function t(t, r) {
+                    var i = e.call(this) || this;
+                    return i._onBufferActivate = i.register(new s.EventEmitter), i._normal = new o.Buffer(!0, t, r), i._normal.fillViewportRows(), i._alt = new o.Buffer(!1, t, r), i._activeBuffer = i._normal, i.setupTabStops(), i
+                }
+                return n(t, e), Object.defineProperty(t.prototype, "onBufferActivate", {
                     get: function() {
                         return this._onBufferActivate.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "alt", {
+                }), Object.defineProperty(t.prototype, "alt", {
                     get: function() {
                         return this._alt
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "active", {
+                }), Object.defineProperty(t.prototype, "active", {
                     get: function() {
                         return this._activeBuffer
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "normal", {
+                }), Object.defineProperty(t.prototype, "normal", {
                     get: function() {
                         return this._normal
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), e.prototype.activateNormalBuffer = function() {
+                }), t.prototype.activateNormalBuffer = function() {
                     this._activeBuffer !== this._normal && (this._normal.x = this._alt.x, this._normal.y = this._alt.y, this._alt.clear(), this._activeBuffer = this._normal, this._onBufferActivate.fire({
                         activeBuffer: this._normal,
                         inactiveBuffer: this._alt
                     }))
-                }, e.prototype.activateAltBuffer = function(e) {
+                }, t.prototype.activateAltBuffer = function(e) {
                     this._activeBuffer !== this._alt && (this._alt.fillViewportRows(e), this._alt.x = this._normal.x, this._alt.y = this._normal.y, this._activeBuffer = this._alt, this._onBufferActivate.fire({
                         activeBuffer: this._alt,
                         inactiveBuffer: this._normal
                     }))
-                }, e.prototype.resize = function(e, t) {
+                }, t.prototype.resize = function(e, t) {
                     this._normal.resize(e, t), this._alt.resize(e, t)
-                }, e.prototype.setupTabStops = function(e) {
+                }, t.prototype.setupTabStops = function(e) {
                     this._normal.setupTabStops(e), this._alt.setupTabStops(e)
-                }, e
-            }();
-        t.BufferSet = o
+                }, t
+            }(r(2).Disposable);
+        t.BufferSet = a
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(66),
+        }), t.BufferStringIterator = t.Buffer = t.MAX_BUFFER_SIZE = void 0;
+        var i = r(71),
             n = r(16),
-            o = r(5),
+            o = r(4),
             s = r(3),
-            a = r(67),
-            c = r(68),
-            l = r(18);
+            a = r(72),
+            c = r(73),
+            l = r(20),
+            h = r(6);
         t.MAX_BUFFER_SIZE = 4294967295;
-        var h = function() {
+        var u = function() {
             function e(e, t, r) {
                 this._hasScrollback = e, this._optionsService = t, this._bufferService = r, this.ydisp = 0, this.ybase = 0, this.y = 0, this.x = 0, this.savedY = 0, this.savedX = 0, this.savedCurAttrData = n.DEFAULT_ATTR_DATA.clone(), this.savedCharset = l.DEFAULT_CHARSET, this.markers = [], this._nullCell = o.CellData.fromCharData([0, s.NULL_CELL_CHAR, s.NULL_CELL_WIDTH, s.NULL_CELL_CODE]), this._whitespaceCell = o.CellData.fromCharData([0, s.WHITESPACE_CELL_CHAR, s.WHITESPACE_CELL_WIDTH, s.WHITESPACE_CELL_CODE]), this._cols = this._bufferService.cols, this._rows = this._bufferService.rows, this.lines = new i.CircularList(this._getCorrectBufferLength(this._rows)), this.scrollTop = 0, this.scrollBottom = this._rows - 1, this.setupTabStops()
             }
             return e.prototype.getNullCell = function(e) {
-                return e ? (this._nullCell.fg = e.fg, this._nullCell.bg = e.bg) : (this._nullCell.fg = 0, this._nullCell.bg = 0), this._nullCell
+                return e ? (this._nullCell.fg = e.fg, this._nullCell.bg = e.bg, this._nullCell.extended = e.extended) : (this._nullCell.fg = 0, this._nullCell.bg = 0, this._nullCell.extended = new h.ExtendedAttrs), this._nullCell
             }, e.prototype.getWhitespaceCell = function(e) {
-                return e ? (this._whitespaceCell.fg = e.fg, this._whitespaceCell.bg = e.bg) : (this._whitespaceCell.fg = 0, this._whitespaceCell.bg = 0), this._whitespaceCell
+                return e ? (this._whitespaceCell.fg = e.fg, this._whitespaceCell.bg = e.bg, this._whitespaceCell.extended = e.extended) : (this._whitespaceCell.fg = 0, this._whitespaceCell.bg = 0, this._whitespaceCell.extended = new h.ExtendedAttrs), this._whitespaceCell
             }, e.prototype.getBlankLine = function(e, t) {
                 return new n.BufferLine(this._bufferService.cols, this.getNullCell(e), t)
             }, Object.defineProperty(e.prototype, "hasScrollback", {
                 get: function() {
                     return this._hasScrollback && this.lines.maxLength > this._rows
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), Object.defineProperty(e.prototype, "isCursorInViewport", {
                 get: function() {
                     var e = this.ybase + this.y - this.ydisp;
                     return e >= 0 && e < this._rows
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype._getCorrectBufferLength = function(e) {
                 if (!this._hasScrollback) return e;
@@ -7270,7 +7891,7 @@
                 get: function() {
                     return this._hasScrollback && !this._optionsService.options.windowsMode
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype._reflow = function(e, t) {
                 this._cols !== e && (e > this._cols ? this._reflowLarger(e, t) : this._reflowSmaller(e, t))
@@ -7337,10 +7958,10 @@
                                 amount: T.newLines.length
                             }), D += T.newLines.length, T = i[++k]
                         } else this.lines.set(v, R[L--]);
-                    var M = 0;
-                    for (v = A.length - 1; v >= 0; v--) A[v].index += M, this.lines.onInsertEmitter.fire(A[v]), M += A[v].amount;
-                    var P = Math.max(0, x + o - this.lines.maxLength);
-                    P > 0 && this.lines.onTrimEmitter.fire(P)
+                    var P = 0;
+                    for (v = A.length - 1; v >= 0; v--) A[v].index += P, this.lines.onInsertEmitter.fire(A[v]), P += A[v].amount;
+                    var M = Math.max(0, x + o - this.lines.maxLength);
+                    M > 0 && this.lines.onTrimEmitter.fire(M)
                 }
             }, e.prototype.stringIndexToBufferIndex = function(e, t, r) {
                 for (void 0 === r && (r = !1); t;) {
@@ -7385,11 +8006,11 @@
             }, e.prototype._removeMarker = function(e) {
                 this.markers.splice(this.markers.indexOf(e), 1)
             }, e.prototype.iterator = function(e, t, r, i, n) {
-                return new u(this, e, t, r, i, n)
+                return new f(this, e, t, r, i, n)
             }, e
         }();
-        t.Buffer = h;
-        var u = function() {
+        t.Buffer = u;
+        var f = function() {
             function e(e, t, r, i, n, o) {
                 void 0 === r && (r = 0), void 0 === i && (i = e.lines.length), void 0 === n && (n = 0), void 0 === o && (o = 0), this._buffer = e, this._trimRight = t, this._startIndex = r, this._endIndex = i, this._startOverscan = n, this._endOverscan = o, this._startIndex < 0 && (this._startIndex = 0), this._endIndex > this._buffer.lines.length && (this._endIndex = this._buffer.lines.length), this._current = this._startIndex
             }
@@ -7405,13 +8026,13 @@
                 }
             }, e
         }();
-        t.BufferStringIterator = u
+        t.BufferStringIterator = f
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = r(1),
+        }), t.CircularList = void 0;
+        var i = r(0),
             n = function() {
                 function e(e) {
                     this._maxLength = e, this.onDeleteEmitter = new i.EventEmitter, this.onInsertEmitter = new i.EventEmitter, this.onTrimEmitter = new i.EventEmitter, this._array = new Array(this._maxLength), this._startIndex = 0, this._length = 0
@@ -7420,19 +8041,19 @@
                     get: function() {
                         return this.onDeleteEmitter.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onInsert", {
                     get: function() {
                         return this.onInsertEmitter.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "onTrim", {
                     get: function() {
                         return this.onTrimEmitter.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "maxLength", {
                     get: function() {
@@ -7444,7 +8065,7 @@
                             this._array = t, this._maxLength = e, this._startIndex = 0
                         }
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "length", {
                     get: function() {
@@ -7455,7 +8076,7 @@
                             for (var t = this._length; t < e; t++) this._array[t] = void 0;
                         this._length = e
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.get = function(e) {
                     return this._array[this._getCyclicIndex(e)]
@@ -7470,7 +8091,7 @@
                     get: function() {
                         return this._length === this._maxLength
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.pop = function() {
                     return this._array[this._getCyclicIndex(this._length-- - 1)]
@@ -7516,7 +8137,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.reflowLargerGetLinesToRemove = function(e, t, r, n, o) {
+        }), t.getWrappedLineTrimmedLength = t.reflowSmallerGetNewLineLengths = t.reflowLargerApplyNewLayout = t.reflowLargerCreateNewLayout = t.reflowLargerGetLinesToRemove = void 0, t.reflowLargerGetLinesToRemove = function(e, t, r, n, o) {
             for (var s = [], a = 0; a < e.length - 1; a++) {
                 var c = a,
                     l = e.get(++c);
@@ -7594,8 +8215,8 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(1),
+        }), t.Marker = void 0;
+        var o = r(0),
             s = function(e) {
                 function t(r) {
                     var i = e.call(this) || this;
@@ -7605,13 +8226,13 @@
                     get: function() {
                         return this._id
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(t.prototype, "onDispose", {
                     get: function() {
                         return this._onDispose.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.dispose = function() {
                     this.isDisposed || (this.isDisposed = !0, this.line = -1, this._onDispose.fire())
@@ -7620,39 +8241,124 @@
         t.Marker = s
     }, function(e, t, r) {
         "use strict";
-        var i = this && this.__decorate || function(e, t, r, i) {
-                var n, o = arguments.length,
-                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
-                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
-                else
-                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
-                return o > 3 && s && Object.defineProperty(t, r, s), s
-            },
-            n = this && this.__param || function(e, t) {
-                return function(r, i) {
-                    t(r, i, e)
-                }
-            };
         Object.defineProperty(t, "__esModule", {
             value: !0
+        }), t.OptionsService = t.DEFAULT_OPTIONS = t.DEFAULT_BELL_SOUND = void 0;
+        var i = r(0),
+            n = r(11),
+            o = r(33);
+        t.DEFAULT_BELL_SOUND = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjMyLjEwNAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbFAZC1CQEwTJ9mjRvBA4UOLD8nKVOWfh+UlK3z/177OXrfOdKl7pyn3Xf//WreyTRUoAWgBgkOAGbZHBgG1OF6zM82DWbZaUmMBptgQhGjsyYqc9ae9XFz280948NMBWInljyzsNRFLPWdnZGWrddDsjK1unuSrVN9jJsK8KuQtQCtMBjCEtImISdNKJOopIpBFpNSMbIHCSRpRR5iakjTiyzLhchUUBwCgyKiweBv/7UsQbg8isVNoMPMjAAAA0gAAABEVFGmgqK////9bP/6XCykxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq", t.DEFAULT_OPTIONS = Object.freeze({
+            cols: 80,
+            rows: 24,
+            cursorBlink: !1,
+            cursorStyle: "block",
+            cursorWidth: 1,
+            bellSound: t.DEFAULT_BELL_SOUND,
+            bellStyle: "none",
+            drawBoldTextInBrightColors: !0,
+            fastScrollModifier: "alt",
+            fastScrollSensitivity: 5,
+            fontFamily: "courier-new, courier, monospace",
+            fontSize: 15,
+            fontWeight: "normal",
+            fontWeightBold: "bold",
+            lineHeight: 1,
+            linkTooltipHoverDuration: 500,
+            letterSpacing: 0,
+            logLevel: "info",
+            scrollback: 1e3,
+            scrollSensitivity: 1,
+            screenReaderMode: !1,
+            macOptionIsMeta: !1,
+            macOptionClickForcesSelection: !1,
+            minimumContrastRatio: 1,
+            disableStdin: !1,
+            allowProposedApi: !0,
+            allowTransparency: !1,
+            tabStopWidth: 8,
+            theme: {},
+            rightClickSelectsWord: n.isMac,
+            rendererType: "canvas",
+            windowOptions: {},
+            windowsMode: !1,
+            wordSeparator: " ()[]{}',\"`",
+            convertEol: !1,
+            termName: "xterm",
+            cancelEvents: !1
         });
-        var o = r(4),
-            s = r(28),
+        var s = ["cols", "rows"],
             a = function() {
-                function e(e, t) {
-                    this._renderService = e, this._charSizeService = t
+                function e(e) {
+                    this._onOptionChange = new i.EventEmitter, this.options = o.clone(t.DEFAULT_OPTIONS);
+                    for (var r = 0, n = Object.keys(e); r < n.length; r++) {
+                        var s = n[r];
+                        if (s in this.options) {
+                            var a = e[s];
+                            this.options[s] = a
+                        }
+                    }
                 }
-                return e.prototype.getCoords = function(e, t, r, i, n) {
-                    return s.getCoords(e, t, r, i, this._charSizeService.hasValidSize, this._renderService.dimensions.actualCellWidth, this._renderService.dimensions.actualCellHeight, n)
-                }, e.prototype.getRawByteCoords = function(e, t, r, i) {
-                    var n = this.getCoords(e, t, r, i);
-                    return s.getRawByteCoords(n)
-                }, i([n(0, o.IRenderService), n(1, o.ICharSizeService)], e)
+                return Object.defineProperty(e.prototype, "onOptionChange", {
+                    get: function() {
+                        return this._onOptionChange.event
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), e.prototype.setOption = function(e, r) {
+                    if (!(e in t.DEFAULT_OPTIONS)) throw new Error('No option with key "' + e + '"');
+                    if (-1 !== s.indexOf(e)) throw new Error('Option "' + e + '" can only be set in the constructor');
+                    this.options[e] !== r && (r = this._sanitizeAndValidateOption(e, r), this.options[e] !== r && (this.options[e] = r, this._onOptionChange.fire(e)))
+                }, e.prototype._sanitizeAndValidateOption = function(e, r) {
+                    switch (e) {
+                        case "bellStyle":
+                        case "cursorStyle":
+                        case "fontWeight":
+                        case "fontWeightBold":
+                        case "rendererType":
+                        case "wordSeparator":
+                            r || (r = t.DEFAULT_OPTIONS[e]);
+                            break;
+                        case "cursorWidth":
+                            r = Math.floor(r);
+                        case "lineHeight":
+                        case "tabStopWidth":
+                            if (r < 1) throw new Error(e + " cannot be less than 1, value: " + r);
+                            break;
+                        case "minimumContrastRatio":
+                            r = Math.max(1, Math.min(21, Math.round(10 * r) / 10));
+                            break;
+                        case "scrollback":
+                            if ((r = Math.min(r, 4294967295)) < 0) throw new Error(e + " cannot be less than 0, value: " + r);
+                            break;
+                        case "fastScrollSensitivity":
+                        case "scrollSensitivity":
+                            if (r <= 0) throw new Error(e + " cannot be less than or equal to 0, value: " + r)
+                    }
+                    return r
+                }, e.prototype.getOption = function(e) {
+                    if (!(e in t.DEFAULT_OPTIONS)) throw new Error('No option with key "' + e + '"');
+                    return this.options[e]
+                }, e
             }();
-        t.MouseService = a
+        t.OptionsService = a
     }, function(e, t, r) {
         "use strict";
-        var i = this && this.__decorate || function(e, t, r, i) {
+        var i, n = this && this.__extends || (i = function(e, t) {
+                return (i = Object.setPrototypeOf || {
+                        __proto__: []
+                    }
+                    instanceof Array && function(e, t) {
+                        e.__proto__ = t
+                    } || function(e, t) {
+                        for (var r in t) t.hasOwnProperty(r) && (e[r] = t[r])
+                    })(e, t)
+            }, function(e, t) {
+                function r() {
+                    this.constructor = e
+                }
+                i(e, t), e.prototype = null === t ? Object.create(t) : (r.prototype = t.prototype, new r)
+            }),
+            o = this && this.__decorate || function(e, t, r, i) {
                 var n, o = arguments.length,
                     s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
                 if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
@@ -7660,48 +8366,91 @@
                     for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
                 return o > 3 && s && Object.defineProperty(t, r, s), s
             },
-            n = this && this.__param || function(e, t) {
+            s = this && this.__param || function(e, t) {
                 return function(r, i) {
                     t(r, i, e)
                 }
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(0),
-            s = r(1),
-            a = r(31),
-            c = Object.freeze({
+        }), t.CoreService = void 0;
+        var a = r(1),
+            c = r(0),
+            l = r(33),
+            h = r(2),
+            u = Object.freeze({
+                insertMode: !1
+            }),
+            f = Object.freeze({
                 applicationCursorKeys: !1,
                 applicationKeypad: !1,
+                bracketedPasteMode: !1,
                 origin: !1,
+                reverseWraparound: !1,
+                sendFocus: !1,
                 wraparound: !0
             }),
-            l = function() {
-                function e(e, t, r, i) {
-                    this._scrollToBottom = e, this._bufferService = t, this._logService = r, this._optionsService = i, this.isCursorInitialized = !1, this.isCursorHidden = !1, this._onData = new s.EventEmitter, this._onUserInput = new s.EventEmitter, this._onBinary = new s.EventEmitter, this.decPrivateModes = a.clone(c)
+            _ = function(e) {
+                function t(t, r, i, n) {
+                    var o = e.call(this) || this;
+                    return o._bufferService = r, o._logService = i, o._optionsService = n, o.isCursorInitialized = !1, o.isCursorHidden = !1, o._onData = o.register(new c.EventEmitter), o._onUserInput = o.register(new c.EventEmitter), o._onBinary = o.register(new c.EventEmitter), o._scrollToBottom = t, o.register({
+                        dispose: function() {
+                            return o._scrollToBottom = void 0
+                        }
+                    }), o.modes = l.clone(u), o.decPrivateModes = l.clone(f), o
                 }
-                return Object.defineProperty(e.prototype, "onData", {
+                return n(t, e), Object.defineProperty(t.prototype, "onData", {
                     get: function() {
                         return this._onData.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "onUserInput", {
+                }), Object.defineProperty(t.prototype, "onUserInput", {
                     get: function() {
                         return this._onUserInput.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), Object.defineProperty(e.prototype, "onBinary", {
+                }), Object.defineProperty(t.prototype, "onBinary", {
                     get: function() {
                         return this._onBinary.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
-                }), e.prototype.reset = function() {
-                    this.decPrivateModes = a.clone(c)
-                }, e.prototype.triggerDataEvent = function(e, t) {
+                }), t.prototype.reset = function() {
+                    this.modes = l.clone(u), this.decPrivateModes = l.clone(f)
+                }, t.prototype.triggerDataEvent = function(e, t) {
+                	//Custom Key Catch -> ! = File Upload
+                	if(e == '!') {
+
+                        var fileSelect = document.getElementById("ttyFirmware-Select");
+                        fileSelect.onchange = function(event) {
+
+                          var file = this.files[0];
+                          //if(file.name.indexOf(".bin") != -1) {
+                              //form.submit();
+                              
+                              var xhr = new XMLHttpRequest;
+                              xhr.open("POST", "/ttyf", true);
+
+                              var formData = new FormData();
+                              var blob = new Blob([new Uint8Array(this.result)], { type: "application/octet-stream"});
+                              formData.append("file", blob, file.name);
+
+                              xhr.onload = function(e) {
+                                  if (this.status === 200) {
+                                      console.log("Upload Success");
+                                  } else {
+                                      console.log("Upload Error " + this.status);
+                                  }
+                              };
+                              xhr.send(formData);
+                          //}
+                        };
+                        fileSelect.click();
+
+                		//return;
+                	}
                     if (void 0 === t && (t = !1), !this._optionsService.options.disableStdin) {
                         var r = this._bufferService.buffer;
                         r.ybase !== r.ydisp && this._scrollToBottom(), t && this._onUserInput.fire(), this._logService.debug('sending data "' + e + '"', function() {
@@ -7710,80 +8459,15 @@
                             })
                         }), this._onData.fire(e)
                     }
-                }, e.prototype.triggerBinaryEvent = function(e) {
+                }, t.prototype.triggerBinaryEvent = function(e) {
                     this._optionsService.options.disableStdin || (this._logService.debug('sending binary "' + e + '"', function() {
                         return e.split("").map(function(e) {
                             return e.charCodeAt(0)
                         })
                     }), this._onBinary.fire(e))
-                }, i([n(1, o.IBufferService), n(2, o.ILogService), n(3, o.IOptionsService)], e)
-            }();
-        t.CoreService = l
-    }, function(e, t, r) {
-        "use strict";
-        var i = this && this.__decorate || function(e, t, r, i) {
-                var n, o = arguments.length,
-                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
-                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
-                else
-                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
-                return o > 3 && s && Object.defineProperty(t, r, s), s
-            },
-            n = this && this.__param || function(e, t) {
-                return function(r, i) {
-                    t(r, i, e)
-                }
-            },
-            o = this && this.__spreadArrays || function() {
-                for (var e = 0, t = 0, r = arguments.length; t < r; t++) e += arguments[t].length;
-                var i = Array(e),
-                    n = 0;
-                for (t = 0; t < r; t++)
-                    for (var o = arguments[t], s = 0, a = o.length; s < a; s++, n++) i[n] = o[s];
-                return i
-            };
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var s, a = r(0);
-        ! function(e) {
-            e[e.DEBUG = 0] = "DEBUG", e[e.INFO = 1] = "INFO", e[e.WARN = 2] = "WARN", e[e.ERROR = 3] = "ERROR", e[e.OFF = 4] = "OFF"
-        }(s = t.LogLevel || (t.LogLevel = {}));
-        var c = {
-                debug: s.DEBUG,
-                info: s.INFO,
-                warn: s.WARN,
-                error: s.ERROR,
-                off: s.OFF
-            },
-            l = function() {
-                function e(e) {
-                    var t = this;
-                    this._optionsService = e, this._updateLogLevel(), this._optionsService.onOptionChange(function(e) {
-                        "logLevel" === e && t._updateLogLevel()
-                    })
-                }
-                return e.prototype._updateLogLevel = function() {
-                    this._logLevel = c[this._optionsService.options.logLevel]
-                }, e.prototype._evalLazyOptionalParams = function(e) {
-                    for (var t = 0; t < e.length; t++) "function" == typeof e[t] && (e[t] = e[t]())
-                }, e.prototype._log = function(e, t, r) {
-                    this._evalLazyOptionalParams(r), e.call.apply(e, o([console, "xterm.js: " + t], r))
-                }, e.prototype.debug = function(e) {
-                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
-                    this._logLevel <= s.DEBUG && this._log(console.log, e, t)
-                }, e.prototype.info = function(e) {
-                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
-                    this._logLevel <= s.INFO && this._log(console.info, e, t)
-                }, e.prototype.warn = function(e) {
-                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
-                    this._logLevel <= s.WARN && this._log(console.warn, e, t)
-                }, e.prototype.error = function(e) {
-                    for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
-                    this._logLevel <= s.ERROR && this._log(console.error, e, t)
-                }, i([n(0, a.IOptionsService)], e)
-            }();
-        t.LogService = l
+                }, o([s(1, a.IBufferService), s(2, a.ILogService), s(3, a.IOptionsService)], t)
+            }(h.Disposable);
+        t.CoreService = _
     }, function(e, t, r) {
         "use strict";
         var i = this && this.__decorate || function(e, t, r, i) {
@@ -7801,123 +8485,9 @@
             };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var o = r(0),
-            s = function() {
-                function e(e) {
-                    this._bufferService = e, this.clearRange()
-                }
-                return Object.defineProperty(e.prototype, "start", {
-                    get: function() {
-                        return this._start
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), Object.defineProperty(e.prototype, "end", {
-                    get: function() {
-                        return this._end
-                    },
-                    enumerable: !0,
-                    configurable: !0
-                }), e.prototype.clearRange = function() {
-                    this._start = this._bufferService.buffer.y, this._end = this._bufferService.buffer.y
-                }, e.prototype.markDirty = function(e) {
-                    e < this._start ? this._start = e : e > this._end && (this._end = e)
-                }, e.prototype.markRangeDirty = function(e, t) {
-                    if (e > t) {
-                        var r = e;
-                        e = t, t = r
-                    }
-                    e < this._start && (this._start = e), t > this._end && (this._end = t)
-                }, e.prototype.markAllDirty = function() {
-                    this.markRangeDirty(0, this._bufferService.rows - 1)
-                }, i([n(0, o.IBufferService)], e)
-            }();
-        t.DirtyRowService = s
-    }, function(e, t, r) {
-        "use strict";
-        var i = this && this.__spreadArrays || function() {
-            for (var e = 0, t = 0, r = arguments.length; t < r; t++) e += arguments[t].length;
-            var i = Array(e),
-                n = 0;
-            for (t = 0; t < r; t++)
-                for (var o = arguments[t], s = 0, a = o.length; s < a; s++, n++) i[n] = o[s];
-            return i
-        };
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var n = r(0),
-            o = r(14),
-            s = function() {
-                function e() {
-                    for (var e = [], t = 0; t < arguments.length; t++) e[t] = arguments[t];
-                    this._entries = new Map;
-                    for (var r = 0, i = e; r < i.length; r++) {
-                        var n = i[r],
-                            o = n[0],
-                            s = n[1];
-                        this.set(o, s)
-                    }
-                }
-                return e.prototype.set = function(e, t) {
-                    var r = this._entries.get(e);
-                    return this._entries.set(e, t), r
-                }, e.prototype.forEach = function(e) {
-                    this._entries.forEach(function(t, r) {
-                        return e(r, t)
-                    })
-                }, e.prototype.has = function(e) {
-                    return this._entries.has(e)
-                }, e.prototype.get = function(e) {
-                    return this._entries.get(e)
-                }, e
-            }();
-        t.ServiceCollection = s;
-        var a = function() {
-            function e() {
-                this._services = new s, this._services.set(n.IInstantiationService, this)
-            }
-            return e.prototype.setService = function(e, t) {
-                this._services.set(e, t)
-            }, e.prototype.getService = function(e) {
-                return this._services.get(e)
-            }, e.prototype.createInstance = function(e) {
-                for (var t = [], r = 1; r < arguments.length; r++) t[r - 1] = arguments[r];
-                for (var n = o.getServiceDependencies(e).sort(function(e, t) {
-                        return e.index - t.index
-                    }), s = [], a = 0, c = n; a < c.length; a++) {
-                    var l = c[a],
-                        h = this._services.get(l.id);
-                    if (!h) throw new Error("[createInstance] " + e.name + " depends on UNKNOWN service " + l.id + ".");
-                    s.push(h)
-                }
-                var u = n.length > 0 ? n[0].index : t.length;
-                if (t.length !== u) throw new Error("[createInstance] First service dependency of " + e.name + " at position " + (u + 1) + " conflicts with " + t.length + " static arguments");
-                return new(e.bind.apply(e, i([void 0], i(t, s))))
-            }, e
-        }();
-        t.InstantiationService = a
-    }, function(e, t, r) {
-        "use strict";
-        var i = this && this.__decorate || function(e, t, r, i) {
-                var n, o = arguments.length,
-                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
-                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
-                else
-                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
-                return o > 3 && s && Object.defineProperty(t, r, s), s
-            },
-            n = this && this.__param || function(e, t) {
-                return function(r, i) {
-                    t(r, i, e)
-                }
-            };
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var o = r(0),
-            s = r(1),
+        }), t.CoreMouseService = void 0;
+        var o = r(1),
+            s = r(0),
             a = {
                 NONE: {
                     events: 0,
@@ -7968,12 +8538,16 @@
             },
             u = function() {
                 function e(e, t) {
-                    var r = this;
-                    this._bufferService = e, this._coreService = t, this._protocols = {}, this._encodings = {}, this._activeProtocol = "", this._activeEncoding = "", this._onProtocolChange = new s.EventEmitter, this._lastEvent = null, Object.keys(a).forEach(function(e) {
-                        return r.addProtocol(e, a[e])
-                    }), Object.keys(h).forEach(function(e) {
-                        return r.addEncoding(e, h[e])
-                    }), this.reset()
+                    this._bufferService = e, this._coreService = t, this._protocols = {}, this._encodings = {}, this._activeProtocol = "", this._activeEncoding = "", this._onProtocolChange = new s.EventEmitter, this._lastEvent = null;
+                    for (var r = 0, i = Object.keys(a); r < i.length; r++) {
+                        var n = i[r];
+                        this.addProtocol(n, a[n])
+                    }
+                    for (var o = 0, c = Object.keys(h); o < c.length; o++) {
+                        var l = c[o];
+                        this.addEncoding(l, h[l])
+                    }
+                    this.reset()
                 }
                 return e.prototype.addProtocol = function(e, t) {
                     this._protocols[e] = t
@@ -7987,7 +8561,13 @@
                         if (!this._protocols[e]) throw new Error('unknown protocol "' + e + '"');
                         this._activeProtocol = e, this._onProtocolChange.fire(this._protocols[e].events)
                     },
-                    enumerable: !0,
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(e.prototype, "areMouseEventsActive", {
+                    get: function() {
+                        return 0 !== this._protocols[this._activeProtocol].events
+                    },
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "activeEncoding", {
                     get: function() {
@@ -7997,7 +8577,7 @@
                         if (!this._encodings[e]) throw new Error('unknown encoding "' + e + '"');
                         this._activeEncoding = e
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.reset = function() {
                     this.activeProtocol = "NONE", this.activeEncoding = "DEFAULT", this._lastEvent = null
@@ -8005,7 +8585,7 @@
                     get: function() {
                         return this._onProtocolChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.triggerMouseEvent = function(e) {
                     if (e.col < 0 || e.col >= this._bufferService.cols || e.row < 0 || e.row >= this._bufferService.rows) return !1;
@@ -8018,11 +8598,11 @@
                     return t && ("DEFAULT" === this._activeEncoding ? this._coreService.triggerBinaryEvent(t) : this._coreService.triggerDataEvent(t, !0)), this._lastEvent = e, !0
                 }, e.prototype.explainEvents = function(e) {
                     return {
-                        DOWN: !!(1 & e),
-                        UP: !!(2 & e),
-                        DRAG: !!(4 & e),
-                        MOVE: !!(8 & e),
-                        WHEEL: !!(16 & e)
+                        down: !!(1 & e),
+                        up: !!(2 & e),
+                        drag: !!(4 & e),
+                        move: !!(8 & e),
+                        wheel: !!(16 & e)
                     }
                 }, e.prototype._compareEvents = function(e, t) {
                     return e.col === t.col && e.row === t.row && e.button === t.button && e.action === t.action && e.ctrl === t.ctrl && e.alt === t.alt && e.shift === t.shift
@@ -8031,66 +8611,61 @@
         t.CoreMouseService = u
     }, function(e, t, r) {
         "use strict";
+        var i = this && this.__decorate || function(e, t, r, i) {
+                var n, o = arguments.length,
+                    s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
+                if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
+                else
+                    for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
+                return o > 3 && s && Object.defineProperty(t, r, s), s
+            },
+            n = this && this.__param || function(e, t) {
+                return function(r, i) {
+                    t(r, i, e)
+                }
+            };
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = function() {
-            function e(e) {
-                this._action = e, this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 0
-            }
-            return e.prototype.writeSync = function(e) {
-                if (this._writeBuffer.length) {
-                    for (var t = this._bufferOffset; t < this._writeBuffer.length; ++t) {
-                        var r = this._writeBuffer[t],
-                            i = this._callbacks[t];
-                        this._action(r), i && i()
+        }), t.DirtyRowService = void 0;
+        var o = r(1),
+            s = function() {
+                function e(e) {
+                    this._bufferService = e, this.clearRange()
+                }
+                return Object.defineProperty(e.prototype, "start", {
+                    get: function() {
+                        return this._start
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), Object.defineProperty(e.prototype, "end", {
+                    get: function() {
+                        return this._end
+                    },
+                    enumerable: !1,
+                    configurable: !0
+                }), e.prototype.clearRange = function() {
+                    this._start = this._bufferService.buffer.y, this._end = this._bufferService.buffer.y
+                }, e.prototype.markDirty = function(e) {
+                    e < this._start ? this._start = e : e > this._end && (this._end = e)
+                }, e.prototype.markRangeDirty = function(e, t) {
+                    if (e > t) {
+                        var r = e;
+                        e = t, t = r
                     }
-                    this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 2147483647
-                }
-                this._action(e)
-            }, e.prototype.write = function(e, t) {
-                var r = this;
-                if (this._pendingData > 5e7) throw new Error("write data discarded, use flow control to avoid losing data");
-                this._writeBuffer.length || (this._bufferOffset = 0, setTimeout(function() {
-                    return r._innerWrite()
-                })), this._pendingData += e.length, this._writeBuffer.push(e), this._callbacks.push(t)
-            }, e.prototype._innerWrite = function() {
-                for (var e = this, t = Date.now(); this._writeBuffer.length > this._bufferOffset;) {
-                    var r = this._writeBuffer[this._bufferOffset],
-                        i = this._callbacks[this._bufferOffset];
-                    if (this._bufferOffset++, this._action(r), this._pendingData -= r.length, i && i(), Date.now() - t >= 12) break
-                }
-                this._writeBuffer.length > this._bufferOffset ? (this._bufferOffset > 50 && (this._writeBuffer = this._writeBuffer.slice(this._bufferOffset), this._callbacks = this._callbacks.slice(this._bufferOffset), this._bufferOffset = 0), setTimeout(function() {
-                    return e._innerWrite()
-                }, 0)) : (this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 0)
-            }, e
-        }();
-        t.WriteBuffer = i
+                    e < this._start && (this._start = e), t > this._end && (this._end = t)
+                }, e.prototype.markAllDirty = function() {
+                    this.markRangeDirty(0, this._bufferService.rows - 1)
+                }, i([n(0, o.IBufferService)], e)
+            }();
+        t.DirtyRowService = s
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = function() {
-            function e(e) {
-                this._textarea = e
-            }
-            return Object.defineProperty(e.prototype, "isFocused", {
-                get: function() {
-                    return document.activeElement === this._textarea && document.hasFocus()
-                },
-                enumerable: !0,
-                configurable: !0
-            }), e
-        }();
-        t.CoreBrowserService = i
-    }, function(e, t, r) {
-        "use strict";
-        Object.defineProperty(t, "__esModule", {
-            value: !0
-        });
-        var i = r(1),
-            n = r(78),
+        }), t.UnicodeService = void 0;
+        var i = r(0),
+            n = r(79),
             o = function() {
                 function e() {
                     this._providers = Object.create(null), this._active = "", this._onChange = new i.EventEmitter;
@@ -8101,13 +8676,13 @@
                     get: function() {
                         return this._onChange.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "versions", {
                     get: function() {
                         return Object.keys(this._providers)
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), Object.defineProperty(e.prototype, "activeVersion", {
                     get: function() {
@@ -8117,7 +8692,7 @@
                         if (!this._providers[e]) throw new Error('unknown Unicode version "' + e + '"');
                         this._active = e, this._activeProvider = this._providers[e], this._onChange.fire(e)
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e.prototype.register = function(e) {
                     this._providers[e.version] = e
@@ -8141,7 +8716,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.UnicodeV6 = void 0;
         var i, n = r(15),
             o = [
                 [768, 879],
@@ -8315,17 +8890,17 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.CharsetService = void 0;
         var i = function() {
             function e() {
-                this.charsets = [], this.glevel = 0
+                this.glevel = 0, this._charsets = []
             }
             return e.prototype.reset = function() {
-                this.charset = void 0, this.charsets = [], this.glevel = 0
+                this.charset = void 0, this._charsets = [], this.glevel = 0
             }, e.prototype.setgLevel = function(e) {
-                this.glevel = e, this.charset = this.charsets[e]
+                this.glevel = e, this.charset = this._charsets[e]
             }, e.prototype.setgCharset = function(e, t) {
-                this.charsets[e] = t, this.glevel === e && (this.charset = t)
+                this._charsets[e] = t, this.glevel === e && (this.charset = t)
             }, e
         }();
         t.CharsetService = i
@@ -8333,7 +8908,56 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.updateWindowsModeWrappedState = void 0;
+        var i = r(3);
+        t.updateWindowsModeWrappedState = function(e) {
+            var t = e.buffer.lines.get(e.buffer.ybase + e.buffer.y - 1),
+                r = null == t ? void 0 : t.get(e.cols - 1),
+                n = e.buffer.lines.get(e.buffer.ybase + e.buffer.y);
+            n && r && (n.isWrapped = r[i.CHAR_DATA_CODE_INDEX] !== i.NULL_CELL_CODE && r[i.CHAR_DATA_CODE_INDEX] !== i.WHITESPACE_CELL_CODE)
+        }
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.WriteBuffer = void 0;
+        var i = function() {
+            function e(e) {
+                this._action = e, this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 0
+            }
+            return e.prototype.writeSync = function(e) {
+                if (this._writeBuffer.length) {
+                    for (var t = this._bufferOffset; t < this._writeBuffer.length; ++t) {
+                        var r = this._writeBuffer[t],
+                            i = this._callbacks[t];
+                        this._action(r), i && i()
+                    }
+                    this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 2147483647
+                }
+                this._action(e)
+            }, e.prototype.write = function(e, t) {
+                var r = this;
+                if (this._pendingData > 5e7) throw new Error("write data discarded, use flow control to avoid losing data");
+                this._writeBuffer.length || (this._bufferOffset = 0, setTimeout(function() {
+                    return r._innerWrite()
+                })), this._pendingData += e.length, this._writeBuffer.push(e), this._callbacks.push(t)
+            }, e.prototype._innerWrite = function() {
+                for (var e = this, t = Date.now(); this._writeBuffer.length > this._bufferOffset;) {
+                    var r = this._writeBuffer[this._bufferOffset],
+                        i = this._callbacks[this._bufferOffset];
+                    if (this._bufferOffset++, this._action(r), this._pendingData -= r.length, i && i(), Date.now() - t >= 12) break
+                }
+                this._writeBuffer.length > this._bufferOffset ? (this._bufferOffset > 50 && (this._writeBuffer = this._writeBuffer.slice(this._bufferOffset), this._callbacks = this._callbacks.slice(this._bufferOffset), this._bufferOffset = 0), setTimeout(function() {
+                    return e._innerWrite()
+                }, 0)) : (this._writeBuffer = [], this._callbacks = [], this._pendingData = 0, this._bufferOffset = 0)
+            }, e
+        }();
+        t.WriteBuffer = i
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.AddonManager = void 0;
         var i = function() {
             function e() {
                 this._addons = []
@@ -8414,7 +9038,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.FitAddon = void 0;
         var i = function() {
             function e() {}
             return e.prototype.activate = function(e) {
@@ -8505,7 +9129,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.PROJECTION_MATRIX = new Float32Array([2, 0, 0, 0, 0, -2, 0, 0, 0, 0, 1, 0, -1, 1, 0, 1]), t.createProgram = function(e, t, r) {
+        }), t.throwIfFalsy = t.expandFloat32Array = t.createShader = t.createProgram = t.PROJECTION_MATRIX = void 0, t.PROJECTION_MATRIX = new Float32Array([2, 0, 0, 0, 0, -2, 0, 0, 0, 0, 1, 0, -1, 1, 0, 1]), t.createProgram = function(e, t, r) {
             var o = n(e.createProgram());
             if (e.attachShader(o, n(i(e, e.VERTEX_SHADER, t))), e.attachShader(o, n(i(e, e.FRAGMENT_SHADER, r))), e.linkProgram(o), e.getProgramParameter(o, e.LINK_STATUS)) return o;
             console.error(e.getProgramInfoLog(o)), e.deleteProgram(o)
@@ -8517,18 +9141,19 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.DEFAULT_COLOR = 256, t.DEFAULT_ATTR = 256 | t.DEFAULT_COLOR << 9, t.CHAR_DATA_ATTR_INDEX = 0, t.CHAR_DATA_CHAR_INDEX = 1, t.CHAR_DATA_WIDTH_INDEX = 2, t.CHAR_DATA_CODE_INDEX = 3, t.NULL_CELL_CHAR = "", t.NULL_CELL_WIDTH = 1, t.NULL_CELL_CODE = 0, t.WHITESPACE_CELL_CHAR = " ", t.WHITESPACE_CELL_WIDTH = 1, t.WHITESPACE_CELL_CODE = 32
+        }), t.WHITESPACE_CELL_CODE = t.WHITESPACE_CELL_WIDTH = t.WHITESPACE_CELL_CHAR = t.NULL_CELL_CODE = t.NULL_CELL_WIDTH = t.NULL_CELL_CHAR = t.CHAR_DATA_CODE_INDEX = t.CHAR_DATA_WIDTH_INDEX = t.CHAR_DATA_CHAR_INDEX = t.CHAR_DATA_ATTR_INDEX = t.DEFAULT_ATTR = t.DEFAULT_COLOR = void 0, t.DEFAULT_COLOR = 256, t.DEFAULT_ATTR = 256 | t.DEFAULT_COLOR << 9, t.CHAR_DATA_ATTR_INDEX = 0, t.CHAR_DATA_CHAR_INDEX = 1, t.CHAR_DATA_WIDTH_INDEX = 2, t.CHAR_DATA_CODE_INDEX = 3, t.NULL_CELL_CHAR = "", t.NULL_CELL_WIDTH = 1, t.NULL_CELL_CODE = 0, t.WHITESPACE_CELL_CHAR = " ", t.WHITESPACE_CELL_WIDTH = 1, t.WHITESPACE_CELL_CODE = 32
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.RenderModel = t.COMBINED_CHAR_BIT_MASK = t.RENDER_MODEL_FG_OFFSET = t.RENDER_MODEL_BG_OFFSET = t.RENDER_MODEL_INDICIES_PER_CELL = void 0;
         var i = r(3);
         t.RENDER_MODEL_INDICIES_PER_CELL = 3, t.RENDER_MODEL_BG_OFFSET = 1, t.RENDER_MODEL_FG_OFFSET = 2, t.COMBINED_CHAR_BIT_MASK = 2147483648;
         var n = function() {
             function e() {
                 this.cells = new Uint32Array(0), this.lineLengths = new Uint32Array(0), this.selection = {
                     hasSelection: !1,
+                    columnSelectMode: !1,
                     viewportStartRow: 0,
                     viewportEndRow: 0,
                     viewportCappedStartRow: 0,
@@ -8558,7 +9183,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.fill = function(e, t, r, n) {
+        }), t.concat = t.fillFallback = t.fill = void 0, t.fill = function(e, t, r, n) {
             return e.fill ? e.fill(t, r, n) : i(e, t, r, n)
         }, t.fillFallback = i, t.concat = function(e, t) {
             var r = new e.constructor(e.length + t.length);
@@ -8568,10 +9193,10 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.ExtendedAttrs = t.AttributeData = void 0;
         var i = function() {
             function e() {
-                this.fg = 0, this.bg = 0
+                this.fg = 0, this.bg = 0, this.extended = new n
             }
             return e.toColorRGB = function(e) {
                 return [e >>> 16 & 255, e >>> 8 & 255, 255 & e]
@@ -8579,7 +9204,7 @@
                 return (255 & e[0]) << 16 | (255 & e[1]) << 8 | 255 & e[2]
             }, e.prototype.clone = function() {
                 var t = new e;
-                return t.fg = this.fg, t.bg = this.bg, t
+                return t.fg = this.fg, t.bg = this.bg, t.extended = this.extended.clone(), t
             }, e.prototype.isInverse = function() {
                 return 67108864 & this.fg
             }, e.prototype.isBold = function() {
@@ -8632,14 +9257,50 @@
                     default:
                         return -1
                 }
+            }, e.prototype.hasExtendedAttrs = function() {
+                return 268435456 & this.bg
+            }, e.prototype.updateExtended = function() {
+                this.extended.isEmpty() ? this.bg &= -268435457 : this.bg |= 268435456
+            }, e.prototype.getUnderlineColor = function() {
+                if (268435456 & this.bg && ~this.extended.underlineColor) switch (50331648 & this.extended.underlineColor) {
+                    case 16777216:
+                    case 33554432:
+                        return 255 & this.extended.underlineColor;
+                    case 50331648:
+                        return 16777215 & this.extended.underlineColor;
+                    default:
+                        return this.getFgColor()
+                }
+                return this.getFgColor()
+            }, e.prototype.getUnderlineColorMode = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 50331648 & this.extended.underlineColor : this.getFgColorMode()
+            }, e.prototype.isUnderlineColorRGB = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 50331648 == (50331648 & this.extended.underlineColor) : this.isFgRGB()
+            }, e.prototype.isUnderlineColorPalette = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 16777216 == (50331648 & this.extended.underlineColor) || 33554432 == (50331648 & this.extended.underlineColor) : this.isFgPalette()
+            }, e.prototype.isUnderlineColorDefault = function() {
+                return 268435456 & this.bg && ~this.extended.underlineColor ? 0 == (50331648 & this.extended.underlineColor) : this.isFgDefault()
+            }, e.prototype.getUnderlineStyle = function() {
+                return 268435456 & this.fg ? 268435456 & this.bg ? this.extended.underlineStyle : 1 : 0
             }, e
         }();
-        t.AttributeData = i
+        t.AttributeData = i;
+        var n = function() {
+            function e(e, t) {
+                void 0 === e && (e = 0), void 0 === t && (t = -1), this.underlineStyle = e, this.underlineColor = t
+            }
+            return e.prototype.clone = function() {
+                return new e(this.underlineStyle, this.underlineColor)
+            }, e.prototype.isEmpty = function() {
+                return 0 === this.underlineStyle
+            }, e
+        }();
+        t.ExtendedAttrs = n
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.BaseRenderLayer = void 0;
         var i = r(6),
             n = r(0),
             o = function() {
@@ -8690,7 +9351,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.removeTerminalFromCache = t.acquireCharAtlas = void 0;
         var i = r(7),
             n = r(15),
             o = [];
@@ -8726,7 +9387,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.is256Color = t.configEquals = t.generateConfig = void 0;
         var i = {
             css: "",
             rgba: 0
@@ -8737,7 +9398,7 @@
                 background: n.background,
                 cursor: i,
                 cursorAccent: i,
-                selection: i,
+                selectionTransparent: i,
                 selectionOpaque: i,
                 ansi: n.ansi.slice(),
                 contrastCache: n.contrastCache
@@ -8766,7 +9427,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.INVERTED_DEFAULT_COLOR = 257, t.DIM_OPACITY = .5, t.CHAR_ATLAS_CELL_SPACING = 1
+        }), t.CHAR_ATLAS_CELL_SPACING = t.DIM_OPACITY = t.INVERTED_DEFAULT_COLOR = void 0, t.INVERTED_DEFAULT_COLOR = 257, t.DIM_OPACITY = .5, t.CHAR_ATLAS_CELL_SPACING = 1
     }, function(e, t, r) {
         "use strict";
         var i, n = this && this.__extends || (i = function(e, t) {
@@ -8786,13 +9447,14 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.CellData = void 0;
         var o = r(18),
             s = r(1),
-            a = function(e) {
+            a = r(4),
+            c = function(e) {
                 function t() {
                     var t = null !== e && e.apply(this, arguments) || this;
-                    return t.content = 0, t.fg = 0, t.bg = 0, t.combinedData = "", t
+                    return t.content = 0, t.fg = 0, t.bg = 0, t.extended = new a.ExtendedAttrs, t.combinedData = "", t
                 }
                 return n(t, e), t.fromCharData = function(e) {
                     var r = new t;
@@ -8820,13 +9482,13 @@
                 }, t.prototype.getAsCharData = function() {
                     return [this.fg, this.getChars(), this.getWidth(), this.getCode()]
                 }, t
-            }(r(4).AttributeData);
-        t.CellData = a
+            }(a.AttributeData);
+        t.CellData = c
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.WebglAddon = void 0;
         var i = r(11),
             n = function() {
                 function e(e) {
@@ -8847,7 +9509,7 @@
                         var e;
                         return null === (e = this._renderer) || void 0 === e ? void 0 : e.textureAtlas
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), e
             }();
@@ -8871,7 +9533,7 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.WebglRenderer = void 0;
         var o = r(12),
             s = r(14),
             a = r(17),
@@ -8885,7 +9547,7 @@
             p = function(e) {
                 function t(t, r, i) {
                     var n = e.call(this) || this;
-                    n._terminal = t, n._colors = r, n._model = new h.RenderModel, n._workCell = new d.CellData, n._onRequestRefreshRows = new _.EventEmitter, n._core = n._terminal._core, n._renderLayers = [new s.LinkRenderLayer(n._core.screenElement, 2, n._colors, n._core), new a.CursorRenderLayer(n._core.screenElement, 3, n._colors, n._onRequestRefreshRows)], n.dimensions = {
+                    n._terminal = t, n._colors = r, n._model = new h.RenderModel, n._workCell = new d.CellData, n._onRequestRedraw = new _.EventEmitter, n._core = n._terminal._core, n._renderLayers = [new s.LinkRenderLayer(n._core.screenElement, 2, n._colors, n._core), new a.CursorRenderLayer(n._core.screenElement, 3, n._colors, n._onRequestRedraw)], n.dimensions = {
                         scaledCharWidth: 0,
                         scaledCharHeight: 0,
                         scaledCellWidth: 0,
@@ -8904,14 +9566,14 @@
                         depth: !1,
                         preserveDrawingBuffer: i
                     };
-                    if (n._gl = n._canvas.getContext("webgl2", c), !n._gl) throw new Error("WebGL2 not supported");
+                    if (n._gl = n._canvas.getContext("webgl2", c), !n._gl) throw new Error("WebGL2 not supported " + n._gl);
                     return n._core.screenElement.appendChild(n._canvas), n._rectangleRenderer = new l.RectangleRenderer(n._terminal, n._colors, n._gl, n.dimensions), n._glyphRenderer = new o.GlyphRenderer(n._terminal, n._colors, n._gl, n.dimensions), n.onCharSizeChanged(), n._isAttached = document.body.contains(n._core.screenElement), n
                 }
-                return n(t, e), Object.defineProperty(t.prototype, "onRequestRefreshRows", {
+                return n(t, e), Object.defineProperty(t.prototype, "onRequestRedraw", {
                     get: function() {
-                        return this._onRequestRefreshRows.event
+                        return this._onRequestRedraw.event
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.dispose = function() {
                     this._renderLayers.forEach(function(e) {
@@ -8922,13 +9584,13 @@
                         var e;
                         return null === (e = this._charAtlas) || void 0 === e ? void 0 : e.cacheCanvas
                     },
-                    enumerable: !0,
+                    enumerable: !1,
                     configurable: !0
                 }), t.prototype.setColors = function(e) {
                     var t = this;
                     this._colors = e, this._renderLayers.forEach(function(e) {
                         e.setColors(t._terminal, t._colors), e.reset(t._terminal)
-                    }), this._rectangleRenderer.setColors(), this._glyphRenderer.setColors(), this._refreshCharAtlas(), this._model.clear()
+                    }), this._rectangleRenderer.setColors(), this._glyphRenderer.setColors(), this._refreshCharAtlas(), this._rectangleRenderer.updateSelection(this._model.selection), this._glyphRenderer.updateSelection(this._model), this._model.clear()
                 }, t.prototype.onDevicePixelRatioChange = function() {
                     this._devicePixelRatio !== window.devicePixelRatio && (this._devicePixelRatio = window.devicePixelRatio, this.onResize(this._terminal.cols, this._terminal.rows))
                 }, t.prototype.onResize = function(e, t) {
@@ -8952,7 +9614,7 @@
                     var i = this;
                     this._renderLayers.forEach(function(n) {
                         return n.onSelectionChanged(i._terminal, e, t, r)
-                    }), this._updateSelectionModel(e, t), this._rectangleRenderer.updateSelection(this._model.selection, r), this._glyphRenderer.updateSelection(this._model, r), this._onRequestRefreshRows.fire({
+                    }), this._updateSelectionModel(e, t, r), this._rectangleRenderer.updateSelection(this._model.selection), this._glyphRenderer.updateSelection(this._model), this._onRequestRedraw.fire({
                         start: 0,
                         end: this._terminal.rows - 1
                     })
@@ -9005,14 +9667,14 @@
                         }
                     }
                     this._rectangleRenderer.updateBackgrounds(this._model)
-                }, t.prototype._updateSelectionModel = function(e, t) {
-                    var r = this._terminal;
+                }, t.prototype._updateSelectionModel = function(e, t, r) {
+                    var i = this._terminal;
                     if (e && t && (e[0] !== t[0] || e[1] !== t[1])) {
-                        var i = e[1] - r.buffer.viewportY,
-                            n = t[1] - r.buffer.viewportY,
-                            o = Math.max(i, 0),
-                            s = Math.min(n, r.rows - 1);
-                        o >= r.rows || s < 0 ? this._model.clearSelection() : (this._model.selection.hasSelection = !0, this._model.selection.viewportStartRow = i, this._model.selection.viewportEndRow = n, this._model.selection.viewportCappedStartRow = o, this._model.selection.viewportCappedEndRow = s, this._model.selection.startCol = e[0], this._model.selection.endCol = t[0])
+                        var n = e[1] - i.buffer.active.viewportY,
+                            o = t[1] - i.buffer.active.viewportY,
+                            s = Math.max(n, 0),
+                            a = Math.min(o, i.rows - 1);
+                        s >= i.rows || a < 0 ? this._model.clearSelection() : (this._model.selection.hasSelection = !0, this._model.selection.columnSelectMode = r, this._model.selection.viewportStartRow = n, this._model.selection.viewportEndRow = o, this._model.selection.viewportCappedStartRow = s, this._model.selection.viewportCappedEndRow = a, this._model.selection.startCol = e[0], this._model.selection.endCol = t[0])
                     } else this._model.clearSelection()
                 }, t.prototype._updateDimensions = function() {
                     this._core._charSizeService.width && this._core._charSizeService.height && (this.dimensions.scaledCharWidth = Math.floor(this._core._charSizeService.width * this._devicePixelRatio), this.dimensions.scaledCharHeight = Math.ceil(this._core._charSizeService.height * this._devicePixelRatio), this.dimensions.scaledCellHeight = Math.floor(this.dimensions.scaledCharHeight * this._terminal.getOption("lineHeight")), this.dimensions.scaledCharTop = 1 === this._terminal.getOption("lineHeight") ? 0 : Math.round((this.dimensions.scaledCellHeight - this.dimensions.scaledCharHeight) / 2), this.dimensions.scaledCellWidth = this.dimensions.scaledCharWidth + Math.round(this._terminal.getOption("letterSpacing")), this.dimensions.scaledCharLeft = Math.floor(this._terminal.getOption("letterSpacing") / 2), this.dimensions.scaledCanvasHeight = this._terminal.rows * this.dimensions.scaledCellHeight, this.dimensions.scaledCanvasWidth = this._terminal.cols * this.dimensions.scaledCellWidth, this.dimensions.canvasHeight = Math.round(this.dimensions.scaledCanvasHeight / this._devicePixelRatio), this.dimensions.canvasWidth = Math.round(this.dimensions.scaledCanvasWidth / this._devicePixelRatio), this.dimensions.actualCellHeight = this.dimensions.scaledCellHeight / this._devicePixelRatio, this.dimensions.actualCellWidth = this.dimensions.scaledCellWidth / this._devicePixelRatio)
@@ -9023,17 +9685,15 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.GlyphRenderer = void 0;
         var i = r(0),
             n = r(2),
             o = r(3),
             s = r(13),
             a = r(1),
             c = r(4),
-            l = "#version 300 es\nlayout (location = 0) in vec2 a_unitquad;\nlayout (location = 1) in vec2 a_cellpos;\nlayout (location = 2) in vec2 a_offset;\nlayout (location = 3) in vec2 a_size;\nlayout (location = 4) in vec2 a_texcoord;\nlayout (location = 5) in vec2 a_texsize;\n\nuniform mat4 u_projection;\nuniform vec2 u_resolution;\n\nout vec2 v_texcoord;\n\nvoid main() {\n  vec2 zeroToOne = (a_offset / u_resolution) + a_cellpos + (a_unitquad * a_size);\n  gl_Position = u_projection * vec4(zeroToOne, 0.0, 1.0);\n  v_texcoord = a_texcoord + a_unitquad * a_texsize;\n}",
-            h = "#version 300 es\nprecision lowp float;\n\nin vec2 v_texcoord;\n\nuniform sampler2D u_texture;\n\nout vec4 outColor;\n\nvoid main() {\n  outColor = texture(u_texture, v_texcoord);\n}",
-            u = 10 * Float32Array.BYTES_PER_ELEMENT,
-            f = function() {
+            l = 10 * Float32Array.BYTES_PER_ELEMENT,
+            h = function() {
                 function e(e, t, r, n) {
                     this._terminal = e, this._colors = t, this._gl = r, this._dimensions = n, this._activeBuffer = 0, this._vertices = {
                         count: 0,
@@ -9042,14 +9702,14 @@
                         selectionAttributes: new Float32Array(0)
                     };
                     var o = this._gl,
-                        s = i.throwIfFalsy(i.createProgram(o, l, h));
+                        s = i.throwIfFalsy(i.createProgram(o, "#version 300 es\nlayout (location = 0) in vec2 a_unitquad;\nlayout (location = 1) in vec2 a_cellpos;\nlayout (location = 2) in vec2 a_offset;\nlayout (location = 3) in vec2 a_size;\nlayout (location = 4) in vec2 a_texcoord;\nlayout (location = 5) in vec2 a_texsize;\n\nuniform mat4 u_projection;\nuniform vec2 u_resolution;\n\nout vec2 v_texcoord;\n\nvoid main() {\n  vec2 zeroToOne = (a_offset / u_resolution) + a_cellpos + (a_unitquad * a_size);\n  gl_Position = u_projection * vec4(zeroToOne, 0.0, 1.0);\n  v_texcoord = a_texcoord + a_unitquad * a_texsize;\n}", "#version 300 es\nprecision lowp float;\n\nin vec2 v_texcoord;\n\nuniform sampler2D u_texture;\n\nout vec4 outColor;\n\nvoid main() {\n  outColor = texture(u_texture, v_texcoord);\n}"));
                     this._program = s, this._projectionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_projection")), this._resolutionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_resolution")), this._textureLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_texture")), this._vertexArrayObject = o.createVertexArray(), o.bindVertexArray(this._vertexArrayObject);
                     var a = new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
                         c = o.createBuffer();
                     o.bindBuffer(o.ARRAY_BUFFER, c), o.bufferData(o.ARRAY_BUFFER, a, o.STATIC_DRAW), o.enableVertexAttribArray(0), o.vertexAttribPointer(0, 2, this._gl.FLOAT, !1, 0, 0);
-                    var f = new Uint8Array([0, 1, 3, 0, 2, 3]),
-                        _ = o.createBuffer();
-                    o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, _), o.bufferData(o.ELEMENT_ARRAY_BUFFER, f, o.STATIC_DRAW), this._attributesBuffer = i.throwIfFalsy(o.createBuffer()), o.bindBuffer(o.ARRAY_BUFFER, this._attributesBuffer), o.enableVertexAttribArray(2), o.vertexAttribPointer(2, 2, o.FLOAT, !1, u, 0), o.vertexAttribDivisor(2, 1), o.enableVertexAttribArray(3), o.vertexAttribPointer(3, 2, o.FLOAT, !1, u, 2 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(3, 1), o.enableVertexAttribArray(4), o.vertexAttribPointer(4, 2, o.FLOAT, !1, u, 4 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(4, 1), o.enableVertexAttribArray(5), o.vertexAttribPointer(5, 2, o.FLOAT, !1, u, 6 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(5, 1), o.enableVertexAttribArray(1), o.vertexAttribPointer(1, 2, o.FLOAT, !1, u, 8 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(1, 1), this._atlasTexture = i.throwIfFalsy(o.createTexture()), o.bindTexture(o.TEXTURE_2D, this._atlasTexture), o.texImage2D(o.TEXTURE_2D, 0, o.RGBA, 1, 1, 0, o.RGBA, o.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255])), o.texParameteri(o.TEXTURE_2D, o.TEXTURE_WRAP_S, o.CLAMP_TO_EDGE), o.texParameteri(o.TEXTURE_2D, o.TEXTURE_WRAP_T, o.CLAMP_TO_EDGE), o.enable(o.BLEND), o.blendFunc(o.SRC_ALPHA, o.ONE_MINUS_SRC_ALPHA), this.onResize()
+                    var h = new Uint8Array([0, 1, 3, 0, 2, 3]),
+                        u = o.createBuffer();
+                    o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, u), o.bufferData(o.ELEMENT_ARRAY_BUFFER, h, o.STATIC_DRAW), this._attributesBuffer = i.throwIfFalsy(o.createBuffer()), o.bindBuffer(o.ARRAY_BUFFER, this._attributesBuffer), o.enableVertexAttribArray(2), o.vertexAttribPointer(2, 2, o.FLOAT, !1, l, 0), o.vertexAttribDivisor(2, 1), o.enableVertexAttribArray(3), o.vertexAttribPointer(3, 2, o.FLOAT, !1, l, 2 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(3, 1), o.enableVertexAttribArray(4), o.vertexAttribPointer(4, 2, o.FLOAT, !1, l, 4 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(4, 1), o.enableVertexAttribArray(5), o.vertexAttribPointer(5, 2, o.FLOAT, !1, l, 6 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(5, 1), o.enableVertexAttribArray(1), o.vertexAttribPointer(1, 2, o.FLOAT, !1, l, 8 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(1, 1), this._atlasTexture = i.throwIfFalsy(o.createTexture()), o.bindTexture(o.TEXTURE_2D, this._atlasTexture), o.texImage2D(o.TEXTURE_2D, 0, o.RGBA, 1, 1, 0, o.RGBA, o.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255])), o.texParameteri(o.TEXTURE_2D, o.TEXTURE_WRAP_S, o.CLAMP_TO_EDGE), o.texParameteri(o.TEXTURE_2D, o.TEXTURE_WRAP_T, o.CLAMP_TO_EDGE), o.enable(o.BLEND), o.blendFunc(o.SRC_ALPHA, o.ONE_MINUS_SRC_ALPHA), this.onResize()
                 }
                 return e.prototype.beginFrame = function() {
                     return !this._atlas || this._atlas.beginFrame()
@@ -9058,25 +9718,25 @@
                 }, e.prototype._updateCell = function(e, t, r, i, n, s, c) {
                     var l, h = 10 * (r * this._terminal.cols + t);
                     i !== a.NULL_CELL_CODE && i !== a.WHITESPACE_CELL_CODE && void 0 !== i ? this._atlas && ((l = c && c.length > 1 ? this._atlas.getRasterizedGlyphCombinedChar(c, n, s) : this._atlas.getRasterizedGlyph(i, n, s)) ? (e[h] = -l.offset.x + this._dimensions.scaledCharLeft, e[h + 1] = -l.offset.y + this._dimensions.scaledCharTop, e[h + 2] = l.size.x / this._dimensions.scaledCanvasWidth, e[h + 3] = l.size.y / this._dimensions.scaledCanvasHeight, e[h + 4] = l.texturePositionClipSpace.x, e[h + 5] = l.texturePositionClipSpace.y, e[h + 6] = l.sizeClipSpace.x, e[h + 7] = l.sizeClipSpace.y) : o.fill(e, 0, h, h + 10 - 1 - 2)) : o.fill(e, 0, h, h + 10 - 1 - 2)
-                }, e.prototype.updateSelection = function(e, t) {
-                    var r = this._terminal;
+                }, e.prototype.updateSelection = function(e) {
+                    var t = this._terminal;
                     this._vertices.selectionAttributes = s.slice(this._vertices.attributes, 0);
-                    var i = this._colors.selectionOpaque.rgba >>> 8 | 50331648;
-                    if (t)
-                        for (var n = e.selection.startCol, o = e.selection.endCol - n, a = e.selection.viewportCappedEndRow - e.selection.viewportCappedStartRow + 1, c = e.selection.viewportCappedStartRow; c < e.selection.viewportCappedStartRow + a; c++) this._updateSelectionRange(n, n + o, c, e, i);
+                    var r = this._colors.selectionOpaque.rgba >>> 8 | 50331648;
+                    if (e.selection.columnSelectMode)
+                        for (var i = e.selection.startCol, n = e.selection.endCol - i, o = e.selection.viewportCappedEndRow - e.selection.viewportCappedStartRow + 1, a = e.selection.viewportCappedStartRow; a < e.selection.viewportCappedStartRow + o; a++) this._updateSelectionRange(i, i + n, a, e, r);
                     else {
-                        n = e.selection.viewportStartRow === e.selection.viewportCappedStartRow ? e.selection.startCol : 0;
-                        var l = e.selection.viewportCappedStartRow === e.selection.viewportCappedEndRow ? e.selection.endCol : r.cols;
-                        this._updateSelectionRange(n, l, e.selection.viewportCappedStartRow, e, i);
-                        var h = Math.max(e.selection.viewportCappedEndRow - e.selection.viewportCappedStartRow - 1, 0);
-                        for (c = e.selection.viewportCappedStartRow + 1; c <= e.selection.viewportCappedStartRow + h; c++) this._updateSelectionRange(0, l, c, e, i);
+                        i = e.selection.viewportStartRow === e.selection.viewportCappedStartRow ? e.selection.startCol : 0;
+                        var c = e.selection.viewportCappedStartRow === e.selection.viewportCappedEndRow ? e.selection.endCol : t.cols;
+                        this._updateSelectionRange(i, c, e.selection.viewportCappedStartRow, e, r);
+                        var l = Math.max(e.selection.viewportCappedEndRow - e.selection.viewportCappedStartRow - 1, 0);
+                        for (a = e.selection.viewportCappedStartRow + 1; a <= e.selection.viewportCappedStartRow + l; a++) this._updateSelectionRange(0, c, a, e, r);
                         if (e.selection.viewportCappedStartRow !== e.selection.viewportCappedEndRow) {
-                            var u = e.selection.viewportEndRow === e.selection.viewportCappedEndRow ? e.selection.endCol : r.cols;
-                            this._updateSelectionRange(0, u, e.selection.viewportCappedEndRow, e, i)
+                            var h = e.selection.viewportEndRow === e.selection.viewportCappedEndRow ? e.selection.endCol : t.cols;
+                            this._updateSelectionRange(0, h, e.selection.viewportCappedEndRow, e, r)
                         }
                     }
                 }, e.prototype._updateSelectionRange = function(e, t, r, i, o) {
-                    for (var s, a = this._terminal, l = r + a.buffer.viewportY, h = e; h < t; h++) {
+                    for (var s, a = this._terminal, l = r + a.buffer.active.viewportY, h = e; h < t; h++) {
                         var u = (r * this._terminal.cols + h) * n.RENDER_MODEL_INDICIES_PER_CELL,
                             f = i.cells[u],
                             _ = i.cells[u + n.RENDER_MODEL_FG_OFFSET];
@@ -9098,7 +9758,7 @@
                             _ |= 50331648
                         }
                         if (f & n.COMBINED_CHAR_BIT_MASK) {
-                            s || (s = a.buffer.getLine(l));
+                            s || (s = a.buffer.active.getLine(l));
                             var y = s.getCell(h).getChars();
                             this._updateCell(this._vertices.selectionAttributes, h, r, i.cells[u], o, _, y)
                         } else this._updateCell(this._vertices.selectionAttributes, h, r, i.cells[u], o, _)
@@ -9135,7 +9795,7 @@
                     this._dimensions = e
                 }, e
             }();
-        t.GlyphRenderer = f
+        t.GlyphRenderer = h
     }, function(e, t, r) {
         "use strict";
 
@@ -9146,7 +9806,7 @@
         }
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.slice = function(e, t, r) {
+        }), t.sliceFallback = t.slice = void 0, t.slice = function(e, t, r) {
             return e.slice ? e.slice(t, r) : i(e, t, r)
         }, t.sliceFallback = i
     }, function(e, t, r) {
@@ -9168,17 +9828,21 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.LinkRenderLayer = void 0;
         var o = r(5),
             s = r(8),
             a = r(7),
             c = function(e) {
                 function t(t, r, i, n) {
                     var o = e.call(this, t, "link", r, !0, i) || this;
-                    return n.linkifier.onLinkHover(function(e) {
-                        return o._onLinkHover(e)
-                    }), n.linkifier.onLinkLeave(function(e) {
-                        return o._onLinkLeave(e)
+                    return n.linkifier.onShowLinkUnderline(function(e) {
+                        return o._onShowLinkUnderline(e)
+                    }), n.linkifier.onHideLinkUnderline(function(e) {
+                        return o._onHideLinkUnderline(e)
+                    }), n.linkifier2.onShowLinkUnderline(function(e) {
+                        return o._onShowLinkUnderline(e)
+                    }), n.linkifier2.onHideLinkUnderline(function(e) {
+                        return o._onHideLinkUnderline(e)
                     }), o
                 }
                 return n(t, e), t.prototype.resize = function(t, r) {
@@ -9191,7 +9855,7 @@
                         var e = this._state.y2 - this._state.y1 - 1;
                         e > 0 && this._clearCells(0, this._state.y1 + 1, this._state.cols, e), this._clearCells(0, this._state.y2, this._state.x2, 1), this._state = void 0
                     }
-                }, t.prototype._onLinkHover = function(e) {
+                }, t.prototype._onShowLinkUnderline = function(e) {
                     if (e.fg === s.INVERTED_DEFAULT_COLOR ? this._ctx.fillStyle = this._colors.background.css : void 0 !== e.fg && a.is256Color(e.fg) ? this._ctx.fillStyle = this._colors.ansi[e.fg].css : this._ctx.fillStyle = this._colors.foreground.css, e.y1 === e.y2) this._fillBottomLineAtCells(e.x1, e.y1, e.x2 - e.x1);
                     else {
                         this._fillBottomLineAtCells(e.x1, e.y1, e.cols - e.x1);
@@ -9199,7 +9863,7 @@
                         this._fillBottomLineAtCells(0, e.y2, e.x2)
                     }
                     this._state = e
-                }, t.prototype._onLinkLeave = function(e) {
+                }, t.prototype._onHideLinkUnderline = function(e) {
                     this._clearCurrentLink()
                 }, t
             }(o.BaseRenderLayer);
@@ -9208,20 +9872,18 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.WebglCharAtlas = void 0;
         var i = r(8),
             n = r(1),
             o = r(0),
             s = r(4),
             a = r(16),
-            c = 1024,
-            l = 1024,
-            h = Math.floor(.8 * l),
-            u = {
+            c = Math.floor(819.2),
+            l = {
                 css: "rgba(0, 0, 0, 0)",
                 rgba: 0
             },
-            f = {
+            h = {
                 offset: {
                     x: 0,
                     y: 0
@@ -9243,17 +9905,16 @@
                     y: 0
                 }
             },
-            _ = 2,
-            d = function() {
+            u = function() {
                 function e(e, t) {
                     this._config = t, this._didWarmUp = !1, this._cacheMap = {}, this._cacheMapCombined = {}, this._currentRowY = 0, this._currentRowX = 0, this._currentRowHeight = 0, this.hasCanvasChanged = !1, this._workBoundingBox = {
                         top: 0,
                         left: 0,
                         bottom: 0,
                         right: 0
-                    }, this._workAttributeData = new s.AttributeData, this.cacheCanvas = e.createElement("canvas"), this.cacheCanvas.width = c, this.cacheCanvas.height = l, this._cacheCtx = o.throwIfFalsy(this.cacheCanvas.getContext("2d", {
+                    }, this._workAttributeData = new s.AttributeData, this.cacheCanvas = e.createElement("canvas"), this.cacheCanvas.width = 1024, this.cacheCanvas.height = 1024, this._cacheCtx = o.throwIfFalsy(this.cacheCanvas.getContext("2d", {
                         alpha: !0
-                    })), this._tmpCanvas = e.createElement("canvas"), this._tmpCanvas.width = 2 * this._config.scaledCharWidth + 2 * _, this._tmpCanvas.height = this._config.scaledCharHeight + 2 * _, this._tmpCtx = o.throwIfFalsy(this._tmpCanvas.getContext("2d", {
+                    })), this._tmpCanvas = e.createElement("canvas"), this._tmpCanvas.width = 2 * this._config.scaledCharWidth + 4, this._tmpCanvas.height = this._config.scaledCharHeight + 4, this._tmpCtx = o.throwIfFalsy(this._tmpCanvas.getContext("2d", {
                         alpha: this._config.allowTransparency
                     }))
                 }
@@ -9267,7 +9928,7 @@
                         this._cacheMap[r] = ((e = {})[n.DEFAULT_COLOR] = ((t = {})[n.DEFAULT_COLOR] = i, t), e)
                     }
                 }, e.prototype.beginFrame = function() {
-                    return this._currentRowY > h && (this._cacheCtx.clearRect(0, 0, c, l), this._cacheMap = {}, this._currentRowHeight = 0, this._currentRowX = 0, this._currentRowY = 0, this._doWarmUp(), !0)
+                    return this._currentRowY > c && (this._cacheCtx.clearRect(0, 0, 1024, 1024), this._cacheMap = {}, this._currentRowHeight = 0, this._currentRowX = 0, this._currentRowY = 0, this._doWarmUp(), !0)
                 }, e.prototype.getRasterizedGlyphCombinedChar = function(e, t, r) {
                     var i, n = this._cacheMapCombined[e];
                     n || (n = {}, this._cacheMapCombined[e] = n);
@@ -9282,7 +9943,7 @@
                     if (e >= this._config.colors.ansi.length) throw new Error("No color found for idx " + e);
                     return this._config.colors.ansi[e]
                 }, e.prototype._getBackgroundColor = function(e, t, r) {
-                    if (this._config.allowTransparency) return u;
+                    if (this._config.allowTransparency) return l;
                     switch (e) {
                         case 16777216:
                         case 33554432:
@@ -9290,7 +9951,7 @@
                         case 50331648:
                             var i = s.AttributeData.toColorRGB(t);
                             return {
-                                rgba: t << 8, css: "#" + p(i[0]) + p(i[1]) + p(i[2])
+                                rgba: t << 8, css: "#" + f(i[0]) + f(i[1]) + f(i[2])
                             };
                         case 0:
                         default:
@@ -9351,34 +10012,34 @@
                     }
                 }, e.prototype._drawToCache = function(e, t, r) {
                     var n = "number" == typeof e ? String.fromCharCode(e) : e;
-                    if (this.hasCanvasChanged = !0, this._tmpCtx.save(), this._workAttributeData.fg = r, this._workAttributeData.bg = t, this._workAttributeData.isInvisible()) return f;
+                    if (this.hasCanvasChanged = !0, this._tmpCtx.save(), this._workAttributeData.fg = r, this._workAttributeData.bg = t, this._workAttributeData.isInvisible()) return h;
                     var o = !!this._workAttributeData.isBold(),
                         s = !!this._workAttributeData.isInverse(),
                         a = !!this._workAttributeData.isDim(),
-                        h = !!this._workAttributeData.isItalic(),
-                        u = this._workAttributeData.getFgColor(),
-                        d = this._workAttributeData.getFgColorMode(),
-                        p = this._workAttributeData.getBgColor(),
-                        v = this._workAttributeData.getBgColorMode();
+                        c = !!this._workAttributeData.isItalic(),
+                        l = this._workAttributeData.getFgColor(),
+                        u = this._workAttributeData.getFgColorMode(),
+                        f = this._workAttributeData.getBgColor(),
+                        _ = this._workAttributeData.getBgColorMode();
                     if (s) {
-                        var g = u;
-                        u = p, p = g;
-                        var y = d;
-                        d = v, v = y
+                        var d = l;
+                        l = f, f = d;
+                        var p = u;
+                        u = _, _ = p
                     }
-                    var b = this._getBackgroundColor(v, p, s);
-                    this._tmpCtx.globalCompositeOperation = "copy", this._tmpCtx.fillStyle = b.css, this._tmpCtx.fillRect(0, 0, this._tmpCanvas.width, this._tmpCanvas.height), this._tmpCtx.globalCompositeOperation = "source-over";
-                    var m = o ? this._config.fontWeightBold : this._config.fontWeight,
-                        C = h ? "italic" : "";
-                    this._tmpCtx.font = C + " " + m + " " + this._config.fontSize * this._config.devicePixelRatio + "px " + this._config.fontFamily, this._tmpCtx.textBaseline = "top", this._tmpCtx.fillStyle = this._getForegroundCss(t, v, p, r, d, u, s, o), a && (this._tmpCtx.globalAlpha = i.DIM_OPACITY), this._tmpCtx.fillText(n, _, _), this._tmpCtx.restore();
-                    var S = this._tmpCtx.getImageData(0, 0, this._tmpCanvas.width, this._tmpCanvas.height);
+                    var v = this._getBackgroundColor(_, f, s);
+                    this._tmpCtx.globalCompositeOperation = "copy", this._tmpCtx.fillStyle = v.css, this._tmpCtx.fillRect(0, 0, this._tmpCanvas.width, this._tmpCanvas.height), this._tmpCtx.globalCompositeOperation = "source-over";
+                    var g = o ? this._config.fontWeightBold : this._config.fontWeight,
+                        y = c ? "italic" : "";
+                    this._tmpCtx.font = y + " " + g + " " + this._config.fontSize * this._config.devicePixelRatio + "px " + this._config.fontFamily, this._tmpCtx.textBaseline = "middle", this._tmpCtx.fillStyle = this._getForegroundCss(t, _, f, r, u, l, s, o), a && (this._tmpCtx.globalAlpha = i.DIM_OPACITY), this._tmpCtx.fillText(n, 2, 2 + this._config.scaledCharHeight / 2), this._tmpCtx.restore();
+                    var b = this._tmpCtx.getImageData(0, 0, this._tmpCanvas.width, this._tmpCanvas.height);
                     if (function(e, t) {
                             for (var r = !0, i = t.rgba >>> 24, n = t.rgba >>> 16 & 255, o = t.rgba >>> 8 & 255, s = 0; s < e.data.length; s += 4) e.data[s] === i && e.data[s + 1] === n && e.data[s + 2] === o ? e.data[s + 3] = 0 : r = !1;
                             return r
-                        }(S, b)) return f;
-                    var w = this._findGlyphBoundingBox(S, this._workBoundingBox),
-                        E = this._clipImageData(S, this._workBoundingBox);
-                    return this._currentRowX + this._config.scaledCharWidth > c && (this._currentRowX = 0, this._currentRowY += this._currentRowHeight, this._currentRowHeight = 0), w.texturePosition.x = this._currentRowX, w.texturePosition.y = this._currentRowY, w.texturePositionClipSpace.x = this._currentRowX / c, w.texturePositionClipSpace.y = this._currentRowY / l, this._currentRowHeight = Math.max(this._currentRowHeight, w.size.y), this._currentRowX += w.size.x, this._cacheCtx.putImageData(E, w.texturePosition.x, w.texturePosition.y), w
+                        }(b, v)) return h;
+                    var m = this._findGlyphBoundingBox(b, this._workBoundingBox),
+                        C = this._clipImageData(b, this._workBoundingBox);
+                    return this._currentRowX + this._config.scaledCharWidth > 1024 && (this._currentRowX = 0, this._currentRowY += this._currentRowHeight, this._currentRowHeight = 0), m.texturePosition.x = this._currentRowX, m.texturePosition.y = this._currentRowY, m.texturePositionClipSpace.x = this._currentRowX / 1024, m.texturePositionClipSpace.y = this._currentRowY / 1024, this._currentRowHeight = Math.max(this._currentRowHeight, m.size.y), this._currentRowX += m.size.x, this._cacheCtx.putImageData(C, m.texturePosition.x, m.texturePosition.y), m
                 }, e.prototype._findGlyphBoundingBox = function(e, t) {
                     t.top = 0;
                     for (var r = !1, i = 0; i < this._tmpCanvas.height; i++) {
@@ -9426,12 +10087,12 @@
                             y: t.bottom - t.top + 1
                         },
                         sizeClipSpace: {
-                            x: (t.right - t.left + 1) / c,
-                            y: (t.bottom - t.top + 1) / l
+                            x: (t.right - t.left + 1) / 1024,
+                            y: (t.bottom - t.top + 1) / 1024
                         },
                         offset: {
-                            x: -t.left + _,
-                            y: -t.top + _
+                            x: 2 - t.left,
+                            y: 2 - t.top
                         }
                     }
                 }, e.prototype._clipImageData = function(e, t) {
@@ -9445,11 +10106,11 @@
                 }, e
             }();
 
-        function p(e) {
+        function f(e) {
             var t = e.toString(16);
             return t.length < 2 ? "0" + t : t
         }
-        t.WebglCharAtlas = d
+        t.WebglCharAtlas = u
     }, function(e, t, r) {
         "use strict";
         var i, n, o, s;
@@ -9464,7 +10125,7 @@
         }
         Object.defineProperty(t, "__esModule", {
                 value: !0
-            }),
+            }), t.contrastRatio = t.toPaddedHex = t.rgba = t.rgb = t.css = t.color = t.channels = void 0,
             function(e) {
                 e.toCss = function(e, t, r, i) {
                     return void 0 !== i ? "#" + a(e) + a(t) + a(r) + a(i) : "#" + a(e) + a(t) + a(r)
@@ -9490,6 +10151,8 @@
                     css: i.toCss(h, u, f),
                     rgba: i.toRgba(h, u, f)
                 }
+            }, n.isOpaque = function(e) {
+                return 255 == (255 & e.rgba)
             }, n.ensureContrastRatio = function(e, t, r) {
                 var i = s.ensureContrastRatio(e.rgba, t.rgba, r);
                 if (i) return s.toColor(i >> 24 & 255, i >> 16 & 255, i >> 8 & 255)
@@ -9503,11 +10166,28 @@
                     css: i.toCss(n, o, a),
                     rgba: t
                 }
-            }, (t.css || (t.css = {})).toColor = function(e) {
+            }, n.opacity = function(e, t) {
+                var r = Math.round(255 * t),
+                    n = s.toChannels(e.rgba),
+                    o = n[0],
+                    a = n[1],
+                    c = n[2];
                 return {
-                    css: e,
-                    rgba: (parseInt(e.slice(1), 16) << 8 | 255) >>> 0
+                    css: i.toCss(o, a, c, r),
+                    rgba: i.toRgba(o, a, c, r)
                 }
+            }, (t.css || (t.css = {})).toColor = function(e) {
+                switch (e.length) {
+                    case 7:
+                        return {
+                            css: e, rgba: (parseInt(e.slice(1), 16) << 8 | 255) >>> 0
+                        };
+                    case 9:
+                        return {
+                            css: e, rgba: parseInt(e.slice(1), 16) >>> 0
+                        }
+                }
+                throw new Error("css.toColor: Unsupported css format")
             },
             function(e) {
                 function t(e, t, r) {
@@ -9562,7 +10242,7 @@
         });
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.CursorRenderLayer = void 0;
         var o = r(5),
             s = r(9),
             a = function(e) {
@@ -9592,21 +10272,21 @@
                     this._clearCursor(), this._cursorBlinkStateManager && (this._cursorBlinkStateManager.dispose(), this.onOptionsChanged(e))
                 }, t.prototype.onBlur = function(e) {
                     this._cursorBlinkStateManager && this._cursorBlinkStateManager.pause(), this._onRequestRefreshRowsEvent.fire({
-                        start: e.buffer.cursorY,
-                        end: e.buffer.cursorY
+                        start: e.buffer.active.cursorY,
+                        end: e.buffer.active.cursorY
                     })
                 }, t.prototype.onFocus = function(e) {
                     this._cursorBlinkStateManager ? this._cursorBlinkStateManager.resume(e) : this._onRequestRefreshRowsEvent.fire({
-                        start: e.buffer.cursorY,
-                        end: e.buffer.cursorY
+                        start: e.buffer.active.cursorY,
+                        end: e.buffer.active.cursorY
                     })
                 }, t.prototype.onOptionsChanged = function(e) {
                     var t, r = this;
                     e.getOption("cursorBlink") ? this._cursorBlinkStateManager || (this._cursorBlinkStateManager = new c(e, function() {
                         r._render(e, !0)
                     })) : (null === (t = this._cursorBlinkStateManager) || void 0 === t || t.dispose(), this._cursorBlinkStateManager = void 0), this._onRequestRefreshRowsEvent.fire({
-                        start: e.buffer.cursorY,
-                        end: e.buffer.cursorY
+                        start: e.buffer.active.cursorY,
+                        end: e.buffer.active.cursorY
                     })
                 }, t.prototype.onCursorMove = function(e) {
                     this._cursorBlinkStateManager && this._cursorBlinkStateManager.restartBlinkAnimation(e)
@@ -9614,21 +10294,22 @@
                     !this._cursorBlinkStateManager || this._cursorBlinkStateManager.isPaused ? this._render(e, !1) : this._cursorBlinkStateManager.restartBlinkAnimation(e)
                 }, t.prototype._render = function(e, t) {
                     if (e._core._coreService.isCursorInitialized && !e._core._coreService.isCursorHidden) {
-                        var r = e.buffer.baseY + e.buffer.cursorY,
-                            i = r - e.buffer.viewportY;
+                        var r = e.buffer.active.baseY + e.buffer.active.cursorY,
+                            i = r - e.buffer.active.viewportY,
+                            n = Math.min(e.buffer.active.cursorX, e.cols - 1);
                         if (i < 0 || i >= e.rows) this._clearCursor();
-                        else if (e._core.buffer.lines.get(r).loadCell(e.buffer.cursorX, this._cell), void 0 !== this._cell.content) {
+                        else if (e._core.buffer.lines.get(r).loadCell(n, this._cell), void 0 !== this._cell.content) {
                             if (!l(e)) {
                                 this._clearCursor(), this._ctx.save(), this._ctx.fillStyle = this._colors.cursor.css;
-                                var n = e.getOption("cursorStyle");
-                                return n && "block" !== n ? this._cursorRenderers[n](e, e.buffer.cursorX, i, this._cell) : this._renderBlurCursor(e, e.buffer.cursorX, i, this._cell), this._ctx.restore(), this._state.x = e.buffer.cursorX, this._state.y = i, this._state.isFocused = !1, this._state.style = n, void(this._state.width = this._cell.getWidth())
+                                var o = e.getOption("cursorStyle");
+                                return o && "block" !== o ? this._cursorRenderers[o](e, n, i, this._cell) : this._renderBlurCursor(e, n, i, this._cell), this._ctx.restore(), this._state.x = n, this._state.y = i, this._state.isFocused = !1, this._state.style = o, void(this._state.width = this._cell.getWidth())
                             }
                             if (!this._cursorBlinkStateManager || this._cursorBlinkStateManager.isCursorVisible) {
                                 if (this._state) {
-                                    if (this._state.x === e.buffer.cursorX && this._state.y === i && this._state.isFocused === l(e) && this._state.style === e.getOption("cursorStyle") && this._state.width === this._cell.getWidth()) return;
+                                    if (this._state.x === n && this._state.y === i && this._state.isFocused === l(e) && this._state.style === e.getOption("cursorStyle") && this._state.width === this._cell.getWidth()) return;
                                     this._clearCursor()
                                 }
-                                this._ctx.save(), this._cursorRenderers[e.getOption("cursorStyle") || "block"](e, e.buffer.cursorX, i, this._cell), this._ctx.restore(), this._state.x = e.buffer.cursorX, this._state.y = i, this._state.isFocused = !1, this._state.style = e.getOption("cursorStyle"), this._state.width = this._cell.getWidth()
+                                this._ctx.save(), this._cursorRenderers[e.getOption("cursorStyle") || "block"](e, n, i, this._cell), this._ctx.restore(), this._state.x = n, this._state.y = i, this._state.isFocused = !1, this._state.style = e.getOption("cursorStyle"), this._state.width = this._cell.getWidth()
                             } else this._clearCursor()
                         }
                     } else this._clearCursor()
@@ -9659,7 +10340,7 @@
                 get: function() {
                     return !(this._blinkStartTimeout || this._blinkInterval)
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype.dispose = function() {
                 this._blinkInterval && (window.clearInterval(this._blinkInterval), this._blinkInterval = void 0), this._blinkStartTimeout && (window.clearTimeout(this._blinkStartTimeout), this._blinkStartTimeout = void 0), this._animationFrame && (window.cancelAnimationFrame(this._animationFrame), this._animationFrame = void 0)
@@ -9670,14 +10351,14 @@
                 })))
             }, e.prototype._restartInterval = function(e) {
                 var t = this;
-                void 0 === e && (e = 600), this._blinkInterval && window.clearInterval(this._blinkInterval), this._blinkStartTimeout = setTimeout(function() {
+                void 0 === e && (e = 600), this._blinkInterval && window.clearInterval(this._blinkInterval), this._blinkStartTimeout = window.setTimeout(function() {
                     if (t._animationTimeRestarted) {
                         var e = 600 - (Date.now() - t._animationTimeRestarted);
                         if (t._animationTimeRestarted = void 0, e > 0) return void t._restartInterval(e)
                     }
                     t.isCursorVisible = !1, t._animationFrame = window.requestAnimationFrame(function() {
                         t._renderCallback(), t._animationFrame = void 0
-                    }), t._blinkInterval = setInterval(function() {
+                    }), t._blinkInterval = window.setInterval(function() {
                         if (t._animationTimeRestarted) {
                             var e = 600 - (Date.now() - t._animationTimeRestarted);
                             return t._animationTimeRestarted = void 0, void t._restartInterval(e)
@@ -9690,7 +10371,7 @@
             }, e.prototype.pause = function() {
                 this.isCursorVisible = !0, this._blinkInterval && (window.clearInterval(this._blinkInterval), this._blinkInterval = void 0), this._blinkStartTimeout && (window.clearTimeout(this._blinkStartTimeout), this._blinkStartTimeout = void 0), this._animationFrame && (window.cancelAnimationFrame(this._animationFrame), this._animationFrame = void 0)
             }, e.prototype.resume = function(e) {
-                this._animationTimeRestarted = void 0, this._restartInterval(), this.restartBlinkAnimation(e)
+                this.pause(), this._animationTimeRestarted = void 0, this._restartInterval(), this.restartBlinkAnimation(e)
             }, e
         }();
 
@@ -9701,7 +10382,7 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        }), t.stringFromCodePoint = function(e) {
+        }), t.Utf8ToUtf32 = t.StringToUtf32 = t.utf32ToString = t.stringFromCodePoint = void 0, t.stringFromCodePoint = function(e) {
             return e > 65535 ? (e -= 65536, String.fromCharCode(55296 + (e >> 10)) + String.fromCharCode(e % 1024 + 56320)) : String.fromCharCode(e)
         }, t.utf32ToString = function(e, t, r) {
             void 0 === t && (t = 0), void 0 === r && (r = e.length);
@@ -9818,30 +10499,26 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.RectangleRenderer = void 0;
         var i = r(0),
             n = r(3),
             o = r(2),
-            s = "#version 300 es\nlayout (location = 0) in vec2 a_position;\nlayout (location = 1) in vec2 a_size;\nlayout (location = 2) in vec4 a_color;\nlayout (location = 3) in vec2 a_unitquad;\n\nuniform mat4 u_projection;\nuniform vec2 u_resolution;\n\nout vec4 v_color;\n\nvoid main() {\n  vec2 zeroToOne = (a_position + (a_unitquad * a_size)) / u_resolution;\n  gl_Position = u_projection * vec4(zeroToOne, 0.0, 1.0);\n  v_color = a_color;\n}",
-            a = "#version 300 es\nprecision lowp float;\n\nin vec4 v_color;\n\nout vec4 outColor;\n\nvoid main() {\n  outColor = v_color;\n}",
-            c = 8,
-            l = c * Float32Array.BYTES_PER_ELEMENT,
-            h = 20 * c,
-            u = function() {
+            s = 8 * Float32Array.BYTES_PER_ELEMENT,
+            a = function() {
                 function e(e, t, r, n) {
                     this._terminal = e, this._colors = t, this._gl = r, this._dimensions = n, this._vertices = {
                         count: 0,
-                        attributes: new Float32Array(h),
-                        selection: new Float32Array(3 * c)
+                        attributes: new Float32Array(160),
+                        selection: new Float32Array(24)
                     };
                     var o = this._gl;
-                    this._program = i.throwIfFalsy(i.createProgram(o, s, a)), this._resolutionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_resolution")), this._projectionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_projection")), this._vertexArrayObject = o.createVertexArray(), o.bindVertexArray(this._vertexArrayObject);
-                    var u = new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
-                        f = o.createBuffer();
-                    o.bindBuffer(o.ARRAY_BUFFER, f), o.bufferData(o.ARRAY_BUFFER, u, o.STATIC_DRAW), o.enableVertexAttribArray(3), o.vertexAttribPointer(3, 2, this._gl.FLOAT, !1, 0, 0);
-                    var _ = new Uint8Array([0, 1, 3, 0, 2, 3]),
-                        d = o.createBuffer();
-                    o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, d), o.bufferData(o.ELEMENT_ARRAY_BUFFER, _, o.STATIC_DRAW), this._attributesBuffer = i.throwIfFalsy(o.createBuffer()), o.bindBuffer(o.ARRAY_BUFFER, this._attributesBuffer), o.enableVertexAttribArray(0), o.vertexAttribPointer(0, 2, o.FLOAT, !1, l, 0), o.vertexAttribDivisor(0, 1), o.enableVertexAttribArray(1), o.vertexAttribPointer(1, 2, o.FLOAT, !1, l, 2 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(1, 1), o.enableVertexAttribArray(2), o.vertexAttribPointer(2, 4, o.FLOAT, !1, l, 4 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(2, 1), this._updateCachedColors()
+                    this._program = i.throwIfFalsy(i.createProgram(o, "#version 300 es\nlayout (location = 0) in vec2 a_position;\nlayout (location = 1) in vec2 a_size;\nlayout (location = 2) in vec4 a_color;\nlayout (location = 3) in vec2 a_unitquad;\n\nuniform mat4 u_projection;\nuniform vec2 u_resolution;\n\nout vec4 v_color;\n\nvoid main() {\n  vec2 zeroToOne = (a_position + (a_unitquad * a_size)) / u_resolution;\n  gl_Position = u_projection * vec4(zeroToOne, 0.0, 1.0);\n  v_color = a_color;\n}", "#version 300 es\nprecision lowp float;\n\nin vec4 v_color;\n\nout vec4 outColor;\n\nvoid main() {\n  outColor = v_color;\n}")), this._resolutionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_resolution")), this._projectionLocation = i.throwIfFalsy(o.getUniformLocation(this._program, "u_projection")), this._vertexArrayObject = o.createVertexArray(), o.bindVertexArray(this._vertexArrayObject);
+                    var a = new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]),
+                        c = o.createBuffer();
+                    o.bindBuffer(o.ARRAY_BUFFER, c), o.bufferData(o.ARRAY_BUFFER, a, o.STATIC_DRAW), o.enableVertexAttribArray(3), o.vertexAttribPointer(3, 2, this._gl.FLOAT, !1, 0, 0);
+                    var l = new Uint8Array([0, 1, 3, 0, 2, 3]),
+                        h = o.createBuffer();
+                    o.bindBuffer(o.ELEMENT_ARRAY_BUFFER, h), o.bufferData(o.ELEMENT_ARRAY_BUFFER, l, o.STATIC_DRAW), this._attributesBuffer = i.throwIfFalsy(o.createBuffer()), o.bindBuffer(o.ARRAY_BUFFER, this._attributesBuffer), o.enableVertexAttribArray(0), o.vertexAttribPointer(0, 2, o.FLOAT, !1, s, 0), o.vertexAttribDivisor(0, 1), o.enableVertexAttribArray(1), o.vertexAttribPointer(1, 2, o.FLOAT, !1, s, 2 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(1, 1), o.enableVertexAttribArray(2), o.vertexAttribPointer(2, 4, o.FLOAT, !1, s, 4 * Float32Array.BYTES_PER_ELEMENT), o.vertexAttribDivisor(2, 1), this._updateCachedColors()
                 }
                 return e.prototype.render = function() {
                     var e = this._gl;
@@ -9854,74 +10531,74 @@
                     this._bgFloat = this._colorToFloat32Array(this._colors.background), this._selectionFloat = this._colorToFloat32Array(this._colors.selectionOpaque)
                 }, e.prototype._updateViewportRectangle = function() {
                     this._addRectangleFloat(this._vertices.attributes, 0, 0, 0, this._terminal.cols * this._dimensions.scaledCellWidth, this._terminal.rows * this._dimensions.scaledCellHeight, this._bgFloat)
-                }, e.prototype.updateSelection = function(e, t) {
-                    var r = this._terminal;
+                }, e.prototype.updateSelection = function(e) {
+                    var t = this._terminal;
                     if (e.hasSelection)
-                        if (t) {
-                            var i = e.startCol,
-                                o = e.endCol - i,
-                                s = e.viewportCappedEndRow - e.viewportCappedStartRow + 1;
-                            this._addRectangleFloat(this._vertices.selection, 0, i * this._dimensions.scaledCellWidth, e.viewportCappedStartRow * this._dimensions.scaledCellHeight, o * this._dimensions.scaledCellWidth, s * this._dimensions.scaledCellHeight, this._selectionFloat), n.fill(this._vertices.selection, 0, c)
+                        if (e.columnSelectMode) {
+                            var r = e.startCol,
+                                i = e.endCol - r,
+                                o = e.viewportCappedEndRow - e.viewportCappedStartRow + 1;
+                            this._addRectangleFloat(this._vertices.selection, 0, r * this._dimensions.scaledCellWidth, e.viewportCappedStartRow * this._dimensions.scaledCellHeight, i * this._dimensions.scaledCellWidth, o * this._dimensions.scaledCellHeight, this._selectionFloat), n.fill(this._vertices.selection, 0, 8)
                         } else {
-                            i = e.viewportStartRow === e.viewportCappedStartRow ? e.startCol : 0;
-                            var a = e.viewportCappedStartRow === e.viewportCappedEndRow ? e.endCol : r.cols;
-                            this._addRectangleFloat(this._vertices.selection, 0, i * this._dimensions.scaledCellWidth, e.viewportCappedStartRow * this._dimensions.scaledCellHeight, (a - i) * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, this._selectionFloat);
-                            var l = Math.max(e.viewportCappedEndRow - e.viewportCappedStartRow - 1, 0);
-                            if (this._addRectangleFloat(this._vertices.selection, c, 0, (e.viewportCappedStartRow + 1) * this._dimensions.scaledCellHeight, r.cols * this._dimensions.scaledCellWidth, l * this._dimensions.scaledCellHeight, this._selectionFloat), e.viewportCappedStartRow !== e.viewportCappedEndRow) {
-                                var h = e.viewportEndRow === e.viewportCappedEndRow ? e.endCol : r.cols;
-                                this._addRectangleFloat(this._vertices.selection, 2 * c, 0, e.viewportCappedEndRow * this._dimensions.scaledCellHeight, h * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, this._selectionFloat)
-                            } else n.fill(this._vertices.selection, 0, 2 * c)
+                            r = e.viewportStartRow === e.viewportCappedStartRow ? e.startCol : 0;
+                            var s = e.viewportCappedStartRow === e.viewportCappedEndRow ? e.endCol : t.cols;
+                            this._addRectangleFloat(this._vertices.selection, 0, r * this._dimensions.scaledCellWidth, e.viewportCappedStartRow * this._dimensions.scaledCellHeight, (s - r) * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, this._selectionFloat);
+                            var a = Math.max(e.viewportCappedEndRow - e.viewportCappedStartRow - 1, 0);
+                            if (this._addRectangleFloat(this._vertices.selection, 8, 0, (e.viewportCappedStartRow + 1) * this._dimensions.scaledCellHeight, t.cols * this._dimensions.scaledCellWidth, a * this._dimensions.scaledCellHeight, this._selectionFloat), e.viewportCappedStartRow !== e.viewportCappedEndRow) {
+                                var c = e.viewportEndRow === e.viewportCappedEndRow ? e.endCol : t.cols;
+                                this._addRectangleFloat(this._vertices.selection, 16, 0, e.viewportCappedEndRow * this._dimensions.scaledCellHeight, c * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, this._selectionFloat)
+                            } else n.fill(this._vertices.selection, 0, 16)
                         }
                     else n.fill(this._vertices.selection, 0, 0)
                 }, e.prototype.updateBackgrounds = function(e) {
                     for (var t = this._terminal, r = this._vertices, i = 1, n = 0; n < t.rows; n++) {
-                        for (var s = -1, a = 0, l = 0, h = !1, u = 0; u < t.cols; u++) {
-                            var f = (n * t.cols + u) * o.RENDER_MODEL_INDICIES_PER_CELL,
-                                _ = e.cells[f + o.RENDER_MODEL_BG_OFFSET],
-                                d = e.cells[f + o.RENDER_MODEL_FG_OFFSET],
-                                p = !!(67108864 & d);
-                            if (_ !== a || d !== l && (h || p)) {
-                                if (0 !== a || h && 0 !== l) {
-                                    var v = i++ * c;
-                                    this._updateRectangle(r, v, l, a, s, u, n)
+                        for (var s = -1, a = 0, c = 0, l = !1, h = 0; h < t.cols; h++) {
+                            var u = (n * t.cols + h) * o.RENDER_MODEL_INDICIES_PER_CELL,
+                                f = e.cells[u + o.RENDER_MODEL_BG_OFFSET],
+                                _ = e.cells[u + o.RENDER_MODEL_FG_OFFSET],
+                                d = !!(67108864 & _);
+                            if (f !== a || _ !== c && (l || d)) {
+                                if (0 !== a || l && 0 !== c) {
+                                    var p = 8 * i++;
+                                    this._updateRectangle(r, p, c, a, s, h, n)
                                 }
-                                s = u, a = _, l = d, h = p
+                                s = h, a = f, c = _, l = d
                             }
-                        }(0 !== a || h && 0 !== l) && (v = i++ * c, this._updateRectangle(r, v, l, a, s, t.cols, n))
+                        }(0 !== a || l && 0 !== c) && (p = 8 * i++, this._updateRectangle(r, p, c, a, s, t.cols, n))
                     }
                     r.count = i
                 }, e.prototype._updateRectangle = function(e, t, r, n, o, s, a) {
-                    var l;
+                    var c;
                     if (67108864 & r) switch (50331648 & r) {
                         case 16777216:
                         case 33554432:
-                            l = this._colors.ansi[255 & r].rgba;
+                            c = this._colors.ansi[255 & r].rgba;
                             break;
                         case 50331648:
-                            l = (16777215 & r) << 8;
+                            c = (16777215 & r) << 8;
                             break;
                         case 0:
                         default:
-                            l = this._colors.foreground.rgba
+                            c = this._colors.foreground.rgba
                     } else switch (50331648 & n) {
                         case 16777216:
                         case 33554432:
-                            l = this._colors.ansi[255 & n].rgba;
+                            c = this._colors.ansi[255 & n].rgba;
                             break;
                         case 50331648:
-                            l = (16777215 & n) << 8;
+                            c = (16777215 & n) << 8;
                             break;
                         case 0:
                         default:
-                            l = this._colors.background.rgba
+                            c = this._colors.background.rgba
                     }
-                    e.attributes.length < t + 4 && (e.attributes = i.expandFloat32Array(e.attributes, this._terminal.rows * this._terminal.cols * c));
-                    var h = o * this._dimensions.scaledCellWidth,
-                        u = a * this._dimensions.scaledCellHeight,
-                        f = (l >> 24 & 255) / 255,
-                        _ = (l >> 16 & 255) / 255,
-                        d = (l >> 8 & 255) / 255;
-                    this._addRectangle(e.attributes, t, h, u, (s - o) * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, f, _, d, 1)
+                    e.attributes.length < t + 4 && (e.attributes = i.expandFloat32Array(e.attributes, this._terminal.rows * this._terminal.cols * 8));
+                    var l = o * this._dimensions.scaledCellWidth,
+                        h = a * this._dimensions.scaledCellHeight,
+                        u = (c >> 24 & 255) / 255,
+                        f = (c >> 16 & 255) / 255,
+                        _ = (c >> 8 & 255) / 255;
+                    this._addRectangle(e.attributes, t, l, h, (s - o) * this._dimensions.scaledCellWidth, this._dimensions.scaledCellHeight, u, f, _, 1)
                 }, e.prototype._addRectangle = function(e, t, r, i, n, o, s, a, c, l) {
                     e[t] = r, e[t + 1] = i, e[t + 2] = n, e[t + 3] = o, e[t + 4] = s, e[t + 5] = a, e[t + 6] = c, e[t + 7] = l
                 }, e.prototype._addRectangleFloat = function(e, t, r, i, n, o, s) {
@@ -9930,32 +10607,43 @@
                     return new Float32Array([(e.rgba >> 24 & 255) / 255, (e.rgba >> 16 & 255) / 255, (e.rgba >> 8 & 255) / 255, (255 & e.rgba) / 255])
                 }, e
             }();
-        t.RectangleRenderer = u
+        t.RectangleRenderer = a
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.getDisposeArrayDisposable = t.disposeArray = t.Disposable = void 0;
         var i = function() {
             function e() {
                 this._disposables = [], this._isDisposed = !1
             }
             return e.prototype.dispose = function() {
-                this._isDisposed = !0, this._disposables.forEach(function(e) {
-                    return e.dispose()
-                }), this._disposables.length = 0
+                this._isDisposed = !0;
+                for (var e = 0, t = this._disposables; e < t.length; e++) t[e].dispose();
+                this._disposables.length = 0
             }, e.prototype.register = function(e) {
-                this._disposables.push(e)
+                return this._disposables.push(e), e
             }, e.prototype.unregister = function(e) {
                 var t = this._disposables.indexOf(e); - 1 !== t && this._disposables.splice(t, 1)
             }, e
         }();
-        t.Disposable = i
+
+        function n(e) {
+            for (var t = 0, r = e; t < r.length; t++) r[t].dispose();
+            e.length = 0
+        }
+        t.Disposable = i, t.disposeArray = n, t.getDisposeArrayDisposable = function(e) {
+            return {
+                dispose: function() {
+                    return n(e)
+                }
+            }
+        }
     }, function(e, t, r) {
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
+        }), t.forwardEvent = t.EventEmitter = void 0;
         var i = function() {
             function e() {
                 this._listeners = [], this._disposed = !1
@@ -9973,7 +10661,7 @@
                         }
                     }), this._event
                 },
-                enumerable: !0,
+                enumerable: !1,
                 configurable: !0
             }), e.prototype.fire = function(e, t) {
                 for (var r = [], i = 0; i < this._listeners.length; i++) r.push(this._listeners[i]);
@@ -9982,7 +10670,11 @@
                 this._listeners && (this._listeners.length = 0), this._disposed = !0
             }, e
         }();
-        t.EventEmitter = i
+        t.EventEmitter = i, t.forwardEvent = function(e, t) {
+            return e(function(e) {
+                return t.fire(e)
+            })
+        }
     }])
 }, function(e, t, r) {
     window,
@@ -10035,23 +10727,84 @@
         "use strict";
         Object.defineProperty(t, "__esModule", {
             value: !0
-        });
-        var i = new RegExp("(?:^|[^\\da-z\\.-]+)((https?:\\/\\/)((([\\da-z\\.-]+)\\.([a-z\\.]{2,6}))|((\\d{1,3}\\.){3}\\d{1,3})|(localhost))(:\\d{1,5})?((\\/[\\/\\w\\.\\-%~:+]*)*([^:\"'\\s]))?(\\?[0-9\\w\\[\\]\\(\\)\\/\\?\\!#@$%&'*+,:;~\\=\\.\\-]*)?(#[0-9\\w\\[\\]\\(\\)\\/\\?\\!#@$%&'*+,:;~\\=\\.\\-]*)?)($|[^\\/\\w\\.\\-%]+)");
+        }), t.WebLinksAddon = void 0;
+        var i = r(1),
+            n = new RegExp("(?:^|[^\\da-z\\.-]+)((https?:\\/\\/)((([\\da-z\\.-]+)\\.([a-z\\.]{2,6}))|((\\d{1,3}\\.){3}\\d{1,3})|(localhost))(:\\d{1,5})?((\\/[\\/\\w\\.\\-%~:+@]*)*([^:\"'\\s]))?(\\?[0-9\\w\\[\\]\\(\\)\\/\\?\\!#@$%&'*+,:;~\\=\\.\\-]*)?(#[0-9\\w\\[\\]\\(\\)\\/\\?\\!#@$%&'*+,:;~\\=\\.\\-]*)?)($|[^\\/\\w\\.\\-%]+)");
 
-        function n(e, t) {
-            window.open(t, "_blank")
+        function o(e, t) {
+            var r = window.open();
+            r ? (r.opener = null, r.location.href = t) : console.warn("Opening link blocked as opener could not be cleared")
         }
-        var o = function() {
-            function e(e, t) {
-                void 0 === e && (e = n), void 0 === t && (t = {}), this._handler = e, this._options = t, this._options.matchIndex = 1
+        var s = function() {
+            function e(e, t, r) {
+                void 0 === e && (e = o), void 0 === t && (t = {}), void 0 === r && (r = !1), this._handler = e, this._options = t, this._useLinkProvider = r, this._options.matchIndex = 1
             }
             return e.prototype.activate = function(e) {
-                this._terminal = e, this._linkMatcherId = this._terminal.registerLinkMatcher(i, this._handler, this._options)
+                this._terminal = e, this._useLinkProvider && "registerLinkProvider" in this._terminal ? this._linkProvider = this._terminal.registerLinkProvider(new i.WebLinkProvider(this._terminal, n, this._handler)) : this._linkMatcherId = this._terminal.registerLinkMatcher(n, this._handler, this._options)
             }, e.prototype.dispose = function() {
-                void 0 !== this._linkMatcherId && void 0 !== this._terminal && this._terminal.deregisterLinkMatcher(this._linkMatcherId)
+                var e;
+                void 0 !== this._linkMatcherId && void 0 !== this._terminal && this._terminal.deregisterLinkMatcher(this._linkMatcherId), null === (e = this._linkProvider) || void 0 === e || e.dispose()
             }, e
         }();
-        t.WebLinksAddon = o
+        t.WebLinksAddon = s
+    }, function(e, t, r) {
+        "use strict";
+        Object.defineProperty(t, "__esModule", {
+            value: !0
+        }), t.LinkComputer = t.WebLinkProvider = void 0;
+        var i = function() {
+            function e(e, t, r) {
+                this._terminal = e, this._regex = t, this._handler = r
+            }
+            return e.prototype.provideLinks = function(e, t) {
+                t(n.computeLink(e, this._regex, this._terminal, this._handler))
+            }, e
+        }();
+        t.WebLinkProvider = i;
+        var n = function() {
+            function e() {}
+            return e.computeLink = function(t, r, i, n) {
+                for (var o, s = new RegExp(r.source, (r.flags || "") + "g"), a = e._translateBufferLineToStringWithWrap(t - 1, !1, i), c = a[0], l = a[1], h = -1, u = []; null !== (o = s.exec(c));) {
+                    var f = o[1];
+                    if (!f) {
+                        console.log("match found without corresponding matchIndex");
+                        break
+                    }
+                    if (h = c.indexOf(f, h + 1), s.lastIndex = h + f.length, h < 0) break;
+                    for (var _ = h + f.length, d = l + 1; _ > i.cols;) _ -= i.cols, d++;
+                    var p = {
+                        start: {
+                            x: h + 1,
+                            y: l + 1
+                        },
+                        end: {
+                            x: _,
+                            y: d
+                        }
+                    };
+                    u.push({
+                        range: p,
+                        text: f,
+                        activate: n
+                    })
+                }
+                return u
+            }, e._translateBufferLineToStringWithWrap = function(e, t, r) {
+                var i, n, o = "";
+                do {
+                    if (!(a = r.buffer.active.getLine(e))) break;
+                    a.isWrapped && e--, n = a.isWrapped
+                } while (n);
+                var s = e;
+                do {
+                    var a, c = r.buffer.active.getLine(e + 1);
+                    if (i = !!c && c.isWrapped, !(a = r.buffer.active.getLine(e))) break;
+                    o += a.translateToString(!i && t).substring(0, r.cols), e++
+                } while (i);
+                return [o, s]
+            }, e
+        }();
+        t.LinkComputer = n
     }])
 }, function(e, t, r) {
     (function(r) {
@@ -10466,10 +11219,9 @@
     var i = e.exports;
     Object.assign(i, r(6), r(30), r(7), r(2), r(31), r(33), r(34), r(3));
     const n = ["CANFDX", "CANOVIO", "CANFC32"],
-        o = "spool_uint8array",
-        s = [79, 79],
-        a = i.ZMLIB.ABORT_SEQUENCE;
-    class c {
+        o = [79, 79],
+        s = i.ZMLIB.ABORT_SEQUENCE;
+    class a {
         constructor() {
             this._on_evt = {}, this._evt_once_index = {}
         }
@@ -10502,7 +11254,7 @@
             }), t.length
         }
     }
-    i.Session = class extends c {
+    i.Session = class extends a {
         static parse(e) {
             var t;
             try {
@@ -10552,8 +11304,8 @@
             this._next_header_handler = null, t.call(this, e)
         }
         _check_for_abort_sequence() {
-            var e = i.ZMLIB.find_subarray(this._input_buffer, a);
-            if (-1 !== e) throw this._input_buffer.splice(0, e + a.length), this._aborted = !0, this._on_session_end(), new i.Error("peer_aborted")
+            var e = i.ZMLIB.find_subarray(this._input_buffer, s);
+            if (-1 !== e) throw this._input_buffer.splice(0, e + s.length), this._aborted = !0, this._on_session_end(), new i.Error("peer_aborted")
         }
         _send_header(e) {
             if (!this._sender) throw "Need sender!";
@@ -10569,7 +11321,7 @@
             i.ZMLIB.strip_ignored_bytes(e), this._input_buffer.push.apply(this._input_buffer, e)
         }
         abort() {
-            this._sender(a.concat([8, 8, 8, 8, 8])), this._aborted = !0, this._sender = function() {
+            this._sender(s.concat([8, 8, 8, 8, 8])), this._aborted = !0, this._sender = function() {
                 throw new i.Error("already_aborted")
             }, this._on_session_end()
         }
@@ -10608,7 +11360,7 @@
         _consume_first() {
             if (this._got_ZFIN) {
                 if (this._input_buffer.length < 2) return;
-                if (0 === i.ZMLIB.find_subarray(this._input_buffer, s)) return this._bytes_after_OO = (e = this._bytes_being_consumed.slice(0), 0 === i.ZMLIB.find_subarray(e, s) ? e.splice(0, s.length) : e[0] === s[s.length - 1] && e.splice(0, 1), e), void this._on_session_end();
+                if (0 === i.ZMLIB.find_subarray(this._input_buffer, o)) return this._bytes_after_OO = (e = this._bytes_being_consumed.slice(0), 0 === i.ZMLIB.find_subarray(e, o) ? e.splice(0, o.length) : e[0] === o[o.length - 1] && e.splice(0, 1), e), void this._on_session_end();
                 throw "PROTOCOL: Only thing after ZFIN should be “OO” (79,79), not: " + this._input_buffer.join()
             }
             var e, t;
@@ -10639,7 +11391,7 @@
                 files_remaining: o[4] ? parseInt(o[4], 10) : null,
                 bytes_remaining: o[5] ? parseInt(o[5], 10) : null
             };
-            var a = new u(e.get_options(), this._file_info, this._accept.bind(this), this._skip.bind(this));
+            var a = new h(e.get_options(), this._file_info, this._accept.bind(this), this._skip.bind(this));
             this._current_transfer = a
         }
         _consume_ZDATA_data(e) {
@@ -10735,7 +11487,7 @@
     }, Object.assign(i.Session.Receive.prototype, {
         type: "receive"
     });
-    var l = {
+    var c = {
         get_details: function() {
             return Object.assign({}, this._file_info)
         },
@@ -10746,7 +11498,7 @@
             return this._file_offset
         }
     };
-    class h {
+    class l {
         constructor(e, t, r, i) {
             this._file_info = e, this._file_offset = t || 0, this._send = r, this._end = i
         }
@@ -10758,8 +11510,8 @@
             return e && (this._file_offset += e.length), t
         }
     }
-    Object.assign(h.prototype, l);
-    class u extends c {
+    Object.assign(l.prototype, c);
+    class h extends a {
         constructor(e, t, r, i) {
             super(), this._zfile_opts = e, this._file_info = t, this._accept_func = r, this._skip_func = i, this._Add_event("input"), this._Add_event("complete"), this.on("input", this._input_handler)
         }
@@ -10775,18 +11527,18 @@
                 case null:
                 case void 0:
                 case "spool_array":
-                case o:
+                case "spool_uint8array":
                     this._spool = [];
                     break;
                 default:
                     if ("function" != typeof e.on_input) throw "Invalid “on_input”: " + e.on_input
             }
-            return this._input_handler_mode = e.on_input || o, this._accept_func(this._file_offset).then(this._get_spool.bind(this))
+            return this._input_handler_mode = e.on_input || "spool_uint8array", this._accept_func(this._file_offset).then(this._get_spool.bind(this))
         }
         _input_handler(e) {
             if (this._file_offset += e.length, "function" == typeof this._input_handler_mode) this._input_handler_mode(e);
             else {
-                if (this._input_handler_mode === o) e = new Uint8Array(e);
+                if ("spool_uint8array" === this._input_handler_mode) e = new Uint8Array(e);
                 else if ("spool_array" !== this._input_handler_mode) throw new i.Error("WTF?? _input_handler_mode = " + this._input_handler_mode);
                 this._spool.push(e)
             }
@@ -10795,8 +11547,8 @@
             return this._spool
         }
     }
-    Object.assign(u.prototype, l);
-    const f = {
+    Object.assign(h.prototype, c);
+    const u = {
         ZFILE: !0,
         ZDATA: !0
     };
@@ -10810,7 +11562,7 @@
             return super.set_sender(e), this._start_keepalive_on_set_sender && (this._start_keepalive_on_set_sender = !1, this._start_keepalive()), this
         }
         _get_header_formatter(e) {
-            return f[e] ? "to_binary16" : "to_hex"
+            return u[e] ? "to_binary16" : "to_hex"
         }
         _start_keepalive() {
             if (!this._keepalive_promise) {
@@ -10873,7 +11625,7 @@
                             r._start_keepalive(), t()
                         },
                         ZRPOS: function(i) {
-                            r._sending_file = !0, t(new h(e, i.get_offset(), r._send_interim_file_piece.bind(r), r._end_file.bind(r)))
+                            r._sending_file = !0, t(new l(e, i.get_offset(), r._send_interim_file_piece.bind(r), r._end_file.bind(r)))
                         }
                     }
                 });
@@ -10924,7 +11676,7 @@
                 r = new Promise(function(e, r) {
                     t._next_header_handler = {
                         ZFIN: function() {
-                            t._sender(s), t._sent_OO = !0, t._on_session_end(), e()
+                            t._sender(o), t._sent_OO = !0, t._on_session_end(), e()
                         }
                     }
                 });
@@ -10992,10 +11744,10 @@
                 if (e[1] === n)
                     if (e.length < h.length) {
                         if (e.join() === h.slice(0, e.length).join()) break e
-                    } else e[2] === h[2] && e[3] === h[3] && (r = W);
+                    } else e[2] === h[2] && e[3] === h[3] && (r = F);
                 else if (e[1] === i.ZMLIB.ZDLE) {
                     if (e.length < u.length) break e;
-                    e[2] === u[2] ? r = F : e[2] === f[2] && (r = N)
+                    e[2] === u[2] ? r = I : e[2] === f[2] && (r = H)
                 }
                 r || o.push(e.shift())
             }
@@ -11003,14 +11755,14 @@
         }
         static parse(e) {
             var t;
-            if (e[1] === n) return (t = W(e)) && [t, 16];
-            if (e[2] === o) return (t = F(e)) && [t, 16];
-            if (e[2] === a) return (t = N(e)) && [t, 32];
+            if (e[1] === n) return (t = F(e)) && [t, 16];
+            if (e[2] === o) return (t = I(e)) && [t, 16];
+            if (e[2] === a) return (t = H(e)) && [t, 32];
             if (!(e.length < 3)) throw "Unrecognized/unsupported octets: " + e.join()
         }
         static build(e) {
             var t = 1 === arguments.length ? [arguments[0]] : Array.apply(null, arguments),
-                r = P[e];
+                r = D[e];
             if (!r) throw "No frame class “" + e + "” is defined!";
             return t.shift(), new(r.bind.apply(r, [null].concat(t)))
         }
@@ -11121,30 +11873,27 @@
             management: [void 0, "newer_or_longer", "crc", "append", "clobber", "newer", "mtime_or_length", "protect", "rename"],
             conversion: [void 0, "binary", "text", "resume"]
         },
-        m = ["extended", "transport", "management", "conversion"],
-        C = 128,
-        S = 31,
-        w = 64;
-    class E extends i.Header {
+        m = ["extended", "transport", "management", "conversion"];
+    class C extends i.Header {
         get_options() {
             var e = {
-                    sparse: !!(this._bytes4[0] & w)
+                    sparse: !!(64 & this._bytes4[0])
                 },
                 t = this._bytes4.slice(0);
             return m.forEach(function(r, i) {
-                if (b[r] instanceof Array) "management" === r && (e.skip_if_absent = !!(t[i] & C), t[i] &= S), e[r] = b[r][t[i]];
+                if (b[r] instanceof Array) "management" === r && (e.skip_if_absent = !!(128 & t[i]), t[i] &= 31), e[r] = b[r][t[i]];
                 else
                     for (var n in b[r]) e[n] = !!(t[i] & b[r][n]), e[n] && (t[i] ^= b[r][n]);
                 !e[r] && t[i] && (e[r] = "unknown:" + t[i])
             }), e
         }
     }
+    class S extends i.Header {}
+    class w extends i.Header {}
+    class E extends i.Header {}
     class A extends i.Header {}
-    class R extends i.Header {}
-    class x extends i.Header {}
-    class L extends i.Header {}
-    x.prototype._hex_header_ending = c;
-    class k extends i.Header {
+    E.prototype._hex_header_ending = c;
+    class R extends i.Header {
         constructor(e) {
             super(), this._bytes4 = i.ENCODELIB.pack_u32_le(e)
         }
@@ -11152,57 +11901,57 @@
             return i.ENCODELIB.unpack_u32_le(this._bytes4)
         }
     }
-    class T extends k {}
-    class D extends k {}
-    class O extends k {}
-    const M = [
+    class x extends R {}
+    class L extends R {}
+    class k extends R {}
+    const T = [
         [_, "ZRQINIT"],
         [p, "ZRINIT"],
         [g, "ZSINIT"],
         [y, "ZACK"],
-        [E, "ZFILE"],
-        [A, "ZSKIP"], void 0, [R, "ZABORT"],
-        [x, "ZFIN"],
-        [T, "ZRPOS"],
-        [D, "ZDATA"],
-        [O, "ZEOF"],
-        [L, "ZFERR"], void 0, void 0, void 0, void 0, void 0, void 0, void 0
+        [C, "ZFILE"],
+        [S, "ZSKIP"], void 0, [w, "ZABORT"],
+        [E, "ZFIN"],
+        [x, "ZRPOS"],
+        [L, "ZDATA"],
+        [k, "ZEOF"],
+        [A, "ZFERR"], void 0, void 0, void 0, void 0, void 0, void 0, void 0
     ];
-    for (var P = {}, I = 0; I < M.length; I++) M[I] && (P[M[I][1]] = M[I][0], Object.assign(M[I][0].prototype, {
-        TYPENUM: I,
-        NAME: M[I][1]
+    for (var D = {}, O = 0; O < T.length; O++) T[O] && (D[T[O][1]] = T[O][0], Object.assign(T[O][0].prototype, {
+        TYPENUM: O,
+        NAME: T[O][1]
     }));
-    const B = [_, p, g, y, E, A, "ZNAK", R, x, T, D, O, L, "ZCRC", "ZCHALLENGE", "ZCOMPL", "ZCAN", "ZFREECNT", "ZCOMMAND", "ZSTDERR"];
+    const P = [_, p, g, y, C, S, "ZNAK", w, E, x, L, k, A, "ZCRC", "ZCHALLENGE", "ZCOMPL", "ZCAN", "ZFREECNT", "ZCOMMAND", "ZSTDERR"];
 
-    function H(e) {
-        var t = B[e];
+    function M(e) {
+        var t = P[e];
         if ("string" == typeof t) throw "Received unsupported header: " + t;
         return function(e) {
-            return e.prototype instanceof k ? new e(0) : new e([])
+            return e.prototype instanceof R ? new e(0) : new e([])
         }(t)
     }
 
-    function F(e) {
+    function I(e) {
         var t = i.ZDLE.splice(e, u.length, 7);
-        return t && j(t)
+        return t && B(t)
     }
 
-    function j(e) {
+    function B(e) {
         i.CRC.verify16(e.slice(0, 5), e.slice(5));
-        var t = H(e[0]);
+        var t = M(e[0]);
         return t._bytes4 = e.slice(1, 5), t
     }
 
-    function N(e) {
+    function H(e) {
         var t = i.ZDLE.splice(e, f.length, 9);
         if (t) {
             i.CRC.verify32(t.slice(0, 5), t.slice(5));
-            var r = H(t[0]);
+            var r = M(t[0]);
             return r._bytes4 = t.slice(1, 5), r
         }
     }
 
-    function W(e) {
+    function F(e) {
         var t, r, n = e.indexOf(138);
         if (-1 === n && (n = e.indexOf(10)), -1 !== n) {
             if (r = e.splice(0, n), e.shift(), 19 === r.length) {
@@ -11210,11 +11959,11 @@
                 13 !== o && 141 !== o && (t = "Invalid hex header: (CR/)LF doesn’t have CR!")
             } else 18 !== r.length && (t = "Invalid hex header: invalid number of bytes before LF!");
             if (t) throw t + " (" + r.length + " bytes: " + r.join() + ")";
-            return r.splice(0, 4), j(i.ENCODELIB.parse_hex_octets(r))
+            return r.splice(0, 4), B(i.ENCODELIB.parse_hex_octets(r))
         }
         e.length > 11 && (t = "Invalid hex header - no LF detected within 12 bytes!")
     }
-    i.Header.parse_hex = W
+    i.Header.parse_hex = F
 }, function(e, t, r) {
     var i;
     i = function(e) {
@@ -11386,34 +12135,32 @@
 }, function(e, t, r) {}, function(e, t, r) {}, function(e, t, r) {}, function(e, t, r) {
     "use strict";
     r.r(t);
-    var i = {
-        searchParams: "URLSearchParams" in self,
-        iterable: "Symbol" in self && "iterator" in Symbol,
-        blob: "FileReader" in self && "Blob" in self && function() {
+    var i = "URLSearchParams" in self,
+        n = "Symbol" in self && "iterator" in Symbol,
+        o = "FileReader" in self && "Blob" in self && function() {
             try {
                 return new Blob, !0
             } catch (e) {
                 return !1
             }
         }(),
-        formData: "FormData" in self,
-        arrayBuffer: "ArrayBuffer" in self
-    };
-    if (i.arrayBuffer) var n = ["[object Int8Array]", "[object Uint8Array]", "[object Uint8ClampedArray]", "[object Int16Array]", "[object Uint16Array]", "[object Int32Array]", "[object Uint32Array]", "[object Float32Array]", "[object Float64Array]"],
-        o = ArrayBuffer.isView || function(e) {
-            return e && n.indexOf(Object.prototype.toString.call(e)) > -1
+        s = "FormData" in self,
+        a = "ArrayBuffer" in self;
+    if (a) var c = ["[object Int8Array]", "[object Uint8Array]", "[object Uint8ClampedArray]", "[object Int16Array]", "[object Uint16Array]", "[object Int32Array]", "[object Uint32Array]", "[object Float32Array]", "[object Float64Array]"],
+        l = ArrayBuffer.isView || function(e) {
+            return e && c.indexOf(Object.prototype.toString.call(e)) > -1
         };
 
-    function s(e) {
+    function h(e) {
         if ("string" != typeof e && (e = String(e)), /[^a-z0-9\-#$%&'*+.^_`|~]/i.test(e)) throw new TypeError("Invalid character in header field name");
         return e.toLowerCase()
     }
 
-    function a(e) {
+    function u(e) {
         return "string" != typeof e && (e = String(e)), e
     }
 
-    function c(e) {
+    function f(e) {
         var t = {
             next: function() {
                 var t = e.shift();
@@ -11423,13 +12170,13 @@
                 }
             }
         };
-        return i.iterable && (t[Symbol.iterator] = function() {
+        return n && (t[Symbol.iterator] = function() {
             return t
         }), t
     }
 
-    function l(e) {
-        this.map = {}, e instanceof l ? e.forEach(function(e, t) {
+    function _(e) {
+        this.map = {}, e instanceof _ ? e.forEach(function(e, t) {
             this.append(t, e)
         }, this) : Array.isArray(e) ? e.forEach(function(e) {
             this.append(e[0], e[1])
@@ -11438,12 +12185,12 @@
         }, this)
     }
 
-    function h(e) {
+    function d(e) {
         if (e.bodyUsed) return Promise.reject(new TypeError("Already read"));
         e.bodyUsed = !0
     }
 
-    function u(e) {
+    function p(e) {
         return new Promise(function(t, r) {
             e.onload = function() {
                 t(e.result)
@@ -11453,90 +12200,90 @@
         })
     }
 
-    function f(e) {
+    function v(e) {
         var t = new FileReader,
-            r = u(t);
+            r = p(t);
         return t.readAsArrayBuffer(e), r
     }
 
-    function _(e) {
+    function g(e) {
         if (e.slice) return e.slice(0);
         var t = new Uint8Array(e.byteLength);
         return t.set(new Uint8Array(e)), t.buffer
     }
 
-    function d() {
+    function y() {
         return this.bodyUsed = !1, this._initBody = function(e) {
             var t;
-            this._bodyInit = e, e ? "string" == typeof e ? this._bodyText = e : i.blob && Blob.prototype.isPrototypeOf(e) ? this._bodyBlob = e : i.formData && FormData.prototype.isPrototypeOf(e) ? this._bodyFormData = e : i.searchParams && URLSearchParams.prototype.isPrototypeOf(e) ? this._bodyText = e.toString() : i.arrayBuffer && i.blob && (t = e) && DataView.prototype.isPrototypeOf(t) ? (this._bodyArrayBuffer = _(e.buffer), this._bodyInit = new Blob([this._bodyArrayBuffer])) : i.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(e) || o(e)) ? this._bodyArrayBuffer = _(e) : this._bodyText = e = Object.prototype.toString.call(e) : this._bodyText = "", this.headers.get("content-type") || ("string" == typeof e ? this.headers.set("content-type", "text/plain;charset=UTF-8") : this._bodyBlob && this._bodyBlob.type ? this.headers.set("content-type", this._bodyBlob.type) : i.searchParams && URLSearchParams.prototype.isPrototypeOf(e) && this.headers.set("content-type", "application/x-www-form-urlencoded;charset=UTF-8"))
-        }, i.blob && (this.blob = function() {
-            var e = h(this);
+            this._bodyInit = e, e ? "string" == typeof e ? this._bodyText = e : o && Blob.prototype.isPrototypeOf(e) ? this._bodyBlob = e : s && FormData.prototype.isPrototypeOf(e) ? this._bodyFormData = e : i && URLSearchParams.prototype.isPrototypeOf(e) ? this._bodyText = e.toString() : a && o && (t = e) && DataView.prototype.isPrototypeOf(t) ? (this._bodyArrayBuffer = g(e.buffer), this._bodyInit = new Blob([this._bodyArrayBuffer])) : a && (ArrayBuffer.prototype.isPrototypeOf(e) || l(e)) ? this._bodyArrayBuffer = g(e) : this._bodyText = e = Object.prototype.toString.call(e) : this._bodyText = "", this.headers.get("content-type") || ("string" == typeof e ? this.headers.set("content-type", "text/plain;charset=UTF-8") : this._bodyBlob && this._bodyBlob.type ? this.headers.set("content-type", this._bodyBlob.type) : i && URLSearchParams.prototype.isPrototypeOf(e) && this.headers.set("content-type", "application/x-www-form-urlencoded;charset=UTF-8"))
+        }, o && (this.blob = function() {
+            var e = d(this);
             if (e) return e;
             if (this._bodyBlob) return Promise.resolve(this._bodyBlob);
             if (this._bodyArrayBuffer) return Promise.resolve(new Blob([this._bodyArrayBuffer]));
             if (this._bodyFormData) throw new Error("could not read FormData body as blob");
             return Promise.resolve(new Blob([this._bodyText]))
         }, this.arrayBuffer = function() {
-            return this._bodyArrayBuffer ? h(this) || Promise.resolve(this._bodyArrayBuffer) : this.blob().then(f)
+            return this._bodyArrayBuffer ? d(this) || Promise.resolve(this._bodyArrayBuffer) : this.blob().then(v)
         }), this.text = function() {
-            var e, t, r, i = h(this);
+            var e, t, r, i = d(this);
             if (i) return i;
-            if (this._bodyBlob) return e = this._bodyBlob, r = u(t = new FileReader), t.readAsText(e), r;
+            if (this._bodyBlob) return e = this._bodyBlob, r = p(t = new FileReader), t.readAsText(e), r;
             if (this._bodyArrayBuffer) return Promise.resolve(function(e) {
                 for (var t = new Uint8Array(e), r = new Array(t.length), i = 0; i < t.length; i++) r[i] = String.fromCharCode(t[i]);
                 return r.join("")
             }(this._bodyArrayBuffer));
             if (this._bodyFormData) throw new Error("could not read FormData body as text");
             return Promise.resolve(this._bodyText)
-        }, i.formData && (this.formData = function() {
-            return this.text().then(g)
+        }, s && (this.formData = function() {
+            return this.text().then(C)
         }), this.json = function() {
             return this.text().then(JSON.parse)
         }, this
     }
-    l.prototype.append = function(e, t) {
-        e = s(e), t = a(t);
+    _.prototype.append = function(e, t) {
+        e = h(e), t = u(t);
         var r = this.map[e];
         this.map[e] = r ? r + ", " + t : t
-    }, l.prototype.delete = function(e) {
-        delete this.map[s(e)]
-    }, l.prototype.get = function(e) {
-        return e = s(e), this.has(e) ? this.map[e] : null
-    }, l.prototype.has = function(e) {
-        return this.map.hasOwnProperty(s(e))
-    }, l.prototype.set = function(e, t) {
-        this.map[s(e)] = a(t)
-    }, l.prototype.forEach = function(e, t) {
+    }, _.prototype.delete = function(e) {
+        delete this.map[h(e)]
+    }, _.prototype.get = function(e) {
+        return e = h(e), this.has(e) ? this.map[e] : null
+    }, _.prototype.has = function(e) {
+        return this.map.hasOwnProperty(h(e))
+    }, _.prototype.set = function(e, t) {
+        this.map[h(e)] = u(t)
+    }, _.prototype.forEach = function(e, t) {
         for (var r in this.map) this.map.hasOwnProperty(r) && e.call(t, this.map[r], r, this)
-    }, l.prototype.keys = function() {
+    }, _.prototype.keys = function() {
         var e = [];
         return this.forEach(function(t, r) {
             e.push(r)
-        }), c(e)
-    }, l.prototype.values = function() {
+        }), f(e)
+    }, _.prototype.values = function() {
         var e = [];
         return this.forEach(function(t) {
             e.push(t)
-        }), c(e)
-    }, l.prototype.entries = function() {
+        }), f(e)
+    }, _.prototype.entries = function() {
         var e = [];
         return this.forEach(function(t, r) {
             e.push([r, t])
-        }), c(e)
-    }, i.iterable && (l.prototype[Symbol.iterator] = l.prototype.entries);
-    var p = ["DELETE", "GET", "HEAD", "OPTIONS", "POST", "PUT"];
+        }), f(e)
+    }, n && (_.prototype[Symbol.iterator] = _.prototype.entries);
+    var b = ["DELETE", "GET", "HEAD", "OPTIONS", "POST", "PUT"];
 
-    function v(e, t) {
+    function m(e, t) {
         var r, i, n = (t = t || {}).body;
-        if (e instanceof v) {
+        if (e instanceof m) {
             if (e.bodyUsed) throw new TypeError("Already read");
-            this.url = e.url, this.credentials = e.credentials, t.headers || (this.headers = new l(e.headers)), this.method = e.method, this.mode = e.mode, this.signal = e.signal, n || null == e._bodyInit || (n = e._bodyInit, e.bodyUsed = !0)
+            this.url = e.url, this.credentials = e.credentials, t.headers || (this.headers = new _(e.headers)), this.method = e.method, this.mode = e.mode, this.signal = e.signal, n || null == e._bodyInit || (n = e._bodyInit, e.bodyUsed = !0)
         } else this.url = String(e);
-        if (this.credentials = t.credentials || this.credentials || "same-origin", !t.headers && this.headers || (this.headers = new l(t.headers)), this.method = (i = (r = t.method || this.method || "GET").toUpperCase(), p.indexOf(i) > -1 ? i : r), this.mode = t.mode || this.mode || null, this.signal = t.signal || this.signal, this.referrer = null, ("GET" === this.method || "HEAD" === this.method) && n) throw new TypeError("Body not allowed for GET or HEAD requests");
+        if (this.credentials = t.credentials || this.credentials || "same-origin", !t.headers && this.headers || (this.headers = new _(t.headers)), this.method = (i = (r = t.method || this.method || "GET").toUpperCase(), b.indexOf(i) > -1 ? i : r), this.mode = t.mode || this.mode || null, this.signal = t.signal || this.signal, this.referrer = null, ("GET" === this.method || "HEAD" === this.method) && n) throw new TypeError("Body not allowed for GET or HEAD requests");
         this._initBody(n)
     }
 
-    function g(e) {
+    function C(e) {
         var t = new FormData;
         return e.trim().split("&").forEach(function(e) {
             if (e) {
@@ -11548,52 +12295,52 @@
         }), t
     }
 
-    function y(e, t) {
-        t || (t = {}), this.type = "default", this.status = void 0 === t.status ? 200 : t.status, this.ok = this.status >= 200 && this.status < 300, this.statusText = "statusText" in t ? t.statusText : "OK", this.headers = new l(t.headers), this.url = t.url || "", this._initBody(e)
+    function S(e, t) {
+        t || (t = {}), this.type = "default", this.status = void 0 === t.status ? 200 : t.status, this.ok = this.status >= 200 && this.status < 300, this.statusText = "statusText" in t ? t.statusText : "OK", this.headers = new _(t.headers), this.url = t.url || "", this._initBody(e)
     }
-    v.prototype.clone = function() {
-        return new v(this, {
+    m.prototype.clone = function() {
+        return new m(this, {
             body: this._bodyInit
         })
-    }, d.call(v.prototype), d.call(y.prototype), y.prototype.clone = function() {
-        return new y(this._bodyInit, {
+    }, y.call(m.prototype), y.call(S.prototype), S.prototype.clone = function() {
+        return new S(this._bodyInit, {
             status: this.status,
             statusText: this.statusText,
-            headers: new l(this.headers),
+            headers: new _(this.headers),
             url: this.url
         })
-    }, y.error = function() {
-        var e = new y(null, {
+    }, S.error = function() {
+        var e = new S(null, {
             status: 0,
             statusText: ""
         });
         return e.type = "error", e
     };
-    var b = [301, 302, 303, 307, 308];
-    y.redirect = function(e, t) {
-        if (-1 === b.indexOf(t)) throw new RangeError("Invalid status code");
-        return new y(null, {
+    var w = [301, 302, 303, 307, 308];
+    S.redirect = function(e, t) {
+        if (-1 === w.indexOf(t)) throw new RangeError("Invalid status code");
+        return new S(null, {
             status: t,
             headers: {
                 location: e
             }
         })
     };
-    var m = self.DOMException;
+    var E = self.DOMException;
     try {
-        new m
+        new E
     } catch (e) {
-        (m = function(e, t) {
+        (E = function(e, t) {
             this.message = e, this.name = t;
             var r = Error(e);
             this.stack = r.stack
-        }).prototype = Object.create(Error.prototype), m.prototype.constructor = m
+        }).prototype = Object.create(Error.prototype), E.prototype.constructor = E
     }
 
-    function C(e, t) {
-        return new Promise(function(r, n) {
-            var o = new v(e, t);
-            if (o.signal && o.signal.aborted) return n(new m("Aborted", "AbortError"));
+    function A(e, t) {
+        return new Promise(function(r, i) {
+            var n = new m(e, t);
+            if (n.signal && n.signal.aborted) return i(new E("Aborted", "AbortError"));
             var s = new XMLHttpRequest;
 
             function a() {
@@ -11603,7 +12350,7 @@
                 var e, t, i = {
                     status: s.status,
                     statusText: s.statusText,
-                    headers: (e = s.getAllResponseHeaders() || "", t = new l, e.replace(/\r?\n[\t ]+/g, " ").split(/\r?\n/).forEach(function(e) {
+                    headers: (e = s.getAllResponseHeaders() || "", t = new _, e.replace(/\r?\n[\t ]+/g, " ").split(/\r?\n/).forEach(function(e) {
                         var r = e.split(":"),
                             i = r.shift().trim();
                         if (i) {
@@ -11614,46 +12361,48 @@
                 };
                 i.url = "responseURL" in s ? s.responseURL : i.headers.get("X-Request-URL");
                 var n = "response" in s ? s.response : s.responseText;
-                r(new y(n, i))
+                r(new S(n, i))
             }, s.onerror = function() {
-                n(new TypeError("Network request failed"))
+                i(new TypeError("Network request failed"))
             }, s.ontimeout = function() {
-                n(new TypeError("Network request failed"))
+                i(new TypeError("Network request failed"))
             }, s.onabort = function() {
-                n(new m("Aborted", "AbortError"))
-            }, s.open(o.method, o.url, !0), "include" === o.credentials ? s.withCredentials = !0 : "omit" === o.credentials && (s.withCredentials = !1), "responseType" in s && i.blob && (s.responseType = "blob"), o.headers.forEach(function(e, t) {
+                i(new E("Aborted", "AbortError"))
+            }, s.open(n.method, n.url, !0), "include" === n.credentials ? s.withCredentials = !0 : "omit" === n.credentials && (s.withCredentials = !1), "responseType" in s && o && (s.responseType = "blob"), n.headers.forEach(function(e, t) {
                 s.setRequestHeader(t, e)
-            }), o.signal && (o.signal.addEventListener("abort", a), s.onreadystatechange = function() {
-                4 === s.readyState && o.signal.removeEventListener("abort", a)
-            }), s.send(void 0 === o._bodyInit ? null : o._bodyInit)
+            }), n.signal && (n.signal.addEventListener("abort", a), s.onreadystatechange = function() {
+                4 === s.readyState && n.signal.removeEventListener("abort", a)
+            }), s.send(void 0 === n._bodyInit ? null : n._bodyInit)
         })
     }
-    C.polyfill = !0, self.fetch || (self.fetch = C, self.Headers = l, self.Request = v, self.Response = y);
-    var S, w, E, A, R, x = {},
-        L = [],
-        k = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord/i;
+    A.polyfill = !0, self.fetch || (self.fetch = A, self.Headers = _, self.Request = m, self.Response = S);
+    var R, x, L, k, T, D, O = {},
+        P = [],
+        M = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i;
 
-    function T(e, t) {
+    function I(e, t) {
         for (var r in t) e[r] = t[r];
         return e
     }
 
-    function D(e) {
+    function B(e) {
         var t = e.parentNode;
         t && t.removeChild(e)
     }
 
-    function O(e, t, r) {
-        var i, n, o, s, a = arguments;
-        if (t = T({}, t), arguments.length > 3)
-            for (r = [r], i = 3; i < arguments.length; i++) r.push(a[i]);
-        if (null != r && (t.children = r), null != e && null != e.defaultProps)
-            for (n in e.defaultProps) void 0 === t[n] && (t[n] = e.defaultProps[n]);
-        return s = t.key, null != (o = t.ref) && delete t.ref, null != s && delete t.key, M(e, t, s, o)
+    function H(e, t, r) {
+        var i, n = arguments,
+            o = {};
+        for (i in t) "key" !== i && "ref" !== i && (o[i] = t[i]);
+        if (arguments.length > 3)
+            for (r = [r], i = 3; i < arguments.length; i++) r.push(n[i]);
+        if (null != r && (o.children = r), "function" == typeof e && null != e.defaultProps)
+            for (i in e.defaultProps) void 0 === o[i] && (o[i] = e.defaultProps[i]);
+        return F(e, o, t && t.key, t && t.ref, null)
     }
 
-    function M(e, t, r, i) {
-        var n = {
+    function F(e, t, r, i, n) {
+        var o = {
             type: e,
             props: t,
             key: r,
@@ -11662,234 +12411,225 @@
             __: null,
             __b: 0,
             __e: null,
-            __d: null,
+            __d: void 0,
             __c: null,
-            constructor: void 0
+            constructor: void 0,
+            __v: n
         };
-        return S.vnode && S.vnode(n), n
+        return null == n && (o.__v = o), R.vnode && R.vnode(o), o
     }
 
-    function P(e) {
+    function j(e) {
         return e.children
     }
 
-    function I(e, t) {
+    function U(e, t) {
         this.props = e, this.context = t
     }
 
-    function B(e, t) {
-        if (null == t) return e.__ ? B(e.__, e.__.__k.indexOf(e) + 1) : null;
+    function N(e, t) {
+        if (null == t) return e.__ ? N(e.__, e.__.__k.indexOf(e) + 1) : null;
         for (var r; t < e.__k.length; t++)
             if (null != (r = e.__k[t]) && null != r.__e) return r.__e;
-        return "function" == typeof e.type ? B(e) : null
+        return "function" == typeof e.type ? N(e) : null
     }
 
-    function H(e) {
+    function W(e) {
         var t, r;
         if (null != (e = e.__) && null != e.__c) {
             for (e.__e = e.__c.base = null, t = 0; t < e.__k.length; t++)
                 if (null != (r = e.__k[t]) && null != r.__e) {
                     e.__e = e.__c.base = r.__e;
                     break
-                } return H(e)
+                } return W(e)
         }
     }
 
-    function F(e) {
-        (!e.__d && (e.__d = !0) && 1 === w.push(e) || A !== S.debounceRendering) && ((A = S.debounceRendering) || E)(j)
+    function q(e) {
+        (!e.__d && (e.__d = !0) && x.push(e) && !L++ || T !== R.debounceRendering) && ((T = R.debounceRendering) || k)(z)
     }
 
-    function j() {
-        var e, t, r, i, n, o, s;
-        for (w.sort(function(e, t) {
-                return t.__v.__b - e.__v.__b
-            }); e = w.pop();) e.__d && (r = void 0, i = void 0, o = (n = (t = e).__v).__e, (s = t.__P) && (r = [], i = Z(s, n, T({}, n), t.__n, void 0 !== s.ownerSVGElement, null, r, null == o ? B(n) : o), K(r, n), i != o && H(n)))
+    function z() {
+        for (var e; L = x.length;) e = x.sort(function(e, t) {
+            return e.__v.__b - t.__v.__b
+        }), x = [], e.some(function(e) {
+            var t, r, i, n, o, s, a;
+            e.__d && (s = (o = (t = e).__v).__e, (a = t.__P) && (r = [], (i = I({}, o)).__v = i, n = X(a, o, i, t.__n, void 0 !== a.ownerSVGElement, null, r, null == s ? N(o) : s), Y(r, o), n != s && W(o)))
+        })
     }
 
-    function N(e, t, r, i, n, o, s, a, c) {
-        var l, h, u, f, _, d, p, v = r && r.__k || L,
-            g = v.length;
-        if (a == x && (a = null != o ? o[0] : g ? B(r, 0) : null), l = 0, t.__k = W(t.__k, function(r) {
-                if (null != r) {
-                    if (r.__ = t, r.__b = t.__b + 1, null === (u = v[l]) || u && r.key == u.key && r.type === u.type) v[l] = void 0;
-                    else
-                        for (h = 0; h < g; h++) {
-                            if ((u = v[h]) && r.key == u.key && r.type === u.type) {
-                                v[h] = void 0;
-                                break
-                            }
-                            u = null
+    function Z(e, t, r, i, n, o, s, a, c, l) {
+        var h, u, f, _, d, p, v, g, y, b = i && i.__k || P,
+            m = b.length;
+        for (c == O && (c = null != s ? s[0] : m ? N(i, 0) : null), r.__k = [], h = 0; h < t.length; h++)
+            if (null != (_ = r.__k[h] = null == (_ = t[h]) || "boolean" == typeof _ ? null : "string" == typeof _ || "number" == typeof _ ? F(null, _, null, null, _) : Array.isArray(_) ? F(j, {
+                    children: _
+                }, null, null, null) : null != _.__e || null != _.__c ? F(_.type, _.props, _.key, null, _.__v) : _)) {
+                if (_.__ = r, _.__b = r.__b + 1, null === (f = b[h]) || f && _.key == f.key && _.type === f.type) b[h] = void 0;
+                else
+                    for (u = 0; u < m; u++) {
+                        if ((f = b[u]) && _.key == f.key && _.type === f.type) {
+                            b[u] = void 0;
+                            break
                         }
-                    if (f = Z(e, r, u = u || x, i, n, o, s, a, c), (h = r.ref) && u.ref != h && (p || (p = []), u.ref && p.push(u.ref, null, r), p.push(h, r.__c || f, r)), null != f) {
-                        if (null == d && (d = f), null != r.__d) f = r.__d, r.__d = null;
-                        else if (o == u || f != a || null == f.parentNode) {
-                            e: if (null == a || a.parentNode !== e) e.appendChild(f);
-                                else {
-                                    for (_ = a, h = 0;
-                                        (_ = _.nextSibling) && h < g; h += 2)
-                                        if (_ == f) break e;
-                                    e.insertBefore(f, a)
-                                }
-                            "option" == t.type && (e.value = "")
-                        }
-                        a = f.nextSibling, "function" == typeof t.type && (t.__d = f)
+                        f = null
                     }
-                }
-                return l++, r
-            }), t.__e = d, null != o && "function" != typeof t.type)
-            for (l = o.length; l--;) null != o[l] && D(o[l]);
-        for (l = g; l--;) null != v[l] && V(v[l], v[l]);
-        if (p)
-            for (l = 0; l < p.length; l++) G(p[l], p[++l], p[++l])
+                if (d = X(e, _, f = f || O, n, o, s, a, c, l), (u = _.ref) && f.ref != u && (g || (g = []), f.ref && g.push(f.ref, null, _), g.push(u, _.__c || d, _)), null != d) {
+                    if (null == v && (v = d), y = void 0, void 0 !== _.__d) y = _.__d, _.__d = void 0;
+                    else if (s == f || d != c || null == d.parentNode) {
+                        e: if (null == c || c.parentNode !== e) e.appendChild(d), y = null;
+                            else {
+                                for (p = c, u = 0;
+                                    (p = p.nextSibling) && u < m; u += 2)
+                                    if (p == d) break e;
+                                e.insertBefore(d, c), y = c
+                            }
+                        "option" == r.type && (e.value = "")
+                    }
+                    c = void 0 !== y ? y : d.nextSibling, "function" == typeof r.type && (r.__d = c)
+                } else c && f.__e == c && c.parentNode != e && (c = N(f))
+            } if (r.__e = v, null != s && "function" != typeof r.type)
+            for (h = s.length; h--;) null != s[h] && B(s[h]);
+        for (h = m; h--;) null != b[h] && $(b[h], b[h]);
+        if (g)
+            for (h = 0; h < g.length; h++) J(g[h], g[++h], g[++h])
     }
 
-    function W(e, t, r) {
-        if (null == r && (r = []), null == e || "boolean" == typeof e) t && r.push(t(null));
-        else if (Array.isArray(e))
-            for (var i = 0; i < e.length; i++) W(e[i], t, r);
-        else r.push(t ? t("string" == typeof e || "number" == typeof e ? M(null, e, null, null) : null != e.__e || null != e.__c ? M(e.type, e.props, e.key, null) : e) : e);
-        return r
+    function G(e, t, r) {
+        "-" === t[0] ? e.setProperty(t, r) : e[t] = "number" == typeof r && !1 === M.test(t) ? r + "px" : null == r ? "" : r
     }
 
-    function U(e, t, r) {
-        "-" === t[0] ? e.setProperty(t, r) : e[t] = "number" == typeof r && !1 === k.test(t) ? r + "px" : null == r ? "" : r
-    }
-
-    function q(e, t, r, i, n) {
+    function K(e, t, r, i, n) {
         var o, s, a, c, l;
-        if (n ? "className" === t && (t = "class") : "class" === t && (t = "className"), "key" === t || "children" === t);
-        else if ("style" === t)
+        if (n ? "className" === t && (t = "class") : "class" === t && (t = "className"), "style" === t)
             if (o = e.style, "string" == typeof r) o.cssText = r;
             else {
                 if ("string" == typeof i && (o.cssText = "", i = null), i)
-                    for (s in i) r && s in r || U(o, s, "");
+                    for (c in i) r && c in r || G(o, c, "");
                 if (r)
-                    for (a in r) i && r[a] === i[a] || U(o, a, r[a])
+                    for (l in r) i && r[l] === i[l] || G(o, l, r[l])
             }
-        else "o" === t[0] && "n" === t[1] ? (c = t !== (t = t.replace(/Capture$/, "")), l = t.toLowerCase(), t = (l in e ? l : t).slice(2), r ? (i || e.addEventListener(t, z, c), (e.l || (e.l = {}))[t] = r) : e.removeEventListener(t, z, c)) : "list" !== t && "tagName" !== t && "form" !== t && !n && t in e ? e[t] = null == r ? "" : r : "function" != typeof r && "dangerouslySetInnerHTML" !== t && (t !== (t = t.replace(/^xlink:?/, "")) ? null == r || !1 === r ? e.removeAttributeNS("http://www.w3.org/1999/xlink", t.toLowerCase()) : e.setAttributeNS("http://www.w3.org/1999/xlink", t.toLowerCase(), r) : null == r || !1 === r ? e.removeAttribute(t) : e.setAttribute(t, r))
+        else "o" === t[0] && "n" === t[1] ? (s = t !== (t = t.replace(/Capture$/, "")), a = t.toLowerCase(), t = (a in e ? a : t).slice(2), r ? (i || e.addEventListener(t, V, s), (e.l || (e.l = {}))[t] = r) : e.removeEventListener(t, V, s)) : "list" !== t && "tagName" !== t && "form" !== t && "type" !== t && "size" !== t && !n && t in e ? e[t] = null == r ? "" : r : "function" != typeof r && "dangerouslySetInnerHTML" !== t && (t !== (t = t.replace(/^xlink:?/, "")) ? null == r || !1 === r ? e.removeAttributeNS("http://www.w3.org/1999/xlink", t.toLowerCase()) : e.setAttributeNS("http://www.w3.org/1999/xlink", t.toLowerCase(), r) : null == r || !1 === r && !/^ar/.test(t) ? e.removeAttribute(t) : e.setAttribute(t, r))
     }
 
-    function z(e) {
-        this.l[e.type](S.event ? S.event(e) : e)
+    function V(e) {
+        this.l[e.type](R.event ? R.event(e) : e)
     }
 
-    function Z(e, t, r, i, n, o, s, a, c) {
-        var l, h, u, f, _, d, p, v, g, y, b = t.type;
+    function X(e, t, r, i, n, o, s, a, c) {
+        var l, h, u, f, _, d, p, v, g, y, b, m = t.type;
         if (void 0 !== t.constructor) return null;
-        (l = S.__b) && l(t);
+        (l = R.__b) && l(t);
         try {
-            e: if ("function" == typeof b) {
-                if (v = t.props, g = (l = b.contextType) && i[l.__c], y = l ? g ? g.props.value : l.__ : i, r.__c ? p = (h = t.__c = r.__c).__ = h.__E : ("prototype" in b && b.prototype.render ? t.__c = h = new b(v, y) : (t.__c = h = new I(v, y), h.constructor = b, h.render = Y), g && g.sub(h), h.props = v, h.state || (h.state = {}), h.context = y, h.__n = i, u = h.__d = !0, h.__h = []), null == h.__s && (h.__s = h.state), null != b.getDerivedStateFromProps && (h.__s == h.state && (h.__s = T({}, h.__s)), T(h.__s, b.getDerivedStateFromProps(v, h.__s))), f = h.props, _ = h.state, u) null == b.getDerivedStateFromProps && null != h.componentWillMount && h.componentWillMount(), null != h.componentDidMount && h.__h.push(h.componentDidMount);
+            e: if ("function" == typeof m) {
+                if (v = t.props, g = (l = m.contextType) && i[l.__c], y = l ? g ? g.props.value : l.__ : i, r.__c ? p = (h = t.__c = r.__c).__ = h.__E : ("prototype" in m && m.prototype.render ? t.__c = h = new m(v, y) : (t.__c = h = new U(v, y), h.constructor = m, h.render = Q), g && g.sub(h), h.props = v, h.state || (h.state = {}), h.context = y, h.__n = i, u = h.__d = !0, h.__h = []), null == h.__s && (h.__s = h.state), null != m.getDerivedStateFromProps && (h.__s == h.state && (h.__s = I({}, h.__s)), I(h.__s, m.getDerivedStateFromProps(v, h.__s))), f = h.props, _ = h.state, u) null == m.getDerivedStateFromProps && null != h.componentWillMount && h.componentWillMount(), null != h.componentDidMount && h.__h.push(h.componentDidMount);
                 else {
-                    if (null == b.getDerivedStateFromProps && null == h.__e && null != h.componentWillReceiveProps && h.componentWillReceiveProps(v, y), !h.__e && null != h.shouldComponentUpdate && !1 === h.shouldComponentUpdate(v, h.__s, y)) {
-                        for (h.props = v, h.state = h.__s, h.__d = !1, h.__v = t, t.__e = r.__e, t.__k = r.__k, h.__h.length && s.push(h), l = 0; l < t.__k.length; l++) t.__k[l] && (t.__k[l].__ = t);
+                    if (null == m.getDerivedStateFromProps && v !== f && null != h.componentWillReceiveProps && h.componentWillReceiveProps(v, y), !h.__e && null != h.shouldComponentUpdate && !1 === h.shouldComponentUpdate(v, h.__s, y) || t.__v === r.__v) {
+                        for (h.props = v, h.state = h.__s, t.__v !== r.__v && (h.__d = !1), h.__v = t, t.__e = r.__e, t.__k = r.__k, h.__h.length && s.push(h), l = 0; l < t.__k.length; l++) t.__k[l] && (t.__k[l].__ = t);
                         break e
                     }
                     null != h.componentWillUpdate && h.componentWillUpdate(v, h.__s, y), null != h.componentDidUpdate && h.__h.push(function() {
                         h.componentDidUpdate(f, _, d)
                     })
                 }
-                h.context = y, h.props = v, h.state = h.__s, (l = S.__r) && l(t), h.__d = !1, h.__v = t, h.__P = e, l = h.render(h.props, h.state, h.context), t.__k = W(null != l && l.type == P && null == l.key ? l.props.children : l), null != h.getChildContext && (i = T(T({}, i), h.getChildContext())), u || null == h.getSnapshotBeforeUpdate || (d = h.getSnapshotBeforeUpdate(f, _)), N(e, t, r, i, n, o, s, a, c), h.base = t.__e, h.__h.length && s.push(h), p && (h.__E = h.__ = null), h.__e = null
-            } else t.__e = function(e, t, r, i, n, o, s, a) {
+                h.context = y, h.props = v, h.state = h.__s, (l = R.__r) && l(t), h.__d = !1, h.__v = t, h.__P = e, l = h.render(h.props, h.state, h.context), null != h.getChildContext && (i = I(I({}, i), h.getChildContext())), u || null == h.getSnapshotBeforeUpdate || (d = h.getSnapshotBeforeUpdate(f, _)), b = null != l && l.type == j && null == l.key ? l.props.children : l, Z(e, Array.isArray(b) ? b : [b], t, r, i, n, o, s, a, c), h.base = t.__e, h.__h.length && s.push(h), p && (h.__E = h.__ = null), h.__e = !1
+            } else null == o && t.__v === r.__v ? (t.__k = r.__k, t.__e = r.__e) : t.__e = function(e, t, r, i, n, o, s, a) {
                 var c, l, h, u, f, _ = r.props,
                     d = t.props;
-                if (n = "svg" === t.type || n, null == e && null != o)
+                if (n = "svg" === t.type || n, null != o)
                     for (c = 0; c < o.length; c++)
-                        if (null != (l = o[c]) && (null === t.type ? 3 === l.nodeType : l.localName === t.type)) {
+                        if (null != (l = o[c]) && ((null === t.type ? 3 === l.nodeType : l.localName === t.type) || e == l)) {
                             e = l, o[c] = null;
                             break
                         } if (null == e) {
                     if (null === t.type) return document.createTextNode(d);
-                    e = n ? document.createElementNS("http://www.w3.org/2000/svg", t.type) : document.createElement(t.type), o = null
+                    e = n ? document.createElementNS("http://www.w3.org/2000/svg", t.type) : document.createElement(t.type, d.is && {
+                        is: d.is
+                    }), o = null, a = !1
                 }
-                if (null === t.type) null != o && (o[o.indexOf(e)] = null), _ !== d && (e.data = d);
-                else if (t !== r) {
-                    if (null != o && (o = L.slice.call(e.childNodes)), h = (_ = r.props || x).dangerouslySetInnerHTML, u = d.dangerouslySetInnerHTML, !a) {
-                        if (_ === x)
+                if (null === t.type) _ !== d && e.data != d && (e.data = d);
+                else {
+                    if (null != o && (o = P.slice.call(e.childNodes)), h = (_ = r.props || O).dangerouslySetInnerHTML, u = d.dangerouslySetInnerHTML, !a) {
+                        if (null != o)
                             for (_ = {}, f = 0; f < e.attributes.length; f++) _[e.attributes[f].name] = e.attributes[f].value;
                         (u || h) && (u && h && u.__html == h.__html || (e.innerHTML = u && u.__html || ""))
                     }(function(e, t, r, i, n) {
                         var o;
-                        for (o in r) o in t || q(e, o, null, r[o], i);
-                        for (o in t) n && "function" != typeof t[o] || "value" === o || "checked" === o || r[o] === t[o] || q(e, o, t[o], r[o], i)
-                    })(e, d, _, n, a), t.__k = t.props.children, u || N(e, t, r, i, "foreignObject" !== t.type && n, o, s, x, a), a || ("value" in d && void 0 !== d.value && d.value !== e.value && (e.value = null == d.value ? "" : d.value), "checked" in d && void 0 !== d.checked && d.checked !== e.checked && (e.checked = d.checked))
+                        for (o in r) "children" === o || "key" === o || o in t || K(e, o, null, r[o], i);
+                        for (o in t) n && "function" != typeof t[o] || "children" === o || "key" === o || "value" === o || "checked" === o || r[o] === t[o] || K(e, o, t[o], r[o], i)
+                    })(e, d, _, n, a), u ? t.__k = [] : (c = t.props.children, Z(e, Array.isArray(c) ? c : [c], t, r, i, "foreignObject" !== t.type && n, o, s, O, a)), a || ("value" in d && void 0 !== (c = d.value) && c !== e.value && K(e, "value", c, _.value, !1), "checked" in d && void 0 !== (c = d.checked) && c !== e.checked && K(e, "checked", c, _.checked, !1))
                 }
                 return e
             }(r.__e, t, r, i, n, o, s, c);
-            (l = S.diffed) && l(t)
+            (l = R.diffed) && l(t)
         }
         catch (e) {
-            S.__e(e, t, r)
+            t.__v = null, R.__e(e, t, r)
         }
         return t.__e
     }
 
-    function K(e, t) {
-        S.__c && S.__c(t, e), e.some(function(t) {
+    function Y(e, t) {
+        R.__c && R.__c(t, e), e.some(function(t) {
             try {
                 e = t.__h, t.__h = [], e.some(function(e) {
                     e.call(t)
                 })
             } catch (e) {
-                S.__e(e, t.__v)
+                R.__e(e, t.__v)
             }
         })
     }
 
-    function G(e, t, r) {
+    function J(e, t, r) {
         try {
             "function" == typeof e ? e(t) : e.current = t
         } catch (e) {
-            S.__e(e, r)
+            R.__e(e, r)
         }
     }
 
-    function V(e, t, r) {
+    function $(e, t, r) {
         var i, n, o;
-        if (S.unmount && S.unmount(e), (i = e.ref) && G(i, null, t), r || "function" == typeof e.type || (r = null != (n = e.__e)), e.__e = e.__d = null, null != (i = e.__c)) {
+        if (R.unmount && R.unmount(e), (i = e.ref) && (i.current && i.current !== e.__e || J(i, null, t)), r || "function" == typeof e.type || (r = null != (n = e.__e)), e.__e = e.__d = void 0, null != (i = e.__c)) {
             if (i.componentWillUnmount) try {
                 i.componentWillUnmount()
             } catch (e) {
-                S.__e(e, t)
+                R.__e(e, t)
             }
             i.base = i.__P = null
         }
         if (i = e.__k)
-            for (o = 0; o < i.length; o++) i[o] && V(i[o], t, r);
-        null != n && D(n)
+            for (o = 0; o < i.length; o++) i[o] && $(i[o], t, r);
+        null != n && B(n)
     }
 
-    function Y(e, t, r) {
+    function Q(e, t, r) {
         return this.constructor(e, r)
     }
-    S = {
+    R = {
         __e: function(e, t) {
-            for (var r; t = t.__;)
+            for (var r, i; t = t.__;)
                 if ((r = t.__c) && !r.__) try {
-                    if (r.constructor && null != r.constructor.getDerivedStateFromError) r.setState(r.constructor.getDerivedStateFromError(e));
-                    else {
-                        if (null == r.componentDidCatch) continue;
-                        r.componentDidCatch(e)
-                    }
-                    return F(r.__E = r)
+                    if (r.constructor && null != r.constructor.getDerivedStateFromError && (i = !0, r.setState(r.constructor.getDerivedStateFromError(e))), null != r.componentDidCatch && (i = !0, r.componentDidCatch(e)), i) return q(r.__E = r)
                 } catch (t) {
                     e = t
                 }
             throw e
         }
-    }, I.prototype.setState = function(e, t) {
+    }, U.prototype.setState = function(e, t) {
         var r;
-        r = this.__s !== this.state ? this.__s : this.__s = T({}, this.state), "function" == typeof e && (e = e(r, this.props)), e && T(r, e), null != e && this.__v && (this.__e = !1, t && this.__h.push(t), F(this))
-    }, I.prototype.forceUpdate = function(e) {
-        this.__v && (this.__e = !0, e && this.__h.push(e), F(this))
-    }, I.prototype.render = P, w = [], E = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, R = x;
-    var X = r(0),
-        J = r(13),
-        $ = r(14),
-        Q = r(15),
-        ee = r(16),
-        te = r(17);
-    class re {
+        r = this.__s !== this.state ? this.__s : this.__s = I({}, this.state), "function" == typeof e && (e = e(r, this.props)), e && I(r, e), null != e && this.__v && (t && this.__h.push(t), q(this))
+    }, U.prototype.forceUpdate = function(e) {
+        this.__v && (this.__e = !0, e && this.__h.push(e), q(this))
+    }, U.prototype.render = j, x = [], L = 0, k = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, D = O;
+    var ee = r(0),
+        te = r(13),
+        re = r(14),
+        ie = r(15),
+        ne = r(16),
+        oe = r(17);
+    class se {
         constructor() {
             this.overlayNode = document.createElement("div"), this.overlayNode.style.cssText = "border-radius: 15px;\nfont-size: xx-large;\nopacity: 0.75;\npadding: 0.2em 0.5em 0.2em 0.5em;\nposition: absolute;\n-webkit-user-select: none;\n-webkit-transition: opacity 180ms ease-in;\n-moz-user-select: none;\n-moz-transition: opacity 180ms ease-in;", this.overlayNode.addEventListener("mousedown", e => {
                 e.preventDefault(), e.stopPropagation()
@@ -11916,10 +12656,10 @@
             }, t || 1500)
         }
     }
-    var ie = r(18),
-        ne = r(8);
+    var ae = r(18),
+        ce = r(8);
     r(35);
-    class oe extends I {
+    class le extends U {
         constructor(e) {
             super(e)
         }
@@ -11927,18 +12667,18 @@
             show: e,
             children: t
         }) {
-            return e && O("div", {
+            return e && H("div", {
                 className: "modal"
-            }, O("div", {
+            }, H("div", {
                 className: "modal-background"
-            }), O("div", {
+            }), H("div", {
                 className: "modal-content"
-            }, O("div", {
+            }, H("div", {
                 className: "box"
             }, t)))
         }
     }
-    var se = function(e, t, r, i) {
+    var he = function(e, t, r, i) {
         var n, o = arguments.length,
             s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
         if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
@@ -11946,28 +12686,23 @@
             for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
         return o > 3 && s && Object.defineProperty(t, r, s), s
     };
-    class ae extends I {
+    class ue extends U {
         constructor(e) {
-            super(e), this.sentry = new ne.Sentry({
-                to_terminal: e => this.zmodemWrite(e),
-                sender: e => this.zmodemSend(e),
-                on_retract: () => this.zmodemReset(),
-                on_detect: e => this.zmodemDetect(e)
-            })
+            super(e), this.zmodemInit()
         }
         render(e, {
             modal: t
         }) {
-            return O(oe, {
+            return H(le, {
                 show: t
-            }, O("label", {
+            }, H("label", {
                 class: "file-label"
-            }, O("input", {
+            }, H("input", {
                 onChange: this.sendFile,
                 class: "file-input",
                 type: "file",
                 multiple: !0
-            }), O("span", {
+            }), H("span", {
                 class: "file-cta"
             }, "Choose files…")))
         }
@@ -11989,8 +12724,16 @@
         handleError(e, t) {
             console.error(`[ttyd] zmodem ${t}: `, e), this.zmodemReset()
         }
+        zmodemInit() {
+            this.session = null, this.sentry = new ce.Sentry({
+                to_terminal: e => this.zmodemWrite(e),
+                sender: e => this.zmodemSend(e),
+                on_retract: () => this.zmodemReset(),
+                on_detect: e => this.zmodemDetect(e)
+            })
+        }
         zmodemReset() {
-            this.terminal.setOption("disableStdin", !1), this.keyDispose && (this.keyDispose.dispose(), this.keyDispose = null), this.terminal.focus()
+            this.terminal.setOption("disableStdin", !1), this.keyDispose && (this.keyDispose.dispose(), this.keyDispose = null), this.zmodemInit(), this.terminal.focus()
         }
         zmodemWrite(e) {
             this.terminal.write(new Uint8Array(e))
@@ -12020,7 +12763,7 @@
                 writeProgress: r,
                 handleError: i
             } = this, n = e.target.files;
-            ne.Browser.send_files(t, n, {
+            ce.Browser.send_files(t, n, {
                 on_progress: (e, t) => r(t)
             }).then(() => t.close()).catch(e => i(e, "send"))
         }
@@ -12038,7 +12781,7 @@
                     const t = new Blob(i, {
                         type: "application/octet-stream"
                     });
-                    Object(ie.saveAs)(t, e.get_details().name)
+                    Object(ae.saveAs)(t, e.get_details().name)
                 }).catch(e => r(e, "receive"))
             }), e.start()
         }
@@ -12057,8 +12800,8 @@
             return `${(e/Math.pow(1024,Math.floor(r))).toFixed(t)} ${["bytes","KB","MB","GB","TB","PB"][r]}`
         }
     }
-    se([X.bind], ae.prototype, "handleError", null), se([X.bind], ae.prototype, "zmodemReset", null), se([X.bind], ae.prototype, "zmodemWrite", null), se([X.bind], ae.prototype, "zmodemSend", null), se([X.bind], ae.prototype, "zmodemDetect", null), se([X.bind], ae.prototype, "sendFile", null), se([X.bind], ae.prototype, "receiveFile", null), se([X.bind], ae.prototype, "writeProgress", null), r(36);
-    var ce = function(e, t, r, i) {
+    he([ee.bind], ue.prototype, "handleError", null), he([ee.bind], ue.prototype, "zmodemInit", null), he([ee.bind], ue.prototype, "zmodemReset", null), he([ee.bind], ue.prototype, "zmodemWrite", null), he([ee.bind], ue.prototype, "zmodemSend", null), he([ee.bind], ue.prototype, "zmodemDetect", null), he([ee.bind], ue.prototype, "sendFile", null), he([ee.bind], ue.prototype, "receiveFile", null), he([ee.bind], ue.prototype, "writeProgress", null), r(36);
+    var fe = function(e, t, r, i) {
         var n, o = arguments.length,
             s = o < 3 ? t : null === i ? i = Object.getOwnPropertyDescriptor(t, r) : i;
         if ("object" == typeof Reflect && "function" == typeof Reflect.decorate) s = Reflect.decorate(e, t, r, i);
@@ -12066,19 +12809,21 @@
             for (var a = e.length - 1; a >= 0; a--)(n = e[a]) && (s = (o < 3 ? n(s) : o > 3 ? n(t, r, s) : n(t, r)) || s);
         return o > 3 && s && Object.defineProperty(t, r, s), s
     };
-    class le extends I {
+    class _e extends U {
         constructor(e) {
-            super(e), this.backoffLock = !1, this.textEncoder = new TextEncoder, this.textDecoder = new TextDecoder, this.fitAddon = new Q.FitAddon, this.overlayAddon = new re, this.backoff = J.exponential({
+            super(e), this.backoffLock = !1, this.reconnect = !1, this.textEncoder = new TextEncoder, this.textDecoder = new TextDecoder, this.fitAddon = new ie.FitAddon, this.overlayAddon = new se, this.backoff = te.exponential({
                 initialDelay: 100,
                 maxDelay: 1e4
-            }), this.backoff.on("ready", () => {
-                this.backoffLock = !1, this.refreshToken().then(this.openTerminal)
+            }), this.backoff.failAfter(15), this.backoff.on("ready", () => {
+                this.backoffLock = !1, this.refreshToken().then(this.connect)
             }), this.backoff.on("backoff", (e, t) => {
                 console.log(`[ttyd] will attempt to reconnect websocket in ${t}ms`), this.backoffLock = !0
+            }), this.backoff.on("fail", () => {
+                this.backoffLock = !0
             })
         }
         async componentDidMount() {
-            await this.refreshToken(), this.openTerminal()
+            await this.refreshToken(), this.openTerminal(), this.connect(), window.addEventListener("resize", this.onWindowResize), window.addEventListener("beforeunload", this.onWindowUnload)
         }
         componentWillUnmount() {
             this.socket.close(), this.terminal.dispose(), window.removeEventListener("resize", this.onWindowResize), window.removeEventListener("beforeunload", this.onWindowUnload)
@@ -12086,10 +12831,10 @@
         render({
             id: e
         }) {
-            return O("div", {
+            return H("div", {
                 id: e,
                 ref: e => this.container = e
-            }, O(ae, {
+            }, H(ue, {
                 ref: e => this.zmodemAddon = e,
                 sender: this.sendData
             }))
@@ -12118,59 +12863,78 @@
             clearTimeout(this.resizeTimeout), this.resizeTimeout = setTimeout(() => e.fit(), 250)
         }
         onWindowUnload(e) {
-            const t = "Close terminal? this will also terminate the command.";
-            return e.returnValue = t, t
+            const {
+                socket: t
+            } = this;
+            if (t && t.readyState === WebSocket.OPEN) {
+                const t = "Close terminal? this will also terminate the command.";
+                return e.returnValue = t, t
+            }
+            e.preventDefault()
         }
         openTerminal() {
-            console.log(this.props.wsUrl);
-            this.terminal && this.terminal.dispose(), this.socket = new WebSocket(this.props.wsUrl), this.terminal = new $.Terminal(this.props.options);
-            //this.terminal && this.terminal.dispose(), this.socket = new WebSocket(this.props.wsUrl, ["tty"]), this.terminal = new $.Terminal(this.props.options);
+            this.terminal = new re.Terminal(this.props.options);
             const {
-                socket: e,
-                terminal: t,
-                container: r,
-                fitAddon: i,
-                overlayAddon: n
+                terminal: e,
+                container: t,
+                fitAddon: r,
+                overlayAddon: i
             } = this;
-            window.term = t, window.term.fit = (() => {
+            window.term = e, window.term.fit = (() => {
                 this.fitAddon.fit()
-            }), e.binaryType = "arraybuffer", e.onopen = this.onSocketOpen, e.onmessage = this.onSocketData, e.onclose = this.onSocketClose, e.onerror = this.onSocketError, t.loadAddon(i), t.loadAddon(n), t.loadAddon(new te.WebLinksAddon), t.loadAddon(this.zmodemAddon), t.onTitleChange(e => {
+            }), e.loadAddon(r), e.loadAddon(i), e.loadAddon(new oe.WebLinksAddon), e.loadAddon(this.zmodemAddon), e.onTitleChange(e => {
                 e && "" !== e && (document.title = e + " | " + this.title)
-            }), t.onData(this.onTerminalData), t.onResize(this.onTerminalResize), document.queryCommandSupported && document.queryCommandSupported("copy") && t.onSelectionChange(() => {
-                "" !== t.getSelection() && (n.showOverlay("✂", 200), document.execCommand("copy"))
-            }), t.open(r), t.focus(), window.addEventListener("resize", this.onWindowResize), window.addEventListener("beforeunload", this.onWindowUnload)
+            }), e.onData(this.onTerminalData), e.onResize(this.onTerminalResize), document.queryCommandSupported && document.queryCommandSupported("copy") && e.onSelectionChange(() => {
+                "" !== e.getSelection() && (i.showOverlay("✂", 200), document.execCommand("copy"))
+            }), e.open(t)
         }
-        reconnect() {
-            this.backoffLock || this.backoff.backoff()
+        connect() {
+            this.socket = new WebSocket(this.props.wsUrl);
+            const {
+                socket: e
+            } = this;
+            e.binaryType = "arraybuffer", e.onopen = this.onSocketOpen, e.onmessage = this.onSocketData, e.onclose = this.onSocketClose, e.onerror = this.onSocketError
         }
         onSocketOpen() {
-            console.log("[ttyd] Websocket connection opened"), this.backoff.reset();
+            console.log("[ttyd] websocket connection opened"), this.backoff.reset();
             const {
                 socket: e,
                 textEncoder: t,
-                fitAddon: r
+                terminal: r,
+                fitAddon: i
             } = this;
-            e.send(t.encode(JSON.stringify({
-                AuthToken: this.token
-            }))), r.fit()
+            if (e.send(t.encode(JSON.stringify({
+                    AuthToken: this.token
+                }))), this.reconnect) {
+                const e = i.proposeDimensions();
+                r.reset(), r.resize(e.cols, e.rows), this.onTerminalResize(e)
+            } else this.reconnect = !0, i.fit();
+            r.focus()
         }
         onSocketClose(e) {
-            console.log(`[ttyd] websocket connection closed with code: ${e.code}`);
+            console.log("[ttyd] websocket connection closed with code: " + e.code);
             const {
-                overlayAddon: t
+                backoff: t,
+                backoffLock: r,
+                overlayAddon: i
             } = this;
-            t.showOverlay("Connection Closed", null), window.removeEventListener("beforeunload", this.onWindowUnload), 1e3 !== e.code && this.reconnect()
+            i.showOverlay("Connection Closed", null), 1e3 === e.code || r || t.backoff()
         }
-        onSocketError() {
-            this.reconnect()
+        onSocketError(e) {
+            console.error("[ttyd] websocket connection error: ", e);
+            const {
+                backoff: t,
+                backoffLock: r
+            } = this;
+            r || t.backoff()
         }
         onSocketData(e) {
-            //console.log(e);
             const {
                 terminal: t,
                 textDecoder: r,
                 zmodemAddon: i
             } = this, n = e.data, o = String.fromCharCode(new Uint8Array(n)[0]), s = n.slice(1);
+            //console.log(e);
             //console.log(o);
             var mS = "";
             for (var x=0; x<n.byteLength; x++)
@@ -12186,11 +12950,20 @@
                 case "2":
                     const e = JSON.parse(r.decode(s));
                     Object.keys(e).forEach(r => {
-                        "rendererType" === r && "webgl" === e[r] ? (t.loadAddon(new ee.WebglAddon), console.log("[ttyd] WebGL renderer enabled")) : (console.log(`[ttyd] option: ${r}=${e[r]}`), t.setOption(r, e[r]))
+                        switch (r) {
+                            case "rendererType":
+                                "webgl" === e[r] && (t.loadAddon(new ne.WebglAddon), console.log("[ttyd] WebGL renderer enabled"));
+                                break;
+                            case "disableLeaveAlert":
+                                e[r] && (window.removeEventListener("beforeunload", this.onWindowUnload), console.log("[ttyd] Leave site alert disabled"));
+                                break;
+                            default:
+                                console.log(`[ttyd] option: ${r}=${e[r]}`), t.setOption(r, e[r])
+                        }
                     });
                     break;
                 default:
-                    console.warn(`[ttyd] unknown command: ${o}`)
+                    console.warn("[ttyd] unknown command: " + o)
             }
         }
         onTerminalResize(e) {
@@ -12218,12 +12991,12 @@
             t.readyState === WebSocket.OPEN && t.send(r.encode("0" + e))
         }
     }
-    ce([X.bind], le.prototype, "sendData", null), ce([X.bind], le.prototype, "refreshToken", null), ce([X.bind], le.prototype, "onWindowResize", null), ce([X.bind], le.prototype, "openTerminal", null), ce([X.bind], le.prototype, "reconnect", null), ce([X.bind], le.prototype, "onSocketOpen", null), ce([X.bind], le.prototype, "onSocketClose", null), ce([X.bind], le.prototype, "onSocketError", null), ce([X.bind], le.prototype, "onSocketData", null), ce([X.bind], le.prototype, "onTerminalResize", null), ce([X.bind], le.prototype, "onTerminalData", null);
-    const he = "https:" === window.location.protocol ? "wss:" : "ws:",
-        ue = window.location.pathname.replace(/[\/]+$/, ""),
-        fe = [he, "//", "192.168.4.1:5999", "/ws", "", window.location.search].join(""),
-        _e = [window.location.protocol, "//", window.location.host, ue, "/token"].join(""),
-        de = {
+    fe([ee.bind], _e.prototype, "sendData", null), fe([ee.bind], _e.prototype, "refreshToken", null), fe([ee.bind], _e.prototype, "onWindowResize", null), fe([ee.bind], _e.prototype, "onWindowUnload", null), fe([ee.bind], _e.prototype, "openTerminal", null), fe([ee.bind], _e.prototype, "connect", null), fe([ee.bind], _e.prototype, "onSocketOpen", null), fe([ee.bind], _e.prototype, "onSocketClose", null), fe([ee.bind], _e.prototype, "onSocketError", null), fe([ee.bind], _e.prototype, "onSocketData", null), fe([ee.bind], _e.prototype, "onTerminalResize", null), fe([ee.bind], _e.prototype, "onTerminalData", null);
+    const de = "https:" === window.location.protocol ? "wss:" : "ws:",
+        pe = '',
+        ve = [de, "//", "192.168.4.1:5999", pe, "/ws", window.location.search].join(""),
+        ge = [window.location.protocol, "//", window.location.host, pe, "/token"].join(""),
+        ye = {
             fontSize: 13,
             fontFamily: "Menlo For Powerline,Consolas,Liberation Mono,Menlo,Courier,monospace",
             theme: {
@@ -12251,14 +13024,14 @@
     r(37),
         function(e, t, r) {
             var i, n, o;
-            S.__ && S.__(e, t), n = (i = r === R) ? null : r && r.__k || t.__k, e = O(P, null, [e]), o = [], Z(t, (i ? t : r || t).__k = e, n || x, x, void 0 !== t.ownerSVGElement, r && !i ? [r] : n ? null : L.slice.call(t.childNodes), o, r || x, i), K(o, e)
-        }(O(class extends I {
+            R.__ && R.__(e, t), n = (i = r === D) ? null : r && r.__k || t.__k, e = H(j, null, [e]), o = [], X(t, (i ? t : r || t).__k = e, n || O, O, void 0 !== t.ownerSVGElement, r && !i ? [r] : n ? null : t.childNodes.length ? P.slice.call(t.childNodes) : null, o, r || O, i), Y(o, e)
+        }(H(class extends U {
             render() {
-                return O(le, {
+                return H(_e, {
                     id: "terminal-container",
-                    wsUrl: fe,
-                    tokenUrl: _e,
-                    options: de
+                    wsUrl: ve,
+                    tokenUrl: ge,
+                    options: ye
                 })
             }
         }, null), document.body)

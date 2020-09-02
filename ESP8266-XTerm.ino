@@ -1,64 +1,96 @@
 #include <LittleFS.h>
 #include <ESP8266WiFi.h>
+#include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <WebSocketsServer.h>
 
+DNSServer dnsServer;
 ESP8266WebServer server(80);
 ESP8266HTTPUpdateServer updater;
 WebSocketsServer webSocket(5999);
 
-int ACCESS_POINT_MODE = 0;
+uint8_t ACCESS_POINT_MODE = 0;
 char ACCESS_POINT_SSID[] = "XTerm";
-char ACCESS_POINT_PASSWORD[] = "terminal123";
-int ACCESS_POINT_CHANNEL = 1;
-int ACCESS_POINT_HIDE = 0;
+char ACCESS_POINT_PASSWORD[] = "";
+uint8_t ACCESS_POINT_CHANNEL = 1;
+uint8_t ACCESS_POINT_HIDE = 0;
+uint8_t NETWORK_DHCP = 0;
+char NETWORK_IP[] = "192.168.4.1";
+char NETWORK_SUBNET[] = "255.255.255.0";
+char NETWORK_GATEWAY[] = "192.168.4.1";
+char NETWORK_DNS[] = "192.168.4.1";
 
 const char text_html[] = "text/html";
 const char text_plain[] = "text/plain";
 
-char tty[64];
+#define CRLF true
+
+// *** Lebowski Inverter ***
+//===============================
+#define RESETPIN 2 //(D4 NodeMCU "also LED")
+//#define SETUPPIN 0 //(D3 NodeMCU)
+#define SETUPPIN 4 //(D2 NodeMCU)
+//===============================
+
+uint8_t ttyFirmware = 0;
 
 void setup()
 {
   Serial.begin(115200, SERIAL_8N1);
 
-  uint8_t timeout = 10;
-  while (!Serial && timeout > 0) {
-    Serial.swap(); //Swapped UART pins
-    delay(500);
-    timeout--;
-  }
+#if RESETPIN
+  pinMode(RESETPIN, OUTPUT);
+  digitalWrite(RESETPIN, LOW);
+#endif
 
-  //===========
-  //File system
-  //===========
+#if SETUPPIN
+  pinMode(SETUPPIN, OUTPUT);
+  digitalWrite(SETUPPIN, LOW);
+#endif
+
   LittleFS.begin();
+
+  WiFi.setPhyMode(WIFI_PHY_MODE_11B); // WIFI_PHY_MODE_11G / WIFI_PHY_MODE_11N
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
+
+  IPAddress ip, gateway, subnet, dns;
+  ip.fromString(NETWORK_IP);
+  subnet.fromString(NETWORK_SUBNET);
+  gateway.fromString(NETWORK_GATEWAY);
+  dns.fromString(NETWORK_DNS);
 
   if (ACCESS_POINT_MODE == 0) {
     //=====================
     //WiFi Access Point Mode
     //=====================
-    WiFi.setPhyMode(WIFI_PHY_MODE_11B); // WIFI_PHY_MODE_11G / WIFI_PHY_MODE_11N
+
     WiFi.mode(WIFI_AP);
-    IPAddress ip(192, 168, 4, 1);
-    IPAddress gateway(192, 168, 4, 1);
-    IPAddress subnet(255, 255, 255, 0);
     WiFi.softAPConfig(ip, gateway, subnet);
     WiFi.softAP(ACCESS_POINT_SSID, ACCESS_POINT_PASSWORD, ACCESS_POINT_CHANNEL, ACCESS_POINT_HIDE);
     //Serial.println(WiFi.softAPIP());
+
+    //==========
+    //DNS Server
+    //==========
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+    dnsServer.start(53, "*", WiFi.softAPIP());
   } else {
     //================
     //WiFi Client Mode
     //================
     WiFi.mode(WIFI_STA);
-    WiFi.persistent(false);
-    WiFi.disconnect(true);
+    if (NETWORK_DHCP == 0) {
+      WiFi.config(ip, dns, gateway, subnet);
+    }
     WiFi.begin(ACCESS_POINT_SSID, ACCESS_POINT_PASSWORD);  //Connect to the WiFi network
+
+    WiFi.setAutoConnect(true);
+    WiFi.setAutoReconnect(true);
     //WiFi.enableAP(0);
     while (WiFi.waitForConnectResult() != WL_CONNECTED) {
       //Serial.println("Connection Failed! Rebooting...");
-      delay(5000);
+      delay(10000);
       ESP.restart();
     }
     //Serial.println(WiFi.localIP());
@@ -83,6 +115,9 @@ void setup()
     delay(500);
     ESP.restart();
   });
+  server.on("/token", HTTP_GET, []() {
+    server.send(200, "application/json", "{\"token\": \"" + String(WiFi.macAddress()) + "\"}");
+  });
   server.on("/", []() {
     if (LittleFS.exists("/index.html")) {
       server.sendHeader("Location", "/index.html");
@@ -104,8 +139,10 @@ void setup()
 
 void loop()
 {
-  webSocket.loop();
   server.handleClient();
+  dnsServer.processNextRequest();
+  webSocket.loop();
+  yield();
 }
 
 bool HTTPServer(String file)
@@ -134,6 +171,7 @@ String getContentType(String filename)
 {
   if (filename.endsWith(".html")) return "text/html";
   else if (filename.endsWith(".css")) return "text/css";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
   else if (filename.endsWith(".js")) return "application/javascript";
   return text_plain;
 }
@@ -143,6 +181,15 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
   switch (type) {
     case WStype_DISCONNECTED:
       //Serial.printf("[%u] Disconnected!\n", num);
+
+#if RESETPIN
+      // *** Lebowski Inverter ***
+      //================================
+      digitalWrite(RESETPIN, HIGH); //ON
+      delay(100);
+      digitalWrite(RESETPIN, LOW); //OFF
+      //================================
+#endif
       break;
     case WStype_CONNECTED: {
         //IPAddress ip = webSocket.remoteIP(num);
@@ -150,9 +197,27 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
         sendTXT(num, "2{ }");
         sendTXT(num, "0\033[32;1;1mConnected\033[0;0;0m\r\n");
-        sendTXT(num, "0------------------------------------------------\r\n");
-        sendTXT(num, "0Firmware updates visit http://192.168.4.1/update\r\n");
-        sendTXT(num, "0------------------------------------------------\r\n");
+        sendTXT(num, "0---------------------------------------------------\r\n");
+        sendTXT(num, "0ESP8266 Firmware Updates: http://" +  String(WiFi.softAPIP()[0]) + "." + String(WiFi.softAPIP()[1]) + "." + String(WiFi.softAPIP()[2]) + "." + String(WiFi.softAPIP()[3]) + "/update\r\n");
+        sendTXT(num, "0---------------------------------------------------\r\n");
+
+#if SETUPPIN
+        // *** Lebowski Inverter ***
+        //================================
+        /*
+          Press RESET (Hold) Press SETUP (Hold), Release RESET, Release SETUP
+          RESET = Pin 1 to GND (using NPN transistor)
+          SETUP = Pin 19 to GND (using NPN transistor)
+        */
+        digitalWrite(RESETPIN, HIGH); //ON
+        delay(100);
+        digitalWrite(SETUPPIN, HIGH); //ON
+        delay(100);
+        digitalWrite(RESETPIN, LOW); //OFF
+        delay(100);
+        digitalWrite(SETUPPIN, LOW); //OFF
+        //================================
+#endif
 
         if (Serial.available()) {
           //String output = "0" + Serial.readString();
@@ -182,23 +247,32 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
       } else if (payload[0] == '0') {
 
-        if (payload[1] != '\r') {
+        if (payload[1] == '!') {
+          webSocket.sendBIN(num, payload, length);
+          ttyFirmware = 1;
+        } else if (payload[1] != '\r') {
           webSocket.sendBIN(num, payload, length);
 
           //DEBUG
+          //------------------
           /*
             char str[256];
             snprintf(str, sizeof str, "0%zx", length);
             sendTXT(num, str);
           */
-          
+          /*
+            uint8_t *p = &payload[1]; //skip first character
+            strcat(tty, (char*)p);
+          */
+          //------------------
+
           uint8_t *p = &payload[1]; //skip first character
-          strcat(tty, (char*)p);
+          Serial.print((char*)p);
 
         } else {
 
           sendTXT(num, "0\r\n");
-          
+
           //DEBUG
           /*
             char str[256];
@@ -206,30 +280,58 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             sendTXT(num, str);
             Serial.print("get udc\n");
           */
-          
-          Serial.printf("%s\n", tty);
 
-          uint8_t timeout = 10;
+          Serial.print('\n');
+#if CRLF
+          Serial.print('\r');
+#endif
+          uint8_t timeout = 100;
           while (!Serial.available() && timeout > 0) {
             delay(1);
             timeout--;
           }
 
-          memset(tty, 0, sizeof(tty));
+          do {
+            String output = "0" + Serial.readString();
+#if CRLF
+            output.replace("\n", "\n\r");
+#endif
+            sendTXT(num, output);
+          } while (Serial.available());
 
-          if (Serial.available()) {
-            //String output = "0" + Serial.readString();
-            //sendTXT(num, output);
-            
+          if (ttyFirmware == 1) { //Send Binary Firmware to Serial
+            ttyFirmware = 0;
+            if (LittleFS.exists("/firmware.bin")) {
+              Serial.end();
+              Serial.begin(4800, SERIAL_8N1);
+
+              char data[1024];
+              size_t len = 0;
+              File f = LittleFS.open("/firmware.bin", "r");
+              do {
+                memset(data, 0, sizeof(data));
+                len = f.readBytes(data, sizeof(data));
+                sendTXT(num, "0" + String(data) + "\r\n");
+
+                //Send binary to Serial
+                //Serial.write((uint8_t*)data, sizeof(data));
+
+              } while (len > 0);
+              f.close();
+            } else {
+              sendTXT(num, "0No Firmware Uploaded\r\n");
+            }
+          }
+          /*
             char b[511];
             size_t len = 0;
             do {
-              memset(b, 0, sizeof(b));
-              len = Serial.readBytes(b, sizeof(b) - 1);
-              char c[512] = "0"; strcat(c, b);
-              webSocket.sendBIN(num, (uint8_t *)c, len + 1);
+            memset(b, 0, sizeof(b));
+            len = Serial.readBytes(b, sizeof(b) - 1);
+            char c[512] = "0"; strcat(c, b);
+            webSocket.sendBIN(num, (uint8_t *)c, sizeof(c) - 1);
             } while (len > 0);
-          }
+          */
         }
       }
       break;
