@@ -15,7 +15,7 @@ A simple web interface based on [ttyd](https://github.com/tsl0922/ttyd) for UART
 ## Connect
 
     SSID: XTerm
-    Password: terminal123
+    Password: (blank)
     Interface: http://192.168.4.1
 
 ## Install
