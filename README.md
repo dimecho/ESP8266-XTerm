@@ -39,7 +39,7 @@ A simple web interface based on [ttyd](https://github.com/tsl0922/ttyd) for UART
 
     [Build]
 
-    1) Run littlefs-build-osx.sh (littlefs-build-win.ps1 Windows) build LittleFS filesystem
+    1) Run littlefs-build-mac (littlefs-build-win.ps1 Windows) build LittleFS filesystem
     2) Open ESP8266-XTerm.ino with Arduino IDE
     3) Sketch -> Export compiled Binary
 

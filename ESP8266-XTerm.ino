@@ -104,6 +104,14 @@ void setup()
   //===============
   //Web Server
   //===============
+  server.on("/hotspot-detect.html", HTTP_GET, []() {
+    if (SPIFFS.exists("/index.html")) {
+        HTTPServer("/index.html");
+      } else {
+        server.sendHeader("Location", "/update");
+        server.send(303);
+      }
+   });
   server.on("/format", HTTP_GET, []() {
     String result = LittleFS.format() ? "OK" : "Error";
     FSInfo fs_info;
@@ -305,19 +313,33 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
               Serial.end();
               Serial.begin(4800, SERIAL_8N1);
 
-              char data[1024];
+              char data[256];
               size_t len = 0;
               File f = LittleFS.open("/firmware.bin", "r");
               do {
                 memset(data, 0, sizeof(data));
                 len = f.readBytes(data, sizeof(data));
-                sendTXT(num, "0" + String(data) + "\r\n");
+                //sendTXT(num, "0" + String(data) + "\r\n");
 
-                //Send binary to Serial
-                //Serial.write((uint8_t*)data, sizeof(data));
+                // *** Lebowski Inverter ***
+                //================================
+                //SEND BINARY is NOT the correct way. Need to send TEXT
+                //Serial.write((uint8_t*)data, sizeof(data)); //Binary
+                Serial.print(data); //Text
+                if (Serial.available()) {
+                  sendTXT(num, "0" + Serial.readString() + "\r\n");
+                }
+                //================================
 
               } while (len > 0);
               f.close();
+
+              if (Serial.available()) {
+                sendTXT(num, "0" + Serial.readString() + "\r\n");
+              }
+              Serial.end();
+              Serial.begin(115200, SERIAL_8N1);
+              
             } else {
               sendTXT(num, "0No Firmware Uploaded\r\n");
             }
